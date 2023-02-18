@@ -183,6 +183,7 @@ public class MineStrikePlusStats extends BaseShipSystemScript implements MineStr
 			float shipjitterLevel = 0.1f;
 			boolean isFizzling = false;
 			boolean isShieldOn = false;
+
 			@Override
 			public void advance(float amount, List<InputEventAPI> events) {
 				if (Global.getCombatEngine().isPaused()) return;
