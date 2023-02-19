@@ -6,6 +6,7 @@ import java.util.List;
 import com.fs.starfarer.api.combat.*;
 import com.fs.starfarer.api.impl.combat.BaseShipSystemScript;
 import com.fs.starfarer.api.impl.combat.MineStrikeStatsAIInfoProvider;
+import org.lazywizard.lazylib.VectorUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.vector.Vector2f;
 
@@ -17,6 +18,7 @@ import com.fs.starfarer.api.input.InputEventAPI;
 import com.fs.starfarer.api.util.Misc;
 import com.fs.starfarer.api.util.WeightedRandomPicker;
 import real_combat.hullmods.CKEM_Hullmod;
+import real_combat.util.RC_Util;
 
 public class MineStrikePlusStats extends BaseShipSystemScript implements MineStrikeStatsAIInfoProvider {
 	
@@ -93,19 +95,6 @@ public class MineStrikePlusStats extends BaseShipSystemScript implements MineStr
 		} else if (state == State.OUT ) {
 		}
 	}
-
-	private void drawArc(Color color, float alpha, float angle, Vector2f loc, float radius, float aimAngle, float aimAngleTop, float x, float y, float thickness){
-		GL11.glLineWidth(thickness);
-		GL11.glColor4ub((byte) color.getRed(), (byte) color.getGreen(), (byte) color.getBlue(), (byte)Math.max(0, Math.min(Math.round(alpha * 255f), 255)) );
-		GL11.glBegin(GL11.GL_LINE_STRIP);
-		for(int i = 0; i < Math.round(angle); i++){
-			GL11.glVertex2f(
-					loc.x + (radius * (float)Math.cos(Math.toRadians(aimAngleTop + i)) + x * (float)Math.cos(Math.toRadians(aimAngle - 90f)) - y * (float)Math.sin(Math.toRadians(aimAngle - 90f))),
-					loc.y + (radius * (float)Math.sin(Math.toRadians(aimAngleTop + i)) + x * (float)Math.sin(Math.toRadians(aimAngle - 90f)) + y * (float)Math.cos(Math.toRadians(aimAngle - 90f)))
-			);
-		}
-		GL11.glEnd();
-	}
 	
 	public void unapply(MutableShipStatsAPI stats, String id) {
 	}
@@ -139,14 +128,14 @@ public class MineStrikePlusStats extends BaseShipSystemScript implements MineStr
 		if (currLoc == null) {
 			currLoc = Misc.getPointAtRadius(mineLoc, 30f + (float) Math.random() * 30f);
 		}
-
-		Double projectileAngle = CKEM_Hullmod.calcAngle(ship.getLocation().x,ship.getLocation().y,mineLoc.x,mineLoc.y);
-		projectileAngle = projectileAngle + 90;
+		//(ship.getLocation().x,ship.getLocation().y,mineLoc.x,mineLoc.y);
+		float projectileAngle = VectorUtils.getAngle(ship.getLocation(),mineLoc);
+		//projectileAngle = projectileAngle + 90;
 		//Vector2f currLoc = mineLoc;
 		DamagingProjectileAPI projectile = (DamagingProjectileAPI)engine.spawnProjectile(source, null,
 				"minestrikeplus",//minelayer2//minestrikeplus
 				mineLoc,//currLoc
-				projectileAngle.floatValue(), //(float) Math.random() * 360f
+				projectileAngle, //(float) Math.random() * 360f
 				null);
 		MissileAPI mine = (MissileAPI) projectile;
 
@@ -220,7 +209,15 @@ public class MineStrikePlusStats extends BaseShipSystemScript implements MineStr
 					//drawArc(Misc.getDarkHighlightColor(), alpha, 360f, arc, mine.getCollisionRadius(), 0f, 0f, 0f, 0f, 2f / viewport.getViewMult());
 					arc.x += mine.getVelocity().x*2;
 					arc.y += mine.getVelocity().y*2;
+
 					drawArc(color, alpha, 360f, arc, mine.getCollisionRadius(), 0f, 0f, 0f, 0f, 2f / viewport.getViewMult());
+
+					GL11.glDisable(GL11.GL_BLEND);
+					GL11.glMatrixMode(GL11.GL_MODELVIEW);
+					GL11.glPopMatrix();
+					GL11.glMatrixMode(GL11.GL_PROJECTION);
+					GL11.glPopMatrix();
+					GL11.glPopAttrib();
 				}
 
 				elapsed += amount;
@@ -287,9 +284,10 @@ public class MineStrikePlusStats extends BaseShipSystemScript implements MineStr
 						}
 						//如果有target
 						if(ship.getShipTarget()!=null) {
-							Double targetAngle = CKEM_Hullmod.calcAngle(ship.getLocation().x, ship.getLocation().y, ship.getShipTarget().getLocation().x, ship.getShipTarget().getLocation().y);
-							targetAngle = targetAngle + 90;
-							ship.setFacing(targetAngle.floatValue());
+							//Double targetAngle = CKEM_Hullmod.calcAngle(ship.getLocation().x, ship.getLocation().y, ship.getShipTarget().getLocation().x, ship.getShipTarget().getLocation().y);
+							float targetAngle = VectorUtils.getAngle(ship.getLocation(),ship.getShipTarget().getLocation());
+							//targetAngle = targetAngle + 90;
+							ship.setFacing(targetAngle);
 						}
 						//mine.getSpec().setLaunchSpeed(originSpead);
 						Global.getSoundPlayer().playSound("mine_teleport", 1f, 1f, ship.getLocation(), ship.getVelocity());
@@ -334,7 +332,19 @@ public class MineStrikePlusStats extends BaseShipSystemScript implements MineStr
 			}
 		};
 	}
-	
+
+	private void drawArc(Color color, float alpha, float angle, Vector2f loc, float radius, float aimAngle, float aimAngleTop, float x, float y, float thickness){
+		GL11.glLineWidth(thickness);
+		GL11.glColor4ub((byte) color.getRed(), (byte) color.getGreen(), (byte) color.getBlue(), (byte)Math.max(0, Math.min(Math.round(alpha * 255f), 255)) );
+		GL11.glBegin(GL11.GL_LINE_STRIP);
+		for(int i = 0; i < Math.round(angle); i++){
+			GL11.glVertex2f(
+					loc.x + (radius * (float)Math.cos(Math.toRadians(aimAngleTop + i)) + x * (float)Math.cos(Math.toRadians(aimAngle - 90f)) - y * (float)Math.sin(Math.toRadians(aimAngle - 90f))),
+					loc.y + (radius * (float)Math.sin(Math.toRadians(aimAngleTop + i)) + x * (float)Math.sin(Math.toRadians(aimAngle - 90f)) + y * (float)Math.cos(Math.toRadians(aimAngle - 90f)))
+			);
+		}
+		GL11.glEnd();
+	}
 	
 	protected float getMaxRange(ShipAPI ship) {
 		return getMineRange(ship);

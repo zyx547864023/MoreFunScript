@@ -1,11 +1,14 @@
 package real_combat.util;
 
 import com.fs.starfarer.api.Global;
+import com.fs.starfarer.api.combat.CombatEngineAPI;
 import com.fs.starfarer.api.combat.MissileAPI;
 import com.fs.starfarer.api.combat.ShipAPI;
 import org.lazywizard.lazylib.MathUtils;
+import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.vector.Vector2f;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -82,5 +85,11 @@ public class RC_Util {
         }
 
         return missiles;
+    }
+
+    public static boolean hide(CombatEngineAPI engine){
+        if (engine == null || engine.getCombatUI() == null) return true;
+        if (engine.getCombatUI().isShowingCommandUI() || engine.isUIShowingDialog()) return true;
+        return !engine.isUIShowingHUD();
     }
 }
