@@ -32,6 +32,8 @@ public class RealCombatEveryFrameCombatPlugin implements EveryFrameCombatPlugin 
 
 	public void advance(float amount, List<InputEventAPI> events) {
 		CombatEngineAPI engine = Global.getCombatEngine();
+		//士气系统
+		engine.maintainStatusForPlayerShip("RealCombatEveryFrameCombatPlugin", Global.getSettings().getSpriteName("ui","icon_tactical_cr_bonus"), "士气 100%", "增益", false);
 		List<ShipAPI> shipList = engine.getShips();
 		for(ShipAPI ship:shipList) {
 			if (ship.getListeners(DamageDealtMod.class).size() == 0) {
@@ -77,9 +79,9 @@ public class RealCombatEveryFrameCombatPlugin implements EveryFrameCombatPlugin 
 				//如果距离大于射程威力减小，距离小于射程威力增加，最大为2
 				if (param instanceof BeamAPI) {
 					double percent = ((BeamAPI) param).getLength()/weapon.getRange();
-					if(percent<=0.3) {
+					if(percent<=0.5) {
 						//100/0.8*(0.8-percent);
-						damage.getModifier().modifyPercent(id, (float) (100/0.3*(0.3-percent)));
+						damage.getModifier().modifyPercent(id, (float) (100/0.5*(0.5-percent)));
 					}
 					else{
 						//-100/2*(percent)
@@ -91,9 +93,9 @@ public class RealCombatEveryFrameCombatPlugin implements EveryFrameCombatPlugin 
 					double distance = Math.sqrt((weaponlocation.x - point.x)*(weaponlocation.x - point.x)+(weaponlocation.y - point.y)*(weaponlocation.y - point.y));
 					//如果距离在原版射程内80%才开始100%原版威力0-->2 0-->0.8是200-->100 0.8-->2是100-->0
 					double percent = distance/weapon.getRange();
-					if(percent<=0.4) {
+					if(percent<=0.5) {
 						//100/0.8*(0.8-percent);
-						damage.getModifier().modifyPercent(id, (float) (100/0.4*(0.4-percent)));
+						damage.getModifier().modifyPercent(id, (float) (100/0.5*(0.5-percent)));
 					}
 					else{
 						//-100/2*(percent)

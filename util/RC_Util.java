@@ -9,6 +9,8 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.vector.Vector2f;
 
 import java.awt.*;
+import java.awt.geom.Line2D;
+import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -88,8 +90,56 @@ public class RC_Util {
     }
 
     public static boolean hide(CombatEngineAPI engine){
-        if (engine == null || engine.getCombatUI() == null) return true;
-        if (engine.getCombatUI().isShowingCommandUI() || engine.isUIShowingDialog()) return true;
+        if (engine == null || engine.getCombatUI() == null) {return true;}
+        if (engine.getCombatUI().isShowingCommandUI() || engine.isUIShowingDialog()) {return true;}
         return !engine.isUIShowingHUD();
+    }
+
+    /**
+     * 获取两条直线的交点
+     * @param line1
+     * @param line2
+     * @return
+     */
+    public static Point2D getIntersectPointBy2Line(Line2D line1, Line2D line2) {
+        return getIntersectPointBy2Line(line1.getP1(),line1.getP2(),line2.getP1(),line2.getP2());
+
+    }
+
+
+    /**
+     * 获取两条直线的交点
+     * @param p1 line1 第一个点
+     * @param p2 line1 第二个点
+     * @param p3 line2 第一个点
+     * @param p4 line2 第二个点
+     * @return
+     */
+    public static Point2D getIntersectPointBy2Line(Point2D p1, Point2D p2, Point2D p3, Point2D p4){
+
+
+        double A1=p1.getY()-p2.getY();
+        double B1=p2.getX()-p1.getX();
+        double C1=A1*p1.getX()+B1*p1.getY();
+
+        double A2=p3.getY()-p4.getY();
+        double B2=p4.getX()-p3.getX();
+        double C2=A2*p3.getX()+B2*p3.getY();
+
+        double det_k=A1*B2-A2*B1;
+
+        if(Math.abs(det_k)<0.00001){
+            return null;
+        }
+
+        double a=B2/det_k;
+        double b=-1*B1/det_k;
+        double c=-1*A2/det_k;
+        double d=A1/det_k;
+
+        double x=a*C1+b*C2;
+        double y=c*C1+d*C2;
+
+        return  new Point2D.Double(x,y);
     }
 }

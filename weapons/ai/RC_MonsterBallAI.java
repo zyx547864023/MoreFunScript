@@ -19,6 +19,16 @@ import real_combat.util.RC_Util;
 
 public class RC_MonsterBallAI extends RC_BaseMissile {
     private static final float TARGET_ACQUISITION_RANGE = 1800f;
+    private static final float RADIUS_DIVIDE_2 = 2f;
+    private static final float SPEED_DIVIDE_2 = 2f;
+    private static final float SPEED_DIVIDE_4 = 4f;
+    private static final float RADIUS_MULTIPLY = 1.7f;
+    private static final float SPURT_ANGLE = 30f;
+    private static final float TURN_ANGLE = 20f;
+
+    private static final float NO_TURN_ANGLE_MAX = 70f;
+    private static final float NO_TURN_ANGLE_MIN = 30f;
+
     private final String ID="monster_ball_shooter_sec";
     public RC_MonsterBallAI(MissileAPI missile, ShipAPI launchingShip) {
         super(missile, launchingShip);
@@ -52,7 +62,7 @@ public class RC_MonsterBallAI extends RC_BaseMissile {
         }
 
         if (!acquireTarget(amount)) {
-            if (missile.getVelocity().length() >= (maxSpeed / 2f)) {
+            if (missile.getVelocity().length() >= (maxSpeed / SPEED_DIVIDE_2)) {
                 missile.giveCommand(ShipCommand.DECELERATE);
             } else {
                 missile.giveCommand(ShipCommand.ACCELERATE);
@@ -62,9 +72,9 @@ public class RC_MonsterBallAI extends RC_BaseMissile {
         //如果导弹和目标之间有护盾就转向
         if (target instanceof ShipAPI) {
             ShipAPI ship = (ShipAPI) target;
-            if(ship.getOwner()==missile.getOwner()) return;
+            if(ship.getOwner()==missile.getOwner()) {return;}
             float shipToMissileAngle = VectorUtils.getAngle(ship.getLocation(),missile.getLocation());
-            float MissileToshipAngle = VectorUtils.getAngle(missile.getLocation(),ship.getLocation());
+            float missileToshipAngle = VectorUtils.getAngle(missile.getLocation(),ship.getLocation());
             //当与目标距离小于护盾半径的时候时直线加速接近
             float distance = Math.abs(MathUtils.getDistance(ship,missile));
             float radius = ship.getCollisionRadius();
@@ -72,59 +82,61 @@ public class RC_MonsterBallAI extends RC_BaseMissile {
             {
                 radius = ship.getShield().getRadius();
             }
-            float mi = Math.abs(MathUtils.getShortestRotation(missile.getFacing(),MissileToshipAngle));
-            Global.getLogger(this.getClass()).info(mi);
+            float mi = Math.abs(MathUtils.getShortestRotation(missile.getFacing(),missileToshipAngle));
+            //Global.getLogger(this.getClass()).info(mi);
             if(ship.getShield()!=null)
             {
                 if(ship.getShield().isOn()) {
-                    if(distance>radius*1.7)
+                    if(distance>radius*RADIUS_MULTIPLY)
                     {
                         //Global.getLogger(this.getClass()).info("ZJJJ");
-                        missileCommandNoSheild(mi,MissileToshipAngle,20,90);
+                        missileCommandNoSheild(mi,missileToshipAngle,20,90);
                     }
                     float shieldAngle = ship.getShield().getFacing();
                     float shieldAcc = ship.getShield().getActiveArc();
                     //如果面前有盾没有盾
-                    if(Math.abs(MathUtils.getShortestRotation(shipToMissileAngle,shieldAngle))>(shieldAcc/2)+1)
+                    if(Math.abs(MathUtils.getShortestRotation(shipToMissileAngle,shieldAngle))>(shieldAcc/RADIUS_DIVIDE_2)+1)
                     {
                         //Global.getLogger(this.getClass()).info("QMMD");
 
-                        if(mi>20)
-                        if (MathUtils.getShortestRotation(missile.getFacing(), MissileToshipAngle) > 0) {
-                            missile.giveCommand(ShipCommand.TURN_LEFT);
-                            if (missile.getVelocity().length() >= (maxSpeed / 2f)) {
-                                missile.giveCommand(ShipCommand.DECELERATE);
-                            }
-                        } else {
-                            missile.giveCommand(ShipCommand.TURN_RIGHT);
-                            if (missile.getVelocity().length() >= (maxSpeed / 2f)) {
-                                missile.giveCommand(ShipCommand.DECELERATE);
+                        if(mi>TURN_ANGLE) {
+                            if (MathUtils.getShortestRotation(missile.getFacing(), missileToshipAngle) > 0) {
+                                missile.giveCommand(ShipCommand.TURN_LEFT);
+                                if (missile.getVelocity().length() >= (maxSpeed / SPEED_DIVIDE_2)) {
+                                    missile.giveCommand(ShipCommand.DECELERATE);
+                                }
+                            } else {
+                                missile.giveCommand(ShipCommand.TURN_RIGHT);
+                                if (missile.getVelocity().length() >= (maxSpeed / SPEED_DIVIDE_2)) {
+                                    missile.giveCommand(ShipCommand.DECELERATE);
+                                }
                             }
                         }
-                        if(mi<30)
+                        if(mi<SPURT_ANGLE) {
                             missile.giveCommand(ShipCommand.ACCELERATE);
+                        }
                         //missileCommandNoSheild(mi,MissileToshipAngle,20,30);
                     }
                     else {
                         //Global.getLogger(this.getClass()).info("QMYD");
                         //顺势转开
-                        if(MathUtils.getShortestRotation(missile.getFacing(),MissileToshipAngle) > 0)
+                        if(MathUtils.getShortestRotation(missile.getFacing(),missileToshipAngle) > 0)
                         {
                             //转超过90度了要转回来
-                            missileCommandExistsSheild(mi,MissileToshipAngle,maxSpeed,ShipCommand.TURN_RIGHT,ShipCommand.TURN_LEFT);
+                            missileCommandExistsSheild(mi,maxSpeed,ShipCommand.TURN_RIGHT,ShipCommand.TURN_LEFT);
                         }
                         else {
-                            missileCommandExistsSheild(mi,MissileToshipAngle,maxSpeed,ShipCommand.TURN_LEFT,ShipCommand.TURN_RIGHT);
+                            missileCommandExistsSheild(mi,maxSpeed,ShipCommand.TURN_LEFT,ShipCommand.TURN_RIGHT);
                         }
 
                     }
                 }
                 else {
-                    missileCommandNoSheild(mi,MissileToshipAngle,20,90);
+                    missileCommandNoSheild(mi,missileToshipAngle,20,90);
                 }
             }
             else {
-                missileCommandNoSheild(mi,MissileToshipAngle,20,90);
+                missileCommandNoSheild(mi,missileToshipAngle,20,90);
             }
         }
 
@@ -183,30 +195,32 @@ public class RC_MonsterBallAI extends RC_BaseMissile {
     }
 
     private void missileCommandNoSheild(float mi,float missileToshipAngle,int turn,int notTurn){
-        if(mi>turn)
+        if(mi>turn) {
             if (MathUtils.getShortestRotation(missile.getFacing(), missileToshipAngle) > 0) {
                 missile.giveCommand(ShipCommand.TURN_LEFT);
             } else {
                 missile.giveCommand(ShipCommand.TURN_RIGHT);
             }
-        if(mi<notTurn)
+        }
+        if(mi<notTurn){
             missile.giveCommand(ShipCommand.ACCELERATE);
+        }
     }
 
-    private void missileCommandExistsSheild(float mi,float missileToshipAngle,float maxSpeed,ShipCommand shipCommandS,ShipCommand shipCommandB){
+    private void missileCommandExistsSheild(float mi,float maxSpeed,ShipCommand shipCommandS,ShipCommand shipCommandB){
         //转超过90度了要转回来
-        if(mi<30) {
+        if(mi<NO_TURN_ANGLE_MIN) {
             missile.giveCommand(shipCommandS);
-            if (missile.getVelocity().length() >= (maxSpeed / 4f)) {
+            if (missile.getVelocity().length() >= (maxSpeed / SPEED_DIVIDE_4)) {
                 missile.giveCommand(ShipCommand.DECELERATE);
             }
         }
-        else if (mi>=30&&mi<70){
+        else if (mi>=NO_TURN_ANGLE_MIN&&mi<NO_TURN_ANGLE_MAX){
             missile.giveCommand(ShipCommand.ACCELERATE);
         }
         else {
             missile.giveCommand(shipCommandB);
-            if (missile.getVelocity().length() >= (maxSpeed / 4f)) {
+            if (missile.getVelocity().length() >= (maxSpeed / SPEED_DIVIDE_4)) {
                 missile.giveCommand(ShipCommand.DECELERATE);
             }
         }

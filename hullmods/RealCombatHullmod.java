@@ -21,25 +21,34 @@ import com.fs.starfarer.api.combat.listeners.WeaponRangeModifier;
 
 public class RealCombatHullmod extends BaseHullMod {
 
-    public static final Map<WeaponSize, Float> ballisticRangeUp = new HashMap<>(3);
-    public static final Map<WeaponSize, Float> ballisticDamageDown = new HashMap<>(3);
-    public static final int engineRangeUp = 100;
-    public static final int missileRangeUp = 200;
-    
+    public static final Map<WeaponSize, Float> BALLISTIC_RANGE_UP = new HashMap<>(3);
+    public static final Map<WeaponSize, Float> BALLISTIC_DAMAGE_DOWN = new HashMap<>(3);
+    public static final int ENGINE_RANGE_UP = 100;
+    public static final int MISSILE_RANGE_UP = 200;
+
+    private static final int INDEX_ENGINE_RANGE_UP = 0;
+    private static final int INDEX_BALLISTIC_RANGE_UP_SMALL = 1;
+    private static final int INDEX_BALLISTIC_RANGE_UP_MEDIUM = 2;
+    private static final int INDEX_BALLISTIC_RANGE_UP_LARGE = 3;
+    private static final int INDEX_BALLISTIC_DAMAGE_DOWN_SMALL = 4;
+    private static final int INDEX_BALLISTIC_DAMAGE_DOWN_MEDIUM = 5;
+    private static final int INDEX_BALLISTIC_DAMAGE_DOWN_LARGE = 6;
+    private static final int INDEX_MISSILE_RANGE_UP = 7;
+
     static {
-    	ballisticRangeUp.put(WeaponSize.LARGE, 150f);
-    	ballisticRangeUp.put(WeaponSize.MEDIUM, 100f);
-    	ballisticRangeUp.put(WeaponSize.SMALL, 0f);
-    	
-    	ballisticDamageDown.put(WeaponSize.LARGE, -50f);
-    	ballisticDamageDown.put(WeaponSize.MEDIUM, -50f);
-    	ballisticDamageDown.put(WeaponSize.SMALL, 0f);
+        BALLISTIC_RANGE_UP.put(WeaponSize.LARGE, 150f);
+        BALLISTIC_RANGE_UP.put(WeaponSize.MEDIUM, 100f);
+        BALLISTIC_RANGE_UP.put(WeaponSize.SMALL, 0f);
+
+        BALLISTIC_DAMAGE_DOWN.put(WeaponSize.LARGE, -50f);
+        BALLISTIC_DAMAGE_DOWN.put(WeaponSize.MEDIUM, -50f);
+        BALLISTIC_DAMAGE_DOWN.put(WeaponSize.SMALL, 0f);
     }
 
     @Override
     public void applyEffectsBeforeShipCreation(HullSize hullSize, MutableShipStatsAPI stats, String id) {
-        stats.getEnergyWeaponRangeBonus().modifyPercent(id, engineRangeUp);
-        stats.getMissileWeaponRangeBonus().modifyPercent(id, missileRangeUp);
+        stats.getEnergyWeaponRangeBonus().modifyPercent(id, ENGINE_RANGE_UP);
+        stats.getMissileWeaponRangeBonus().modifyPercent(id, MISSILE_RANGE_UP);
     }
     /*
     @Override
@@ -54,8 +63,8 @@ public class RealCombatHullmod extends BaseHullMod {
         ship.addListener(new DamageDealtMod());
         ship.addListener(new WeaponRangeMod());
     }
-    
-    
+
+
     private static class DamageDealtMod implements DamageDealtModifier {
 
         @Override
@@ -83,28 +92,28 @@ public class RealCombatHullmod extends BaseHullMod {
             }
             if (weapon.getType()==WeaponType.ENERGY)
             {
-	            //Vector2f weaponlocation = weapon.getLocation();
-	            //double distance = Math.sqrt((weaponlocation.x - point.x)*(weaponlocation.x - point.x)+(weaponlocation.y - point.y)*(weaponlocation.y - point.y));
-	            //»Áπ˚æ‡¿Î¥Û”⁄…‰≥ÃÕ˛¡¶ºı–°£¨æ‡¿Î–°”⁄…‰≥ÃÕ˛¡¶‘ˆº”£¨◊Ó¥ÛŒ™2
-            	if (param instanceof BeamAPI) {
-		            double percent = ((BeamAPI) param).getLength()/weapon.getRange();
-		            damage.getModifier().modifyPercent(id, (float) ((1-percent)*100));
-            	}
-            	if (param instanceof DamagingProjectileAPI) {
-            		Vector2f weaponlocation = ((DamagingProjectileAPI) param).getSpawnLocation();
-    	            double distance = Math.sqrt((weaponlocation.x - point.x)*(weaponlocation.x - point.x)+(weaponlocation.y - point.y)*(weaponlocation.y - point.y));
-    	            double percent = distance/weapon.getRange();
-    	            damage.getModifier().modifyPercent(id, (float) ((1-percent)*100));
-                } 
+                //Vector2f weaponlocation = weapon.getLocation();
+                //double distance = Math.sqrt((weaponlocation.x - point.x)*(weaponlocation.x - point.x)+(weaponlocation.y - point.y)*(weaponlocation.y - point.y));
+                //Â¶ÇÊûúË∑ùÁ¶ªÂ§ß‰∫éÂ∞ÑÁ®ãÂ®ÅÂäõÂáèÂ∞èÔºåË∑ùÁ¶ªÂ∞è‰∫éÂ∞ÑÁ®ãÂ®ÅÂäõÂ¢ûÂä†ÔºåÊúÄÂ§ß‰∏∫2
+                if (param instanceof BeamAPI) {
+                    double percent = ((BeamAPI) param).getLength()/weapon.getRange();
+                    damage.getModifier().modifyPercent(id, (float) ((1-percent)*100));
+                }
+                if (param instanceof DamagingProjectileAPI) {
+                    Vector2f weaponlocation = ((DamagingProjectileAPI) param).getSpawnLocation();
+                    double distance = Math.sqrt((weaponlocation.x - point.x)*(weaponlocation.x - point.x)+(weaponlocation.y - point.y)*(weaponlocation.y - point.y));
+                    double percent = distance/weapon.getRange();
+                    damage.getModifier().modifyPercent(id, (float) ((1-percent)*100));
+                }
             }
             if (weapon.getType()==WeaponType.BALLISTIC)//||weapon.getType()==WeaponType.BUILT_IN
             {
-            	damage.getModifier().modifyPercent(id, ballisticDamageDown.get(weapon.getSize()));
+                damage.getModifier().modifyPercent(id, BALLISTIC_DAMAGE_DOWN.get(weapon.getSize()));
             }
             return id;
         }
-    } 
-    
+    }
+
     private static class WeaponRangeMod implements WeaponRangeModifier {
 
         @Override
@@ -112,7 +121,7 @@ public class RealCombatHullmod extends BaseHullMod {
             if (!(weapon.getType() == WeaponType.BALLISTIC)) {
                 return 0f;
             }
-            return (ballisticRangeUp.get(weapon.getSize())) / 100f;
+            return (BALLISTIC_RANGE_UP.get(weapon.getSize())) / 100f;
         }
 
         @Override
@@ -125,33 +134,33 @@ public class RealCombatHullmod extends BaseHullMod {
             return 0f;
         }
     }
-    
-    //∏˘æ›Œ‰∆˜πÊ∏Ò£¨‘ˆº”ƒ‹¡øŒ‰∆˜{%s}µƒ…‰≥Ã£¨∏˘æ›√¸÷–æ‡¿ÎÀ•ºı…À∫¶£¨‘ˆº” µµØŒ‰∆˜{%s/%s/%s}µƒ…‰≥Ã£¨Õ¨ ±ºı…Ÿ µµØŒ‰∆˜{%s/%s/%s}µƒ…À∫¶£¨‘ˆº”µºµØ{%s}µƒ…‰≥Ã°£
+
+    //Ê†πÊçÆÊ≠¶Âô®ËßÑÊ†ºÔºåÂ¢ûÂä†ËÉΩÈáèÊ≠¶Âô®{%s}ÁöÑÂ∞ÑÁ®ãÔºåÊ†πÊçÆÂëΩ‰∏≠Ë∑ùÁ¶ªË°∞Âáè‰º§ÂÆ≥ÔºåÂ¢ûÂä†ÂÆûÂºπÊ≠¶Âô®{%s/%s/%s}ÁöÑÂ∞ÑÁ®ãÔºåÂêåÊó∂ÂáèÂ∞ëÂÆûÂºπÊ≠¶Âô®{%s/%s/%s}ÁöÑ‰º§ÂÆ≥ÔºåÂ¢ûÂä†ÂØºÂºπ{%s}ÁöÑÂ∞ÑÁ®ã„ÄÇ
     @Override
     public String getDescriptionParam(int index, HullSize hullSize) {
-        if (index == 0) {
-            return "" + engineRangeUp+"%";
+        if (index == INDEX_ENGINE_RANGE_UP) {
+            return "" + ENGINE_RANGE_UP+"%";
         }
-        if (index == 1) {
-            return "" + ballisticRangeUp.get(WeaponSize.SMALL).intValue()+"%";
+        if (index == INDEX_BALLISTIC_RANGE_UP_SMALL) {
+            return "" + BALLISTIC_RANGE_UP.get(WeaponSize.SMALL).intValue()+"%";
         }
-        if (index == 2) {
-            return "" + ballisticRangeUp.get(WeaponSize.MEDIUM).intValue()+"%";
+        if (index == INDEX_BALLISTIC_RANGE_UP_MEDIUM) {
+            return "" + BALLISTIC_RANGE_UP.get(WeaponSize.MEDIUM).intValue()+"%";
         }
-        if (index == 3) {
-            return "" + ballisticRangeUp.get(WeaponSize.LARGE).intValue()+"%";
+        if (index == INDEX_BALLISTIC_RANGE_UP_LARGE) {
+            return "" + BALLISTIC_RANGE_UP.get(WeaponSize.LARGE).intValue()+"%";
         }
-        if (index == 4) {
-            return "" + ballisticDamageDown.get(WeaponSize.SMALL).intValue()+"%";
+        if (index == INDEX_BALLISTIC_DAMAGE_DOWN_SMALL) {
+            return "" + BALLISTIC_DAMAGE_DOWN.get(WeaponSize.SMALL).intValue()+"%";
         }
-        if (index == 5) {
-            return "" + ballisticDamageDown.get(WeaponSize.MEDIUM).intValue()+"%";
+        if (index == INDEX_BALLISTIC_DAMAGE_DOWN_MEDIUM) {
+            return "" + BALLISTIC_DAMAGE_DOWN.get(WeaponSize.MEDIUM).intValue()+"%";
         }
-        if (index == 6) {
-            return "" + ballisticDamageDown.get(WeaponSize.LARGE).intValue()+"%";
+        if (index == INDEX_BALLISTIC_DAMAGE_DOWN_LARGE) {
+            return "" + BALLISTIC_DAMAGE_DOWN.get(WeaponSize.LARGE).intValue()+"%";
         }
-        if (index == 7) {
-            return "" + missileRangeUp+"%";
+        if (index == INDEX_MISSILE_RANGE_UP) {
+            return "" + MISSILE_RANGE_UP+"%";
         }
         return null;
     }

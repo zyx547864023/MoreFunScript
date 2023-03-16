@@ -19,7 +19,7 @@ import java.util.*;
 import java.util.List;
 
 /**
- * ·´¶¯ÄÜµ¼µ¯²å¼ş ckem_hullmod
+ * ååŠ¨èƒ½å¯¼å¼¹æ’ä»¶ ckem_hullmod
  */
 public class CKEM_Hullmod extends BaseHullMod {
     private String ID = "CKEM_Plugin";
@@ -27,16 +27,16 @@ public class CKEM_Hullmod extends BaseHullMod {
     public void advanceInCombat(final ShipAPI ship, float amount) {
         CombatEngineAPI engine =  Global.getCombatEngine();
 
-        //¸ÄÔì
+        //æ”¹é€ 
         Map<MissileAPI, Vector2f> missileLocationMap = new HashMap<>();
         if (engine.getCustomData().get(ship + ID) != null) {
             missileLocationMap = (Map<MissileAPI, Vector2f>) engine.getCustomData().get(ship + ID);
         }
-        //´æ´¢µ¼µ¯ÉÏÒ»Ö¡µÄÎ»ÖÃ
-        //»ñÈ¡ËùÓĞ·ÉĞĞÎï
+        //å­˜å‚¨å¯¼å¼¹ä¸Šä¸€å¸§çš„ä½ç½®
+        //è·å–æ‰€æœ‰é£è¡Œç‰©
         List<DamagingProjectileAPI> damagingProjectiles = engine.getProjectiles();
         List<MissileAPI> keMissileList = new ArrayList<>();
-        //Èç¹û¿ª¶ÜÕÒ¶¯ÄÜµ¼µ¯£¬Èç¹ûÃ»¿ª¶ÜÕÒ×î½üµ¼µ¯
+        //å¦‚æœå¼€ç›¾æ‰¾åŠ¨èƒ½å¯¼å¼¹ï¼Œå¦‚æœæ²¡å¼€ç›¾æ‰¾æœ€è¿‘å¯¼å¼¹
         if(ship.getShield().isOn()) {
             for (DamagingProjectileAPI damagingProjectile : damagingProjectiles) {
                 if (!(damagingProjectile instanceof MissileAPI)) continue;
@@ -52,7 +52,7 @@ public class CKEM_Hullmod extends BaseHullMod {
                     missileLocationMap.remove(missile);
                     continue;
                 }
-                //µ¼µ¯ÊÇ¶¯ÄÜµ¼µ¯
+                //å¯¼å¼¹æ˜¯åŠ¨èƒ½å¯¼å¼¹
                 if (DamageType.KINETIC.equals(missile.getDamageType())) {
                     setMissile(missile,ship,missileLocationMap,keMissileList);
                 }
@@ -60,7 +60,7 @@ public class CKEM_Hullmod extends BaseHullMod {
         }
 
         engine.getCustomData().put(ship+ID,missileLocationMap);
-        //Ñ­»·µ¼µ¯ÖØĞÂÅÅĞò
+        //å¾ªç¯å¯¼å¼¹é‡æ–°æ’åº
         Comparator<MissileAPI> missileAPIComparator = new Comparator<MissileAPI>(){
             @Override
             public int compare(MissileAPI m1, MissileAPI m2) {
@@ -111,24 +111,24 @@ public class CKEM_Hullmod extends BaseHullMod {
         if(engine.isPaused()) return;
         ShipAPI target = ship.getShipTarget();
         ship.setShipTarget(null);
-        //¿ªÊ¼µ÷ÓÃPDÎäÆ÷
+        //å¼€å§‹è°ƒç”¨PDæ­¦å™¨
         for(WeaponAPI weapon:ship.getAllWeapons())
         {
-            //Èç¹ûÊÇPDÎäÆ÷
+            //å¦‚æœæ˜¯PDæ­¦å™¨
             if(weapon.getSpec().getAIHints().contains(WeaponAPI.AIHints.PD))
             {
                 Vector2f missileLocation = lately.getLocation();
                 Vector2f weaponLocation = weapon.getLocation();
-                //Èç¹ûµ¼µ¯ÔÚÉä³ÌºÍÉä½ÇÄÚ
+                //å¦‚æœå¯¼å¼¹åœ¨å°„ç¨‹å’Œå°„è§’å†…
                 float weaponToMissileAngle = VectorUtils.getAngle(weaponLocation,missileLocation);
                 float arcFacing =  MathUtils.clampAngle(weapon.getArcFacing()+ship.getFacing());
                 if(Math.abs(MathUtils.getShortestRotation(arcFacing,weaponToMissileAngle))<weapon.getArc()/2)
                 {
-                    //Èç¹ûµ¼µ¯ÔÚÉä³ÌÄÚ
+                    //å¦‚æœå¯¼å¼¹åœ¨å°„ç¨‹å†…
                     float weaponToMissile = MathUtils.getDistance(weaponLocation, missileLocation);
                     if(weaponToMissile<=weapon.getRange())
                     {
-                        //»ñÈ¡µ±Ç°½Ç¶È
+                        //è·å–å½“å‰è§’åº¦
                         float now = weapon.getCurrAngle();
                         float weaponToMissileRotation = MathUtils.getShortestRotation(now,weaponToMissileAngle);
                         if(Math.abs(weaponToMissileRotation)<=weapon.getTurnRate()*amount)
@@ -167,12 +167,12 @@ public class CKEM_Hullmod extends BaseHullMod {
     {
         Vector2f now = missile.getLocation();
         Vector2f shipLocation = ship.getLocation();
-        //µ¼µ¯µÄÎ»ÖÃÊÇ·ñÓë´¬Ô½À´Ô½½ü
+        //å¯¼å¼¹çš„ä½ç½®æ˜¯å¦ä¸èˆ¹è¶Šæ¥è¶Šè¿‘
         if (missileLocationMap.get(missile) != null) {
             Vector2f from = missileLocationMap.get(missile);
             float fromToShip = MathUtils.getDistance(from, shipLocation);
             float nowToShip = MathUtils.getDistance(now, shipLocation);
-            //µ¼µ¯µÄÎ»ÖÃÊÇ·ñÓë´¬Ô½À´Ô½½ü
+            //å¯¼å¼¹çš„ä½ç½®æ˜¯å¦ä¸èˆ¹è¶Šæ¥è¶Šè¿‘
             if (nowToShip <= fromToShip) {
                 keMissileList.add(missile);
                 missileLocationMap.put(missile, new Vector2f(now.getX(), now.getY()));
@@ -181,7 +181,7 @@ public class CKEM_Hullmod extends BaseHullMod {
             }
             //
         }
-        //Èç¹ûÃ»ÓĞ´æÈëÊı¾İ
+        //å¦‚æœæ²¡æœ‰å­˜å…¥æ•°æ®
         else {
             missileLocationMap.put(missile, new Vector2f(now.getX(), now.getY()));
         }
@@ -195,13 +195,13 @@ public class CKEM_Hullmod extends BaseHullMod {
     }
     public String getUnapplicableReason(ShipAPI ship) {
         if (ship.getVariant().getHullMods().contains("damaged_mounts")) {
-            return "²»¼æÈİÓÚ ÎäÆ÷Î»Ëğ»µ";
+            return "ä¸å…¼å®¹äº æ­¦å™¨ä½æŸå";
         }
         if (ship.getVariant().getHullMods().contains("advancedoptics")) {
-            return "²»¼æÈİÓÚ ÏÈ½ø¹âÑ§Æ÷¼ş";
+            return "ä¸å…¼å®¹äº å…ˆè¿›å…‰å­¦å™¨ä»¶";
         }
         if (ship.getVariant().getHullMods().contains("armoredweapons")) {
-            return "²»¼æÈİÓÚ ÅÚËş×°¼×";
+            return "ä¸å…¼å®¹äº ç‚®å¡”è£…ç”²";
         }
         return null;
     }
