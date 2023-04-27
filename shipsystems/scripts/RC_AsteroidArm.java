@@ -1,44 +1,37 @@
 package real_combat.shipsystems.scripts;
 
-import com.fs.graphics.F;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.*;
-import com.fs.starfarer.api.graphics.SpriteAPI;
 import com.fs.starfarer.api.impl.combat.*;
-import data.scripts.plugins.MagicRenderPlugin;
-import data.shipsystems.scripts.AmmoFeedStats;
-import data.shipsystems.scripts.HighEnergyFocusStats;
-import data.shipsystems.scripts.MicroBurnStats;
-import jdk.internal.dynalink.beans.StaticClass;
 import org.lazywizard.lazylib.MathUtils;
 import org.lazywizard.lazylib.VectorUtils;
-import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.vector.Vector2f;
-import real_combat.constant.RC_ComboConstant;
-import real_combat.util.RC_Util;
 
-import java.awt.*;
 import java.util.*;
 import java.util.List;
 
 public class RC_AsteroidArm extends BaseShipSystemScript {
-    private static String ID = "RC_AsteroidArm";
+    private final static String ID = "RC_AsteroidArm";
+    private final static String IS_ON = "IS_ON";
+    private final static String IS_SET = "IS_SET";
+    private final static String WHO_CATCH = "WHO_CATCH";
     private static float maxSpeed = 10f;
     private static float minSpeed = 1f;
     private boolean init = false;
     private ShipAPI ship;
+    CombatEngineAPI engine = Global.getCombatEngine();
     @Override
     public void apply(MutableShipStatsAPI stats, String id, State state, float effectLevel) {
-        CombatEngineAPI engine = Global.getCombatEngine();
-        if(engine.isPaused()) {return;}
+        if (engine == null) return;
+        if (engine.isPaused()) {return;}
         ship = (ShipAPI) stats.getEntity();
         if (ship == null) {
             return;
         }
         try {
-            ship.setCustomData("isOn","true");
+            ship.setCustomData(ID+IS_ON,true);
             ship.getMutableStats().getFluxDissipation().modifyPercent(ID,100);
-            ship.getMutableStats().getFighterRefitTimeMult().modifyPercent(ID,100);
+            ship.getMutableStats().getFighterRefitTimeMult().modifyPercent(ID,-100);
             if (!init) {
                 init = true;
                 Global.getCombatEngine().addLayeredRenderingPlugin(new RC_AsteroidsArmCombatPlugin(ship));
@@ -52,13 +45,13 @@ public class RC_AsteroidArm extends BaseShipSystemScript {
 
     @Override
     public void unapply(MutableShipStatsAPI stats, String id) {
-        CombatEngineAPI engine = Global.getCombatEngine();
+        if (engine == null) return;
         if(engine.isPaused()) {return;}
         if (ship == null) {
             return;
         }
         try {
-            ship.setCustomData("isOn","false");
+            ship.setCustomData(ID+IS_ON,false);
             ship.getMutableStats().getFluxDissipation().unmodifyPercent(ID);
             ship.getMutableStats().getFighterRefitTimeMult().unmodifyPercent(ID);
         }
@@ -82,28 +75,30 @@ public class RC_AsteroidArm extends BaseShipSystemScript {
         return true;
     }
 
-    public static class RC_AsteroidsArmCombatPlugin extends BaseCombatLayeredRenderingPlugin {
+    public class RC_AsteroidsArmCombatPlugin extends BaseCombatLayeredRenderingPlugin {
         private final ShipAPI ship;
-        List<CombatEntityAPI> hulkList = new ArrayList<>();
-        CombatEngineAPI engine;
+        private List<CombatEntityAPI> hulkList = new ArrayList<>();
+        private CombatEngineAPI engine = Global.getCombatEngine();
         public RC_AsteroidsArmCombatPlugin(ShipAPI ship) {
             this.ship = ship;
         }
 
         @Override
         public void advance(float amount) {
-            engine = Global.getCombatEngine();
+            if (engine == null) return;
             if (engine.isPaused()) {return;}
             if (!ship.isAlive()) {return;}
-            if (ship.getCustomData().get("isOn")==null) {return;}
-            if (!"true".equals(ship.getCustomData().get("isOn"))) {
+            if (ship.getCustomData().get(ID+IS_ON)==null) {return;}
+            if (!(boolean)ship.getCustomData().get(ID+IS_ON)) {
                 for(CombatEntityAPI h:hulkList) {
-                    Vector2f hulkLocation = h.getLocation();
-                    Vector2f shipLocation = ship.getLocation();
-                    float shipToHulkAngle = VectorUtils.getAngle(shipLocation,hulkLocation);
-                    //h.setMass(h.getMass()*100);
-                    h.getCustomData().remove("whoCatch");
-                    h.getVelocity().set(MathUtils.getPoint(new Vector2f(0,0),maxSpeed*10000,shipToHulkAngle));
+                    if (!ship.getFluxTracker().isOverloaded()) {
+                        Vector2f hulkLocation = h.getLocation();
+                        Vector2f shipLocation = ship.getLocation();
+                        float shipToHulkAngle = VectorUtils.getAngle(shipLocation, hulkLocation);
+                        //h.setMass(h.getMass()*100);
+                        h.getVelocity().set(MathUtils.getPoint(new Vector2f(0, 0), maxSpeed * 10000, shipToHulkAngle));
+                    }
+                    h.getCustomData().remove(WHO_CATCH);
                 }
                 hulkList.clear();
                 return;
@@ -135,7 +130,7 @@ public class RC_AsteroidArm extends BaseShipSystemScript {
             float shipToHulkAngle = VectorUtils.getAngle(shipLocation,hulkLocation);
             float hulkToshipAngle = VectorUtils.getAngle(hulkLocation,shipLocation);
             //获取完整距离
-            float distance = MathUtils.getDistance(shipLocation,hulkLocation)-ship.getCollisionRadius()-s.getCollisionRadius();
+            float distance = MathUtils.getDistance(ship,s);
             //先拿到圆周上的点
             Vector2f midPoint = MathUtils.getPointOnCircumference(shipLocation,distance,shipToHulkAngle);
             Vector2f leftPoint = MathUtils.getPoint(midPoint,s.getCollisionRadius(),hulkToshipAngle-90);
@@ -153,7 +148,7 @@ public class RC_AsteroidArm extends BaseShipSystemScript {
             float shipToHulkAngle = VectorUtils.getAngle(shipLocation,hulkLocation);
             float hulkToshipAngle = VectorUtils.getAngle(hulkLocation,shipLocation);
             //获取完整距离
-            float distance = MathUtils.getDistance(shipLocation,hulkLocation)-ship.getCollisionRadius()-s.getCollisionRadius();
+            float distance = MathUtils.getDistance(ship,s);
             float nowSpeed = maxSpeed*distance/ship.getCollisionRadius()+minSpeed*100;
             //间距在一个半径内0.5半径外
             if(distance<ship.getCollisionRadius()*100
@@ -191,19 +186,21 @@ public class RC_AsteroidArm extends BaseShipSystemScript {
                  */
                 if(notIn)
                 {
-                    ShipAPI whoCatch = (ShipAPI) Global.getCombatEngine().getCustomData().get(s+"whoCatch");
-                    try {
-                        if(whoCatch==null) {
-                            Global.getCombatEngine().getCustomData().put(s+"whoCatch", ship);
+                    Map<String, Object> customData = s.getCustomData();
+                    if (customData!=null) {
+                        ShipAPI whoCatch = (ShipAPI) customData.get(s + WHO_CATCH);
+                        try {
+                            if (whoCatch == null) {
+                                s.setCustomData(WHO_CATCH, ship);
+                            }
+                            if (ship.equals(customData.get(WHO_CATCH))) {
+                                //向内移动
+                                Vector2f newSpeed = MathUtils.getPoint(new Vector2f(0, 0), nowSpeed, hulkToshipAngle);
+                                s.getVelocity().set(newSpeed);
+                            }
+                        } catch (Exception e) {
+                            Global.getLogger(this.getClass()).info(e);
                         }
-                        if(Global.getCombatEngine().getCustomData().get(s+"whoCatch").equals(ship)){
-                            //向内移动
-                            Vector2f newSpeed = MathUtils.getPoint(new Vector2f(0, 0), nowSpeed, hulkToshipAngle);
-                            s.getVelocity().set(newSpeed);
-                        }
-                    }
-                    catch (Exception e){
-                        Global.getLogger(this.getClass()).info(e);
                     }
                 }
             }
@@ -213,13 +210,10 @@ public class RC_AsteroidArm extends BaseShipSystemScript {
                 if(hulkList.indexOf(s)==-1)
                 {
                     hulkList.add(s);
-                    List<CombatEntityAPI> isSetList = (List<CombatEntityAPI>) Global.getCombatEngine().getCustomData().get("isSet");
-                    if(isSetList==null) {
-                        isSetList = new ArrayList<>();
-                    }
-                    if (isSetList.indexOf(s)==-1){
-                        isSetList.add(s);
-                        Global.getCombatEngine().getCustomData().put("isSet",isSetList);
+                    Map<String, Object> customData = s.getCustomData();
+                    if(customData.get(ID+IS_SET)==null)
+                    {
+                        s.setCustomData(ID+IS_SET,true);
                         s.setHitpoints(s.getHitpoints()*3);
                         //s.setMass(s.getMass()*3);
                     }

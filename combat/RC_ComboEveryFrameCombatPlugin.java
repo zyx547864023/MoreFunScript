@@ -2,23 +2,18 @@ package real_combat.combat;
 
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.*;
-import com.fs.starfarer.api.combat.listeners.DamageDealtModifier;
-import com.fs.starfarer.api.combat.listeners.WeaponRangeModifier;
 import com.fs.starfarer.api.input.InputEventAPI;
 import com.fs.starfarer.api.input.InputEventType;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.lwjgl.input.Keyboard;
-import org.lwjgl.util.vector.Vector2f;
 import real_combat.constant.RC_ComboConstant;
 
 import java.awt.*;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class RC_ComboEveryFrameCombatPlugin implements EveryFrameCombatPlugin {
 	private Color START_COLOR = new Color(0, 255, 0, 255);
@@ -32,9 +27,11 @@ public class RC_ComboEveryFrameCombatPlugin implements EveryFrameCombatPlugin {
 	private static int listeningKey = -1;
 	private static boolean initialized = false;
 	private static final String SETTINGS_FILE = "KEY.ini";
+	private static final String MOD_ID = "real_combat";
+	private CombatEngineAPI engine = Global.getCombatEngine();
 
 	public static void reloadSettings() throws IOException, JSONException {
-		JSONObject settings = Global.getSettings().loadJSON(SETTINGS_FILE);
+		JSONObject settings = Global.getSettings().loadJSON(SETTINGS_FILE,MOD_ID);
 		JSONArray options = settings.getJSONArray("comboOptions");
 		if (options.length() == 0) {
 			return;
@@ -47,8 +44,22 @@ public class RC_ComboEveryFrameCombatPlugin implements EveryFrameCombatPlugin {
 	}
 
 	public void advance(float amount, List<InputEventAPI> events) {
-		CombatEngineAPI engine = Global.getCombatEngine();
+
+	}
+
+	public void renderInUICoords(ViewportAPI viewport) {
+	}
+
+	public void init(CombatEngineAPI engine) {
+	}
+
+	public void renderInWorldCoords(ViewportAPI viewport) {
+		
+	}
+
+	public void processInputPreCoreControls(float amount, List<InputEventAPI> events) {
 		//游戏没有暂停的时候
+		if (engine == null) return;
 		if (!engine.isPaused()) {
 			//获取玩家的船
 			ShipAPI player = engine.getPlayerShip();
@@ -107,28 +118,28 @@ public class RC_ComboEveryFrameCombatPlugin implements EveryFrameCombatPlugin {
 					//记录WSAD
 					if (event.getEventType() == InputEventType.KEY_UP) {
 						//是否超过四个按键
-							if (event.getEventValue() == Keyboard.KEY_W) {
-								if (keys.size()<3) {
-									keys.add("W");
-								}
+						if (event.getEventValue() == Keyboard.KEY_W) {
+							if (keys.size()<3) {
+								keys.add("W");
 							}
-							if (event.getEventValue() == Keyboard.KEY_S) {
-								if (keys.size()<3) {
-									keys.add("S");
-								}
+						}
+						if (event.getEventValue() == Keyboard.KEY_S) {
+							if (keys.size()<3) {
+								keys.add("S");
 							}
-							if (event.getEventValue() == Keyboard.KEY_A) {
-								if (keys.size()<3) {
-									keys.add("A");
-								}
+						}
+						if (event.getEventValue() == Keyboard.KEY_A) {
+							if (keys.size()<3) {
+								keys.add("A");
 							}
-							if (event.getEventValue() == Keyboard.KEY_D) {
-								if  (keys.size()<3) {
-									keys.add("D");
-								}
+						}
+						if (event.getEventValue() == Keyboard.KEY_D) {
+							if  (keys.size()<3) {
+								keys.add("D");
 							}
 						}
 					}
+				}
 			}
 			if (!keys.equals(oldKeys)&&keys.size()!=0){
 				String comboString = "";
@@ -153,6 +164,7 @@ public class RC_ComboEveryFrameCombatPlugin implements EveryFrameCombatPlugin {
 						engine.getCombatUI().addMessage(0, OVER_COLOR,
 								"指令错误！");
 						isListening = false;
+						engine.addFloatingText(player.getLocation(), "?", 50f, Color.YELLOW, player, 5f, 10f);
 					}
 				}
 				else {
@@ -179,19 +191,5 @@ public class RC_ComboEveryFrameCombatPlugin implements EveryFrameCombatPlugin {
 			}
 
 		}
-	}
-
-	public void renderInUICoords(ViewportAPI viewport) {
-	}
-
-	public void init(CombatEngineAPI engine) {
-	}
-
-	public void renderInWorldCoords(ViewportAPI viewport) {
-		
-	}
-
-	public void processInputPreCoreControls(float amount, List<InputEventAPI> events) {
-		
 	}
 }

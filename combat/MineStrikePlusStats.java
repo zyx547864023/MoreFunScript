@@ -17,8 +17,6 @@ import com.fs.starfarer.api.combat.WeaponAPI.WeaponType;
 import com.fs.starfarer.api.input.InputEventAPI;
 import com.fs.starfarer.api.util.Misc;
 import com.fs.starfarer.api.util.WeightedRandomPicker;
-import real_combat.hullmods.CKEM_Hullmod;
-import real_combat.util.RC_Util;
 
 public class MineStrikePlusStats extends BaseShipSystemScript implements MineStrikeStatsAIInfoProvider {
 	

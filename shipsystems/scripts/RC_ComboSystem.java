@@ -2,31 +2,31 @@ package real_combat.shipsystems.scripts;
 
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.*;
+import com.fs.starfarer.api.graphics.SpriteAPI;
 import com.fs.starfarer.api.impl.combat.*;
-import com.fs.starfarer.api.input.InputEventAPI;
-import com.fs.starfarer.api.util.Misc;
+import data.scripts.plugins.MagicRenderPlugin;
 import data.shipsystems.scripts.AmmoFeedStats;
 import data.shipsystems.scripts.HighEnergyFocusStats;
 import data.shipsystems.scripts.MicroBurnStats;
+import org.lazywizard.lazylib.MathUtils;
 import org.lwjgl.util.vector.Vector2f;
 import real_combat.constant.RC_ComboConstant;
-import real_combat.util.RC_Util;
+import real_combat.util.MyMath;
 
 import java.awt.*;
-import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class RC_ComboSystem extends BaseShipSystemScript {
     private String ID = "RC_ComboSystem";
     boolean init = false;
-
-    public final Map<MissileAPI, MissileAPI> destroyMap = new HashMap<>();
     private ShipAPI ship;
+    private float maxSpeed = 0f;
+    private CombatEngineAPI engine = Global.getCombatEngine();
+
     @Override
     public void apply(MutableShipStatsAPI stats, String id, State state, float effectLevel) {
-        CombatEngineAPI engine = Global.getCombatEngine();
+        if (engine == null) return;
         if(engine.isPaused()) {return;}
         ship = (ShipAPI) stats.getEntity();
         if (ship == null) {
@@ -40,6 +40,10 @@ public class RC_ComboSystem extends BaseShipSystemScript {
             }
             if (RC_ComboConstant.SKILL.get(skill) instanceof MicroBurnStats ){
                 MicroBurnStats system = (MicroBurnStats) RC_ComboConstant.SKILL.get(skill);
+                if (!init) {
+                    maxSpeed = ship.getMutableStats().getMaxSpeed().getBaseValue();
+                    ship.getMutableStats().getMaxSpeed().setBaseValue(-60);
+                }
                 system.apply(stats, id, state, effectLevel);
             }
             else if (RC_ComboConstant.SKILL.get(skill) instanceof EntropyAmplifierStats ){
@@ -66,21 +70,31 @@ public class RC_ComboSystem extends BaseShipSystemScript {
                 TemporalShellStats system = (TemporalShellStats) RC_ComboConstant.SKILL.get(skill);
                 system.apply(stats, id, state, effectLevel);
             }
+            else if (RC_ComboConstant.SKILL.get(skill) instanceof RC_TransAmSystem ){
+                RC_TransAmSystem transAmSystem = (RC_TransAmSystem) RC_ComboConstant.SKILL.get(skill);
+                transAmSystem.apply(stats, id, state, effectLevel);
+            }
 
             if (!init){
                 init = true;
-                engine.addFloatingText(ship.getLocation(), RC_ComboConstant.SKILL_CHINESE.get(skill).toString(), 50f, Color.YELLOW, ship, 5f, 10f);
+                if ("Trans-Am".equals(RC_ComboConstant.SKILL_CHINESE.get(skill).toString())){
+                    //engine.addFloatingText(ship.getLocation(), RC_ComboConstant.SKILL_CHINESE.get(skill).toString(), 50f, Color.RED, ship, 5f, 10f);
+                }
+                else {
+                    engine.addFloatingText(ship.getLocation(), RC_ComboConstant.SKILL_CHINESE.get(skill).toString(), 50f, Color.YELLOW, ship, 5f, 10f);
+                }
+
             }
         }
         catch (Exception e)
         {
-            Global.getLogger(this.getClass()).info(e);
+                Global.getLogger(this.getClass()).info(e);
         }
     }
 
     @Override
     public void unapply(MutableShipStatsAPI stats, String id) {
-        CombatEngineAPI engine = Global.getCombatEngine();
+        if (engine == null) return;
         if(engine.isPaused()) {return;}
         if (ship == null) {
             return;
@@ -93,6 +107,8 @@ public class RC_ComboSystem extends BaseShipSystemScript {
             }
             if (RC_ComboConstant.SKILL.get(skill) instanceof MicroBurnStats ){
                 MicroBurnStats system = (MicroBurnStats) RC_ComboConstant.SKILL.get(skill);
+                ship.getMutableStats().getMaxSpeed().setBaseValue(maxSpeed);
+                maxSpeed = 0;
                 system.unapply(stats, id);
             }
             else if (RC_ComboConstant.SKILL.get(skill) instanceof EntropyAmplifierStats ){
@@ -121,6 +137,10 @@ public class RC_ComboSystem extends BaseShipSystemScript {
                 TemporalShellStats system = (TemporalShellStats) RC_ComboConstant.SKILL.get(skill);
                 system.unapply(stats, id);
             }
+            else if (RC_ComboConstant.SKILL.get(skill) instanceof RC_TransAmSystem ){
+                RC_TransAmSystem transAmSystem = (RC_TransAmSystem) RC_ComboConstant.SKILL.get(skill);
+                transAmSystem.unapply(stats, id);
+            }
 
             init = false;
             ship.removeCustomData("Combo");
@@ -133,7 +153,7 @@ public class RC_ComboSystem extends BaseShipSystemScript {
     }
 
     public StatusData getStatusData(int index, State state, float effectLevel) {
-        CombatEngineAPI engine = Global.getCombatEngine();
+        if (engine == null) {return null;}
         if(engine.isPaused()) {return null;}
         if (ship == null) {
             return null;
@@ -160,7 +180,7 @@ public class RC_ComboSystem extends BaseShipSystemScript {
 
     @Override
     public String getInfoText(ShipSystemAPI system, ShipAPI ship) {
-        CombatEngineAPI engine = Global.getCombatEngine();
+        if (engine == null) {return null;}
         if (engine.isPaused()) {return null;}
         if (ship == null) {
             return null;
@@ -188,15 +208,17 @@ public class RC_ComboSystem extends BaseShipSystemScript {
 
     @Override
     public boolean isUsable(ShipSystemAPI system, ShipAPI ship) {
-        CombatEngineAPI engine = Global.getCombatEngine();
+        if (engine == null) {return false;}
         if(engine.isPaused()) {return false;}
         if (ship == null) {
             return false;
         }
+        /*
         if (!ship.getId().equals(engine.getPlayerShip().getId()))
         {
             return false;
         }
+        */
         try {
             String skill = (String) ship.getCustomData().get("Combo");
             if(skill==null)

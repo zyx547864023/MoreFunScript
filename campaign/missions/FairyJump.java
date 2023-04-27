@@ -1,33 +1,18 @@
 package real_combat.campaign.missions;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 import com.fs.starfarer.api.Global;
-import com.fs.starfarer.api.campaign.FactionAPI;
-import com.fs.starfarer.api.campaign.FactionAPI.ShipPickMode;
-import com.fs.starfarer.api.campaign.FactionAPI.ShipPickParams;
 import com.fs.starfarer.api.campaign.InteractionDialogAPI;
-import com.fs.starfarer.api.campaign.PersonImportance;
 import com.fs.starfarer.api.campaign.econ.MarketAPI;
 import com.fs.starfarer.api.campaign.rules.MemoryAPI;
 import com.fs.starfarer.api.characters.FullName;
 import com.fs.starfarer.api.characters.PersonAPI;
-import com.fs.starfarer.api.combat.ShipVariantAPI;
 import com.fs.starfarer.api.fleet.FleetMemberAPI;
-import com.fs.starfarer.api.fleet.FleetMemberType;
-import com.fs.starfarer.api.fleet.ShipRolePick;
-import com.fs.starfarer.api.impl.campaign.DModManager;
-import com.fs.starfarer.api.impl.campaign.econ.impl.ShipQuality;
-import com.fs.starfarer.api.impl.campaign.fleets.DefaultFleetInflater;
-import com.fs.starfarer.api.impl.campaign.ids.*;
-import com.fs.starfarer.api.impl.campaign.intel.bases.PirateBaseManager;
 import com.fs.starfarer.api.impl.campaign.missions.hub.HubMissionWithBarEvent;
 import com.fs.starfarer.api.util.Misc;
 import com.fs.starfarer.api.util.Misc.Token;
-import com.fs.starfarer.api.util.WeightedRandomPicker;
 
 public class FairyJump extends HubMissionWithBarEvent {
 
@@ -54,7 +39,7 @@ public class FairyJump extends HubMissionWithBarEvent {
 			//设置成女的
 			person.setGender(FullName.Gender.FEMALE);
 			//设置头像
-			person.setPortraitSprite("graphics/portraits/independent/57.png");
+			person.setPortraitSprite("graphics/portraits/independent/56.png");
 			//设置回复
 			person.setVoice("FairyJump");
 			setPersonOverride(person);

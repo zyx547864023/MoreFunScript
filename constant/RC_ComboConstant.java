@@ -1,16 +1,10 @@
 package real_combat.constant;
 
-import com.fs.starfarer.api.Global;
-import com.fs.starfarer.api.combat.MissileAPI;
-import com.fs.starfarer.api.combat.MutableShipStatsAPI;
-import com.fs.starfarer.api.combat.ShipAPI;
-import com.fs.starfarer.api.combat.ShipSystemAPI;
 import com.fs.starfarer.api.impl.combat.*;
-import data.shipsystems.scripts.AmmoFeedStats;
 import data.shipsystems.scripts.HighEnergyFocusStats;
 import data.shipsystems.scripts.MicroBurnStats;
+import real_combat.shipsystems.scripts.RC_TransAmSystem;
 
-import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -40,13 +34,15 @@ public class RC_ComboConstant {
     //时流之壳
     public static final String SKILL_TEMPORALSHELL1 = "WSW";
     public static final String SKILL_TEMPORALSHELL2 = "SWS";
-
+    //TransAm
+    public static final String SKILL_TRANSAM1 = "WSW";
+    public static final String SKILL_TRANSAM2 = "SWS";
 
     public static final Map SKILL = new HashMap();
     static {
         SKILL.put(SKILL_MICROBURN,new MicroBurnStats());
         SKILL.put(SKILL_ENTROPYAMPLIFIER1, new EntropyAmplifierStats());
-        //SKILL.put(SKILL_HIGHENERGYFOCUS1,new HighEnergyFocusStats());
+        SKILL.put("HighEnergyFocusStats",new HighEnergyFocusStats());
         //SKILL.put(SKILL_AMMOFEED1,new AmmoFeedStats());
 
         SKILL.put(SKILL_ENTROPYAMPLIFIER2, new EntropyAmplifierStats());
@@ -56,8 +52,10 @@ public class RC_ComboConstant {
         SKILL.put(SKILL_ACAUSALDISRUPTOR1, new AcausalDisruptorStats());
         SKILL.put(SKILL_ACAUSALDISRUPTOR2, new AcausalDisruptorStats());
         SKILL.put(SKILL_DAMPER_OMEGA, new DamperFieldOmegaStats());
-        SKILL.put(SKILL_TEMPORALSHELL1, new TemporalShellStats());
-        SKILL.put(SKILL_TEMPORALSHELL2, new TemporalShellStats());
+        //SKILL.put(SKILL_TEMPORALSHELL1, new TemporalShellStats());
+        //SKILL.put(SKILL_TEMPORALSHELL2, new TemporalShellStats());
+        SKILL.put(SKILL_TRANSAM1, new RC_TransAmSystem());
+        SKILL.put(SKILL_TRANSAM2, new RC_TransAmSystem());
     }
 
     public static final Map SKILL_CHINESE = new HashMap();
@@ -76,7 +74,9 @@ public class RC_ComboConstant {
         SKILL_CHINESE.put(SKILL_ACAUSALDISRUPTOR1, "量子干扰");
         SKILL_CHINESE.put(SKILL_ACAUSALDISRUPTOR2, "量子干扰");
         SKILL_CHINESE.put(SKILL_DAMPER_OMEGA, "熵抑制器");
-        SKILL_CHINESE.put(SKILL_TEMPORALSHELL1, "时流之壳");
-        SKILL_CHINESE.put(SKILL_TEMPORALSHELL2, "时流之壳");
+        //SKILL_CHINESE.put(SKILL_TEMPORALSHELL1, "时流之壳");
+        //SKILL_CHINESE.put(SKILL_TEMPORALSHELL2, "时流之壳");
+        SKILL_CHINESE.put(SKILL_TRANSAM1, "Trans-Am");
+        SKILL_CHINESE.put(SKILL_TRANSAM2, "Trans-Am");
     }
 }

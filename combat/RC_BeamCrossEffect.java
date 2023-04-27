@@ -9,7 +9,6 @@ import com.fs.starfarer.api.loading.MissileSpecAPI;
 import com.fs.starfarer.api.util.IntervalUtil;
 import com.fs.starfarer.api.util.Misc;
 import org.lazywizard.lazylib.MathUtils;
-import org.lazywizard.lazylib.VectorUtils;
 import org.lwjgl.util.vector.Vector2f;
 import real_combat.util.RC_Util;
 
@@ -29,7 +28,6 @@ import java.util.List;
  */
 public class RC_BeamCrossEffect implements BeamEffectPlugin { //WithReset {
 	public static Color NEGATIVE_SOURCE_COLOR = new Color(200,255,200,25);
-
 	public static String RIFTCASCADE_MINELAYER = "riftcascade_minelayer";
 	public static String PHASEBEAM_SUN = "phasebeam_sun";
 	public static String PHASEBEAM_ICE = "phasebeam_ice";
@@ -45,8 +43,9 @@ public class RC_BeamCrossEffect implements BeamEffectPlugin { //WithReset {
 	protected float spawnDir = 0;
 	protected boolean doneSpawningMines = false;
 	protected int numToSpawn = 0;
-	public static int MAX_RIFTS = 8;
+	public static int MAX_RIFTS = 5;
 	public static float UNUSED_RANGE_PER_SPAWN = 80;
+	public static float MIN_CORE_WIDTH = 20f;
 	public RC_BeamCrossEffect() {
 
 	}
@@ -106,9 +105,9 @@ public class RC_BeamCrossEffect implements BeamEffectPlugin { //WithReset {
 								Vector2f arcTo = getNextArcLoc(engine, beam, perSpawn, loc);
 								float thickness = beam.getWidth();
 								EmpArcEntityAPI arc_sun = engine.spawnEmpArcVisual(arcFrom, null, arcTo, null, thickness, beam.getFringeColor(), Color.white);
-								arc_sun.setCoreWidthOverride(Math.max(20f, thickness * 0.67f));
+								arc_sun.setCoreWidthOverride(Math.max(MIN_CORE_WIDTH, thickness * 0.67f));
 								EmpArcEntityAPI arc_ice = engine.spawnEmpArcVisual(arcFrom, null, arcTo, null, thickness, b.getFringeColor(), Color.white);
-								arc_ice.setCoreWidthOverride(Math.max(20f, thickness * 0.67f));
+								arc_ice.setCoreWidthOverride(Math.max(MIN_CORE_WIDTH, thickness * 0.67f));
 								if (!arcTo.equals(arcFrom)) {
 									spawnMine(ship, arcTo);
 									spawnedMine = true;
@@ -131,9 +130,9 @@ public class RC_BeamCrossEffect implements BeamEffectPlugin { //WithReset {
 								Vector2f arcTo = getNextArcLoc(engine, b, perSpawn, loc);
 								float thickness = beam.getWidth();
 								EmpArcEntityAPI arc_sun = engine.spawnEmpArcVisual(arcFrom, null, arcTo, null, thickness, beam.getFringeColor(), Color.white);
-								arc_sun.setCoreWidthOverride(Math.max(20f, thickness * 0.67f));
+								arc_sun.setCoreWidthOverride(Math.max(MIN_CORE_WIDTH, thickness * 0.67f));
 								EmpArcEntityAPI arc_ice = engine.spawnEmpArcVisual(arcFrom, null, arcTo, null, thickness, b.getFringeColor(), Color.white);
-								arc_ice.setCoreWidthOverride(Math.max(20f, thickness * 0.67f));
+								arc_ice.setCoreWidthOverride(Math.max(MIN_CORE_WIDTH, thickness * 0.67f));
 								if (!arcTo.equals(arcFrom)) {
 									spawnMine(ship, arcTo);
 									spawnedMine = true;
@@ -145,9 +144,9 @@ public class RC_BeamCrossEffect implements BeamEffectPlugin { //WithReset {
 								float thickness = beam.getWidth();
 								Vector2f arcTo = MathUtils.getRandomPointInCircle(loc,UNUSED_RANGE_PER_SPAWN);
 								EmpArcEntityAPI arc_sun = engine.spawnEmpArcVisual(loc, null, arcTo, null, thickness, beam.getFringeColor(), Color.white);
-								arc_sun.setCoreWidthOverride(Math.max(20f, thickness * 0.67f));
+								arc_sun.setCoreWidthOverride(Math.max(MIN_CORE_WIDTH, thickness * 0.67f));
 								EmpArcEntityAPI arc_ice = engine.spawnEmpArcVisual(loc, null, arcTo, null, thickness, b.getFringeColor(), Color.white);
-								arc_ice.setCoreWidthOverride(Math.max(20f, thickness * 0.67f));
+								arc_ice.setCoreWidthOverride(Math.max(MIN_CORE_WIDTH, thickness * 0.67f));
 								spawnMine(ship, arcTo);
 							}
 						}

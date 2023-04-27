@@ -1,5 +1,6 @@
 package real_combat.campaign.missions.intel.bar.events;
 
+import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.impl.campaign.intel.bar.PortsideBarEvent;
 import com.fs.starfarer.api.impl.campaign.intel.bar.events.BaseBarEventCreator;
 
