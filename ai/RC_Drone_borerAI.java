@@ -34,6 +34,8 @@ public class RC_Drone_borerAI extends RC_BaseShipAI {
             //获取飞机的半径
             FighterWingAPI wing = ship.getWing();
             if (wing != null) {
+                usePhase();
+
                 float shipRange = wing.getRange();
                 //获取母船的坐标
                 ShipAPI motherShip = ship.getWing().getSourceShip();
@@ -285,7 +287,9 @@ public class RC_Drone_borerAI extends RC_BaseShipAI {
                     turn(needTurnAngle, toTargetAngle, amount);
                     ship.giveCommand(ShipCommand.STRAFE_LEFT, (Object)null ,0);
                 }
-
+                if (ship.isPhased()) {
+                    return;
+                }
                 Map<ShipAPI,NeedDrawLine> allDrawShip = (Map<ShipAPI,NeedDrawLine>) engine.getCustomData().get(ID);
                 if(allDrawShip==null)
                 {
@@ -372,6 +376,32 @@ public class RC_Drone_borerAI extends RC_BaseShipAI {
             }
         }
     }
+
+    private void usePhase(){
+        float useRange = ship.getCollisionRadius() * 3;
+        //如果周围很多子弹
+        int count = 0;
+        boolean isProjectileMany = false;
+        List<DamagingProjectileAPI> damagingProjectiles = engine.getProjectiles();
+        for (DamagingProjectileAPI damagingProjectile : damagingProjectiles) {
+            float range = MathUtils.getDistance(ship, damagingProjectile);
+            if(range<=useRange&&damagingProjectile.getOwner()!=ship.getOwner()) {
+                isProjectileMany = true;
+            }
+        }
+
+        if(isProjectileMany) {
+            if (!ship.isPhased()) {
+                ship.giveCommand(ShipCommand.TOGGLE_SHIELD_OR_PHASE_CLOAK,null, 0);
+            }
+        }
+        else {
+            if (ship.isPhased()&&ship.getFluxTracker().getCurrFlux()>ship.getMaxFlux()/2) {
+                ship.giveCommand(ShipCommand.TOGGLE_SHIELD_OR_PHASE_CLOAK,null, 0);
+            }
+        }
+    }
+
 
     public class NeedDrawLine{
         ShipAPI ship;

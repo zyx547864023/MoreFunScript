@@ -52,7 +52,7 @@ public class RC_TransAmSystem extends BaseShipSystemScript {
             stats.getMaxTurnRate().modifyPercent(id, MAX_SPEED_PERCENT * effectLevel);
 
             //如果启动
-            for(int i = 0; i < 10; ++i) {
+            //for(int i = 0; i < 2; ++i) {
                 Vector2f partstartloc = MathUtils.getPointOnCircumference(ship.getLocation(), ship.getCollisionRadius() * MathUtils.getRandomNumberInRange(0.1F, 0.8F), MyMath.RANDOM.nextFloat() * 360.0F);
                 Vector2f partvec = Vector2f.sub(partstartloc, ship.getLocation(), (Vector2f)null);
                 partvec.scale(1.5F);
@@ -61,7 +61,7 @@ public class RC_TransAmSystem extends BaseShipSystemScript {
                 float brightness = MathUtils.getRandomNumberInRange(0.1F, 0.5F);
                 engine.addSmoothParticle(partstartloc, partvec, size, brightness, damage, Color.green);
                 engine.addSmoothParticle(partstartloc, partvec, size, 1F, damage, Color.white);
-            }
+            //}
             ship.setJitter(ship, Color.RED, 0.5f, 3, 0f, 5f);
             //ship.addAfterimage(Color.RED, 0, 0, -ship.getVelocity().x*5,-ship.getVelocity().y*5, 0f, 0f, 0.05f, 0.1f,true, false, true);
 
@@ -225,13 +225,14 @@ public class RC_TransAmSystem extends BaseShipSystemScript {
 
         public void addShadowMap(float maxAlphaMult) {
             ShadowMap shadowMap = new ShadowMap(maxAlphaMult, new ArrayList<Shadow>(), new ArrayList<Shadow>(), new ArrayList<Shadow>(), null);
-            shadowMap.ship = new Shadow(ship.getFacing() - 90, new Vector2f(ship.getLocation()), ship.getHullSpec().getSpriteName());
+            shadowMap.ship = new Shadow(ship.getFacing() - 90, new Vector2f(ship.getLocation()), ship.getHullSpec().getSpriteName(),null);
             for (WeaponAPI w : ship.getAllWeapons()) {
                 if (w.getSlot().isHardpoint()) {
-                    shadowMap.weapons.add(0, new Shadow(w.getCurrAngle() - 90, new Vector2f(w.getLocation()), w.getSpec().getHardpointSpriteName()));
+                    shadowMap.weapons.add(0, new Shadow(w.getCurrAngle() - 90, new Vector2f(w.getLocation()), w.getSpec().getHardpointSpriteName(),true));
+                    shadowMap.unders.add(0, new Shadow(w.getCurrAngle() - 90, new Vector2f(w.getLocation()), w.getSpec().getHardpointUnderSpriteName(),true));
                 } else if (w.getSlot().isTurret()) {
-                    shadowMap.weapons.add(0, new Shadow(w.getCurrAngle() - 90, new Vector2f(w.getLocation()), w.getSpec().getTurretSpriteName()));
-                    shadowMap.unders.add(0, new Shadow(w.getCurrAngle() - 90, new Vector2f(w.getLocation()), w.getSpec().getTurretUnderSpriteName()));
+                    shadowMap.weapons.add(0, new Shadow(w.getCurrAngle() - 90, new Vector2f(w.getLocation()), w.getSpec().getTurretSpriteName(),false));
+                    shadowMap.unders.add(0, new Shadow(w.getCurrAngle() - 90, new Vector2f(w.getLocation()), w.getSpec().getTurretUnderSpriteName(),false));
                 }
                 if (w.getBarrelSpriteAPI() != null) {
                     shadowMap.barrels.add(0, new Shadow(w.getCurrAngle() - 90, new Vector2f(w.getLocation()), w));
@@ -293,10 +294,11 @@ public class RC_TransAmSystem extends BaseShipSystemScript {
                         Color oldColor = sprite.getColor();
                         sprite.setAngle(s.facing);
                         sprite.setColor(COLOR);
-                        Vector2f spriteLocation = new Vector2f(sprite.getCenterX(), 0);
-                        float distance = MathUtils.getDistance(new Vector2f(0, 0), spriteLocation);
-                        Vector2f barrelLocation = MathUtils.getPoint(s.location, -distance, s.facing + 90);
-                        sprite.renderAtCenter(barrelLocation.getX(), barrelLocation.getY());
+                        sprite.setCenter(sprite.getWidth()/2,sprite.getHeight()/2);
+                        if (weapon.getSlot().isHardpoint()) {
+                            sprite.setCenter(sprite.getWidth()/2,sprite.getHeight()/4);
+                        }
+                        sprite.renderAtCenter(s.location.x, s.location.y);
                         sprite.setColor(oldColor);
                     }
                 }
@@ -308,7 +310,11 @@ public class RC_TransAmSystem extends BaseShipSystemScript {
                         sprite.setAngle(s.facing);
                         sprite.setAlphaMult(m.alphaMult);
                         sprite.setColor(COLOR);
-                        sprite.renderAtCenter(s.location.getX(), s.location.getY());
+                        sprite.setCenter(sprite.getWidth()/2,sprite.getHeight()/2);
+                        if (s.isHardpoint) {
+                            sprite.setCenter(sprite.getWidth()/2,sprite.getHeight()/4);
+                        }
+                        sprite.renderAtCenter(s.location.x, s.location.y);
                     }
                 }
             }
@@ -350,10 +356,12 @@ public class RC_TransAmSystem extends BaseShipSystemScript {
             Vector2f location;
             String spriteName;
             WeaponAPI weapon;
-            public Shadow(float facing,Vector2f location,String spriteName){
+            Boolean isHardpoint;
+            public Shadow(float facing,Vector2f location,String spriteName,Boolean isHardpoint){
                 this.facing = facing;
                 this.location = location;
                 this.spriteName = spriteName;
+                this.isHardpoint = isHardpoint;
             }
             public Shadow(float facing,Vector2f location,WeaponAPI weapon){
                 this.facing = facing;

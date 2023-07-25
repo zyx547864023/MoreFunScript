@@ -1,5 +1,6 @@
 package real_combat.combat;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +15,8 @@ import com.fs.starfarer.api.fleet.FleetMemberType;
 import com.fs.starfarer.api.input.InputEventAPI;
 import com.fs.starfarer.api.loading.VariantSource;
 import com.fs.starfarer.api.mission.FleetSide;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.lwjgl.util.vector.Vector2f;
 import real_combat.shipsystems.scripts.RC_TransAmSystem;
 
@@ -37,6 +40,16 @@ public class RealCombatEveryFrameCombatPlugin implements EveryFrameCombatPlugin 
 	}
 
 	public void advance(float amount, List<InputEventAPI> events) {
+		/*
+		try {
+			JSONObject json = Global.getSettings().loadJSON("mod_info2.json","real_combat");
+			Global.getLogger(this.getClass()).info(json.getJSONObject("version").get("major"));
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		} catch (JSONException e) {
+			throw new RuntimeException(e);
+		}
+		 */
 		CombatEngineAPI engine = Global.getCombatEngine();
 		//士气系统
 		engine.maintainStatusForPlayerShip("RealCombatEveryFrameCombatPlugin", Global.getSettings().getSpriteName("ui","icon_tactical_cr_bonus"), "士气 100%", "增益", false);

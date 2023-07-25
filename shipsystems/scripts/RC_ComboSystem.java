@@ -81,7 +81,7 @@ public class RC_ComboSystem extends BaseShipSystemScript {
                     //engine.addFloatingText(ship.getLocation(), RC_ComboConstant.SKILL_CHINESE.get(skill).toString(), 50f, Color.RED, ship, 5f, 10f);
                 }
                 else {
-                    engine.addFloatingText(ship.getLocation(), RC_ComboConstant.SKILL_CHINESE.get(skill).toString(), 50f, Color.YELLOW, ship, 5f, 10f);
+                    engine.addFloatingText(ship.getLocation(), RC_ComboConstant.SKILL_CHINESE.get(skill).toString(), 25f, Color.YELLOW, ship, 5f, 10f);
                 }
 
             }

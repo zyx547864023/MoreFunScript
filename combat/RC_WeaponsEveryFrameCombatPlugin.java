@@ -71,6 +71,8 @@ public class RC_WeaponsEveryFrameCombatPlugin implements EveryFrameCombatPlugin 
 
 	@Override
 	public void init(CombatEngineAPI engine) {
+		engine.addLayeredRenderingPlugin(new RC_ElectromagnetismLayeredRenderingPlugin());
 		engine.addLayeredRenderingPlugin(new RC_RepairCombatLayeredRenderingPlugin());
+		engine.addLayeredRenderingPlugin(new RC_HyperionEngineLayeredRenderingPlugin());
 	}
 }

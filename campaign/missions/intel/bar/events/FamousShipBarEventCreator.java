@@ -7,7 +7,9 @@ import com.fs.starfarer.api.impl.campaign.intel.bar.events.BaseBarEventCreator;
 public class FamousShipBarEventCreator extends BaseBarEventCreator {
 	
 	public PortsideBarEvent createBarEvent() {
-		return new FamousShipBarEvent();
+		FamousShipBarEvent famousShipBarEvent = new FamousShipBarEvent();
+		famousShipBarEvent.getMarket();
+		return famousShipBarEvent;
 	}
 
 	@Override

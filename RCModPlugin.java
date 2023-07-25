@@ -19,6 +19,7 @@ import real_combat.weapons.ai.RC_MonsterBallAI;
 import real_combat.weapons.ai.RC_MonsterBallShoterAI;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 
 public class RCModPlugin extends BaseModPlugin {
@@ -67,12 +68,10 @@ public class RCModPlugin extends BaseModPlugin {
 
     @Override
     public void onGameLoad(boolean newGame) {
-        /*
         BarEventManager bar = BarEventManager.getInstance();
         if (!bar.hasEventCreator(FamousShipBarEventCreator.class)) {
             bar.addEventCreator(new FamousShipBarEventCreator());
         }
-        */
         Global.getSector().registerPlugin(new RC_CampaignPlugin());
     }
 }

@@ -6,6 +6,7 @@ import com.fs.starfarer.api.combat.*;
 import com.fs.starfarer.api.graphics.SpriteAPI;
 import data.scripts.plugins.MagicRenderPlugin;
 import org.lazywizard.lazylib.LazyLib;
+import org.lazywizard.lazylib.MathUtils;
 import org.lazywizard.lazylib.VectorUtils;
 import org.lazywizard.lazylib.combat.AIUtils;
 import org.lazywizard.lazylib.combat.CombatUtils;
@@ -108,6 +109,18 @@ public class RC_RepairCombatLayeredRenderingPlugin extends BaseCombatLayeredRend
                     ball.setColor(Color.GREEN);
                     ball.renderAtCenter(needDrawLine.getEndList().get(0).getX(), needDrawLine.getEndList().get(0).getY());
                     ball.setAlphaMult(1 / needDrawLine.getStartList().size());
+                    if (!engine.isPaused()) {
+                        for (int i = 0; i < 2; ++i) {
+                            Vector2f partstartloc = MathUtils.getPointOnCircumference(needDrawLine.getEndList().get(0), ball.getWidth() / 1.5f * MathUtils.getRandomNumberInRange(0.1F, 0.8F), MyMath.RANDOM.nextFloat() * 360.0F);
+                            Vector2f partvec = Vector2f.sub(partstartloc, needDrawLine.getEndList().get(0), (Vector2f) null);
+                            partvec.scale(1.5F);
+                            float size = MathUtils.getRandomNumberInRange(1.0F, 5.0F);
+                            float damage = MathUtils.getRandomNumberInRange(0.6F, 1.0F);
+                            float brightness = MathUtils.getRandomNumberInRange(0.1F, 0.5F);
+                            engine.addSmoothParticle(partstartloc, partvec, size, brightness, damage, Color.green);
+                            engine.addSmoothParticle(partstartloc, partvec, size, 1F, damage, Color.white);
+                        }
+                    }
                 }
                 if(!engine.isPaused()) {
                     needDrawLine.getStartList().clear();

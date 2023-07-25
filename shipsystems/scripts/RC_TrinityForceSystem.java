@@ -138,7 +138,7 @@ public class RC_TrinityForceSystem extends BaseShipSystemScript {
                                 }
                             }
                             copyShip(ship.getOwner(), newShip, m);
-
+                            engine.applyDamage(newShip, newShip.getLocation(), 1f, DamageType.ENERGY, 0, true, false, newShip, false);
                             newShip.setCollisionClass(CollisionClass.NONE);
                             newShip.getVelocity().set(MathUtils.getPoint(new Vector2f(), newShip.getMaxSpeed(), newShip.getFacing()));
                             newShip.turnOnTravelDrive();
@@ -495,6 +495,7 @@ public class RC_TrinityForceSystem extends BaseShipSystemScript {
                             } else {
                                 //分体的情况下 状态全部复制给模块，这样显示正常
                                 copyShipStatus(m, newShip);
+
                                 //新船离开母船碰撞半径 恢复碰撞半径
                                 float nowDistance = MathUtils.getDistance(newShip, ship);
                                 if (nowDistance > 0) {
@@ -623,6 +624,7 @@ public class RC_TrinityForceSystem extends BaseShipSystemScript {
                                             float nowDistance = MathUtils.getDistance(newShip.getLocation(), m.getLocation());
                                             if (nowDistance < MIN_DISTANCE) {
                                                 copyShip(ship.getOwner(),m,newShip);
+                                                engine.applyDamage(m, m.getLocation(), 1f, DamageType.ENERGY, 0, true, false, m, false);
                                                 newShip.setAlphaMult(0);
                                                 newShip.setPhased(true);
                                                 float height = engine.getMapHeight();

@@ -1,7 +1,6 @@
 package real_combat.combat;
 
 
-import com.fs.graphics.H;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.ModSpecAPI;
 import com.fs.starfarer.api.SettingsAPI;
@@ -15,19 +14,18 @@ import com.fs.starfarer.api.impl.campaign.ids.HullMods;
 import com.fs.starfarer.api.input.InputEventAPI;
 import com.fs.starfarer.api.mission.FleetSide;
 import com.fs.starfarer.api.util.Misc;
+
+import data.scripts.plugins.MagicRenderPlugin;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.vector.Vector2f;
 import real_combat.entity.RC_AnchoredEntity;
-import real_combat.shipsystems.scripts.RC_TransAmSystem;
 import real_combat.util.RC_Util;
 
 import java.awt.*;
-import java.io.IOException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class RC_MonsterBallEveryFrameCombatPlugin implements EveryFrameCombatPlugin {
     private final static String ID = "RC_MonsterBallLayeredRenderingPlugin";
@@ -39,6 +37,7 @@ public class RC_MonsterBallEveryFrameCombatPlugin implements EveryFrameCombatPlu
     private final static String TEXT = "TEXT";
     private final static Color GREY = new Color(100, 100, 100, 50);
     private final static String SPRITE_NAME = "graphics/icons/hullsys/fortress_shield.png";
+    private final static String SHUTTLE_IN =  "graphics/missiles/shuttle.png";
     private final static float FONT_SIZE = 50f;
     private final static float FLASH_FREQUENCY = 5f;
     private final static float FLASH_DURATION = 10f;
@@ -47,7 +46,7 @@ public class RC_MonsterBallEveryFrameCombatPlugin implements EveryFrameCombatPlu
     private final static String IS_CATCH = "IS_CATCH";
     private final static String ZIGGURAT = "ziggurat";
     private CombatEngineAPI engine = Global.getCombatEngine();
-    private SpriteAPI sprite  = Global.getSettings().getSprite("graphics/missiles/shuttle.png");
+    private SpriteAPI sprite  = Global.getSettings().getSprite("graphics/missiles/shuttle_in.png");
     //用于存储每个船的当前占领值
     private Map<ShipAPI,Float> occupyMap = new HashMap();
     //经过时间间隔
@@ -287,7 +286,7 @@ public class RC_MonsterBallEveryFrameCombatPlugin implements EveryFrameCombatPlu
         GL11.glPushMatrix();
         //禁用纹理
         GL11.glEnable(GL11.GL_TEXTURE_2D);
-        SpriteAPI sprite = Global.getSettings().getSprite("fs_beamsystem", "fs_bs_2");
+        SpriteAPI sprite = Global.getSettings().getSprite("graphics/fx/beamfringec.png");
         sprite.bindTexture();
         //color = new Color(color.getRed(),color.getGreen(),color.getBlue(),255);
         //抗锯齿 移动镜头的时候不会出现奇怪的锯齿
@@ -375,6 +374,7 @@ public class RC_MonsterBallEveryFrameCombatPlugin implements EveryFrameCombatPlu
                 newShip.getArmorGrid().setArmorValue(x, y, grid[x][y]);
             }
         }
+        engine.applyDamage(newShip, newShip.getLocation(), 1f, DamageType.ENERGY, 0, true, false, newShip, false);
         //没有效果不知道干啥用
         newShip.syncWithArmorGridState();
         newShip.syncWeaponDecalsWithArmorDamage();
@@ -534,7 +534,15 @@ public class RC_MonsterBallEveryFrameCombatPlugin implements EveryFrameCombatPlu
                     if(player!=null) {
                         if(s.equals(player.getShipTarget())) {
                             float needMarines = getMarines(s,crew);
-                            engine.maintainStatusForPlayerShip(ID, SPRITE_NAME, "占领目标 持有陆战队：" + Global.getSector().getPlayerFleet().getCargo().getMarines(),"至少需要:"+ (int)needMarines + "名陆战队员 当前:" + nowMarines, true);
+                            if (needMarines<1) {
+                                needMarines = 1;
+                            }
+                            if (!(engine.isSimulation() || engine.isMission())) {
+                                engine.maintainStatusForPlayerShip(ID, SPRITE_NAME, "占领目标 持有陆战队：" + Global.getSector().getPlayerFleet().getCargo().getMarines(), "至少需要:" + (int) needMarines + "名陆战队员 当前:" + nowMarines, true);
+                            }
+                            else {
+                                engine.maintainStatusForPlayerShip(ID, SPRITE_NAME, "占领目标", "至少需要:" + (int) needMarines + "名陆战队员 当前:" + nowMarines, true);
+                            }
                         }
                     }
 
@@ -738,9 +746,17 @@ public class RC_MonsterBallEveryFrameCombatPlugin implements EveryFrameCombatPlu
                             isCatch.add(s);
                             engine.getCustomData().put(IS_CATCH,isCatch);
                             */
-                            int count = disableWeaponAndEngine(s);
-                            if (count != 0) {
-                                engine.addFloatingText(s.getLocation(), "占领成功", FONT_SIZE, Color.GREEN, s, FLASH_FREQUENCY, FLASH_DURATION);
+                            if (s.getLocation().x>=engine.getMapWidth()||s.getLocation().x<=-engine.getMapWidth()
+                                    ||s.getLocation().y>=engine.getMapHeight()||s.getLocation().y<=-engine.getMapHeight()
+                                    ||s.isRetreating()
+                            ) {
+                                s.splitShip();
+                            }
+                            else {
+                                int count = disableWeaponAndEngine(s);
+                                if (count != 0) {
+                                    engine.addFloatingText(s.getLocation(), "占领成功", FONT_SIZE, Color.GREEN, s, FLASH_FREQUENCY, FLASH_DURATION);
+                                }
                             }
                         }
                     }
@@ -770,6 +786,13 @@ public class RC_MonsterBallEveryFrameCombatPlugin implements EveryFrameCombatPlu
                 float relativeAngle = m.getRelativeAngle();
                 sprite.setAngle(relativeAngle+targetFace-90);
                 sprite.renderAtCenter(m.getLocation().getX(), m.getLocation().getY());
+                /*
+                if (!engine.isPaused()) {
+                    SpriteAPI shuttleIn = Global.getSettings().getSprite(SHUTTLE_IN);
+                    shuttleIn.setAngle(relativeAngle+targetFace-90);
+                    MagicRenderPlugin.addSingleframe(shuttleIn, m.getLocation(), CombatEngineLayers.UNDER_SHIPS_LAYER);
+                }
+                 */
             }
         }
         //渲染圈圈

@@ -1,4 +1,4 @@
-package real_combat.combat;
+package real_combat.weapons;
 
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.*;
@@ -39,12 +39,12 @@ public class RC_BeamCrossEffect implements BeamEffectPlugin { //WithReset {
 	protected IntervalUtil tracker = new IntervalUtil(0.1f, 0.2f);
 
 	protected Vector2f arcFrom = null;
-	public static float SPAWN_SPACING = 175;
+	public static float SPAWN_SPACING = 175f;
 	protected float spawnDir = 0;
 	protected boolean doneSpawningMines = false;
 	protected int numToSpawn = 0;
 	public static int MAX_RIFTS = 5;
-	public static float UNUSED_RANGE_PER_SPAWN = 80;
+	public static float UNUSED_RANGE_PER_SPAWN = 120f;//80f
 	public static float MIN_CORE_WIDTH = 20f;
 	public RC_BeamCrossEffect() {
 

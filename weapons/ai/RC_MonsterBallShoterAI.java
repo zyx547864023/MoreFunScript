@@ -11,7 +11,7 @@ import java.util.List;
 
 public class RC_MonsterBallShoterAI implements AutofireAIPlugin {
     private static final float AIMING_RANGE = 3000f;
-    private static final float MIN_MULT = 3f;
+    private static final float MIN_MULT = 2.5f;
     private boolean shouldFire = false;
     private ShipAPI target = null;
     private CombatEngineAPI engine = Global.getCombatEngine();
