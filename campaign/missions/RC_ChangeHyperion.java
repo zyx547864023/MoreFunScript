@@ -102,7 +102,7 @@ public class RC_ChangeHyperion extends HubMissionWithBarEvent {
 			person.addTag(Tags.CONTACT_SCIENCE);
 			person.setImportance(PersonImportance.VERY_HIGH);
 			//设置名称是
-			person.setName(new FullName("超可爱的", "女仆酱", FullName.Gender.FEMALE));
+			person.setName(new FullName("超可爱的", "梅朵", FullName.Gender.FEMALE));
 			//设置成女的
 			person.setGender(FullName.Gender.FEMALE);
 			//设置头像

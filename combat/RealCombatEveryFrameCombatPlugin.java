@@ -1,6 +1,7 @@
 package real_combat.combat;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,9 +18,18 @@ import com.fs.starfarer.api.loading.VariantSource;
 import com.fs.starfarer.api.mission.FleetSide;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.lazywizard.lazylib.MathUtils;
+import org.lazywizard.lazylib.combat.AIUtils;
 import org.lwjgl.util.vector.Vector2f;
+import real_combat.RCModPlugin;
+import real_combat.entity.RC_Escort;
 import real_combat.shipsystems.scripts.RC_TransAmSystem;
 
+/**
+ * 伤害修改射程修改
+ * 报警
+ * 向友军移动有加速（如果速度方将和位置夹角超过90°）
+ */
 public class RealCombatEveryFrameCombatPlugin implements EveryFrameCombatPlugin {
 	public static final String ID = "RealCombatEveryFrameCombatPlugin";
 	public static final String SAFETYOVERRIDES = "safetyoverrides";
@@ -28,6 +38,8 @@ public class RealCombatEveryFrameCombatPlugin implements EveryFrameCombatPlugin 
 	public static final Map<WeaponAPI.WeaponSize, Float> ballisticDamageDown = new HashMap<>(3);
 	public static final float engineRangeUp = 100f;
 	public static final float missileRangeUp = 150f;
+
+	private boolean isNoEnemy = true;
 
 	static {
 		ballisticRangeUp.put(WeaponAPI.WeaponSize.LARGE, 150f);
@@ -51,15 +63,67 @@ public class RealCombatEveryFrameCombatPlugin implements EveryFrameCombatPlugin 
 		}
 		 */
 		CombatEngineAPI engine = Global.getCombatEngine();
-		//士气系统
-		engine.maintainStatusForPlayerShip("RealCombatEveryFrameCombatPlugin", Global.getSettings().getSpriteName("ui","icon_tactical_cr_bonus"), "士气 100%", "增益", false);
-		List<ShipAPI> shipList = engine.getShips();
-		for(ShipAPI ship:shipList) {
-			if (ship.getListeners(DamageDealtMod.class).size() == 0) {
-				ship.addListener(new DamageDealtMod());
+
+		//报警
+		if (RCModPlugin.isWarningEnabled()) {
+			if (engine.getPlayerShip()!=null) {
+				ShipAPI player = engine.getPlayerShip();
+				if (player.isAlive()) {
+					if (player.areAnyEnemiesInRange() && isNoEnemy) {
+						Global.getSoundPlayer().playSound("high_energy_ahead", 1f, 0.7f, player.getLocation(), player.getVelocity());
+						isNoEnemy = false;
+					}
+					else if(!player.areAnyEnemiesInRange()){
+						isNoEnemy = true;
+					}
+				}
+				else {
+					isNoEnemy = true;
+				}
 			}
-			if (ship.getListeners(WeaponRangeMod.class).size() == 0) {
-				ship.addListener(new WeaponRangeMod());
+			else {
+				isNoEnemy = true;
+			}
+		}
+		//护卫增速
+
+		//士气系统
+		//engine.maintainStatusForPlayerShip(ID, Global.getSettings().getSpriteName("ui","icon_tactical_cr_bonus"), "士气 100%", "增益", false);
+		List<ShipAPI> shipList = engine.getShips();
+		List<RC_Escort> escortList = new ArrayList<>();
+		for(ShipAPI ship:shipList) {
+			if (!ship.isAlive()) {
+				continue;
+			}
+			if (RCModPlugin.isSightRadiusEnabled()) {
+				if (engine.isSimulation() || engine.isInCampaignSim()) {
+					ship.getMutableStats().getSightRadiusMod().modifyPercent(ID, 1000f);
+				}
+			}
+			//命令目标
+			if (RCModPlugin.isEscortAccelerationEnabled()) {
+				//if (!ship.isFighter()&&!ship.isStation()&&!ship.isStationModule()) {
+				if (ShipAPI.HullSize.FRIGATE.equals(ship.getHullSize()) || ShipAPI.HullSize.DESTROYER.equals(ship.getHullSize())) {
+					CombatFleetManagerAPI manager = engine.getFleetManager(ship.getOwner());
+					if (manager != null) {
+						CombatTaskManagerAPI task = manager.getTaskManager(false);
+						CombatFleetManagerAPI.AssignmentInfo mission = task.getAssignmentFor(ship);
+						if (mission != null) {
+							if (CombatAssignmentType.HEAVY_ESCORT.equals(mission.getType()) || CombatAssignmentType.MEDIUM_ESCORT.equals(mission.getType()) || CombatAssignmentType.LIGHT_ESCORT.equals(mission.getType())) {
+								RC_Escort rcEscort = new RC_Escort(ship, mission.getTarget().getLocation());
+								escortList.add(rcEscort);
+							}
+						}
+					}
+				}
+			}
+			if (RCModPlugin.isRangeDamageEnabled()) {
+				if (ship.getListeners(DamageDealtMod.class).size() == 0) {
+					ship.addListener(new DamageDealtMod());
+				}
+				if (ship.getListeners(WeaponRangeMod.class).size() == 0) {
+					ship.addListener(new WeaponRangeMod());
+				}
 			}
 			/*
 			List<WeaponAPI> newShipWeapons = ship.getAllWeapons();
@@ -68,6 +132,30 @@ public class RealCombatEveryFrameCombatPlugin implements EveryFrameCombatPlugin 
 				nw.getRange();
 			}
 			 */
+		}
+		if (RCModPlugin.isEscortAccelerationEnabled()) {
+			for (RC_Escort e : escortList) {
+				for (ShipAPI ship : shipList) {
+					if (!ship.isAlive()) {
+						continue;
+					}
+					//if (!ship.isFighter() && !ship.isStation() && !ship.isStationModule()) {
+					if (ShipAPI.HullSize.CAPITAL_SHIP.equals(ship.getHullSize()) || ShipAPI.HullSize.CRUISER.equals(ship.getHullSize())) {
+						float distance = MathUtils.getDistance(e.ship, ship);
+						if (
+								e.targetLocation.equals(ship.getLocation())
+										//&&e.ship.getHullSize().compareTo(ship.getHullSize())<=0
+										&&
+										distance < (e.ship.getCollisionRadius() + ship.getCollisionRadius()) * 2
+						) {
+							ship.getMutableStats().getMaxSpeed().modifyPercent(ID, 10f);
+							if (ship.equals(engine.getPlayerShip())) {
+								engine.maintainStatusForPlayerShip(ID, Global.getSettings().getSpriteName("ui", "icon_tactical_cr_bonus"), "护航导航", "+10% 最高速度", false);
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 

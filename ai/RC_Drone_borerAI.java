@@ -11,17 +11,35 @@ import org.lwjgl.util.vector.Vector2f;
 import java.util.*;
 import java.util.List;
 
-public class RC_Drone_borerAI extends RC_BaseShipAI {
+public class RC_Drone_borerAI implements ShipAIPlugin {
     private final static String ID = "RC_RepairCombatLayeredRenderingPlugin";
-
     private static final float REPAIR_POINT = 10f;
     private static final float ARMOR_REPAIR_POINT = 1f;
     private CombatEngineAPI engine = Global.getCombatEngine();
     private ShipwideAIFlags AIFlags = new ShipwideAIFlags();
-    public RC_Drone_borerAI(ShipAPI drone) {
-        super(drone);
+    private ShipAPI ship;
+    protected float dontFireUntil = 0.0F;
+    public RC_Drone_borerAI(ShipAPI ship) {
+        this.ship = ship;
     }
+    public boolean mayFire() {
+        return this.dontFireUntil <= Global.getCombatEngine().getTotalElapsedTime(false);
+    }
+    public void evaluateCircumstances() {
 
+    }
+    @Override
+    public void setDoNotFireDelay(float amount) {
+        this.dontFireUntil = amount + Global.getCombatEngine().getTotalElapsedTime(false);
+    }
+    @Override
+    public void forceCircumstanceEvaluation() {
+        this.evaluateCircumstances();
+    }
+    @Override
+    public boolean needsRefit() {
+        return false;
+    }
     /**
      * 40CR以下不修
      * 不修的时候返回母船
@@ -30,7 +48,6 @@ public class RC_Drone_borerAI extends RC_BaseShipAI {
      */
     public void advance(float amount) {
         try {
-            super.advance(amount);
             //获取飞机的半径
             FighterWingAPI wing = ship.getWing();
             if (wing != null) {
@@ -93,12 +110,12 @@ public class RC_Drone_borerAI extends RC_BaseShipAI {
                         if (distance < shipRange) {
                             //存活、不是飞机、是跟母船同一个阵营
                             if (s.isAlive() && !s.isFighter() && s.getOwner() == motherShip.getOwner() && !s.equals(ship)) {
-                                if (s.getCurrentCR() > 0.4) {
+                                if (s.getCurrentCR() > 0.45) {
                                     if(s.getLocation().equals(targetLocation))
                                     {
                                         //获取Hp
                                         if (s.getHitpoints() < s.getMaxHitpoints()-1) {
-                                            needCR = REPAIR_POINT/s.getMaxHitpoints()/2;
+                                            needCR = REPAIR_POINT/s.getMaxHitpoints()/4;
                                         }
                                         float nowArmor = 0;
                                         int count = 0;
@@ -112,7 +129,7 @@ public class RC_Drone_borerAI extends RC_BaseShipAI {
                                         maxArmor = count * s.getArmorGrid().getArmorRating() / 15f;
                                         //获取装甲最少
                                         if (nowArmor < maxArmor-1) {
-                                            needCR = ARMOR_REPAIR_POINT/maxArmor/15;
+                                            needCR = ARMOR_REPAIR_POINT/maxArmor/30;
                                         }
                                         flyToTarget(s, amount, needCR);
                                         return;
@@ -121,7 +138,7 @@ public class RC_Drone_borerAI extends RC_BaseShipAI {
                                     if (s.getHitpoints() < minHp && s.getHitpoints() < s.getMaxHitpoints()-1) {
                                         minHp = s.getHitpoints();
                                         hpTarget = s;
-                                        needCR = REPAIR_POINT/s.getMaxHitpoints()/2;
+                                        needCR = REPAIR_POINT/s.getMaxHitpoints()/4;
                                     }
                                     float nowArmor = 0;
                                     int count = 0;
@@ -137,7 +154,7 @@ public class RC_Drone_borerAI extends RC_BaseShipAI {
                                     if (nowArmor < minArmor && nowArmor < maxArmor-1) {
                                         minArmor = nowArmor;
                                         armorTarget = s;
-                                        needCR = ARMOR_REPAIR_POINT/maxArmor/15;
+                                        needCR = ARMOR_REPAIR_POINT/maxArmor/30;
                                     }
                                 }
                             }

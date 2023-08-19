@@ -1,11 +1,10 @@
 package real_combat.combat;
 
 import com.fs.starfarer.api.Global;
-import com.fs.starfarer.api.combat.CombatEngineAPI;
-import com.fs.starfarer.api.combat.EveryFrameCombatPlugin;
-import com.fs.starfarer.api.combat.ShipAPI;
-import com.fs.starfarer.api.combat.ViewportAPI;
+import com.fs.starfarer.api.combat.*;
 import com.fs.starfarer.api.input.InputEventAPI;
+import com.fs.starfarer.api.mission.FleetSide;
+import real_combat.RCModPlugin;
 import real_combat.ai.RC_SmartAI;
 
 import java.util.List;
@@ -23,6 +22,7 @@ public class RC_SmartAIEveryFrameCombatPlugin implements EveryFrameCombatPlugin 
 	public void advance(float amount, List<InputEventAPI> events) {
 		if (engine==null) {return;}
 		if (engine.isPaused()) {return;}
+		if (!RCModPlugin.isSmartAIEnabled()) {return;}
 		for (ShipAPI s:engine.getShips()) {
 			if (s.getOwner() == 0&&!s.isFighter()&&s!=Global.getCombatEngine().getPlayerShip() && s.isAlive()) {
 				RC_SmartAI smartAI = new RC_SmartAI(s);

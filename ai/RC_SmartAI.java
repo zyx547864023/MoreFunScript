@@ -18,14 +18,13 @@ import java.util.List;
  * 技能
  */
 
-public class RC_SmartAI extends RC_BaseShipAI {
+public class RC_SmartAI {
     private final static String ID = "RC_SmartAI";
     private CombatEngineAPI engine = Global.getCombatEngine();
     private ShipwideAIFlags AIFlags = new ShipwideAIFlags();
     private ShipAPI ship;
 
     public RC_SmartAI(ShipAPI ship) {
-        super(ship);
         this.ship = ship;
     }
     /**

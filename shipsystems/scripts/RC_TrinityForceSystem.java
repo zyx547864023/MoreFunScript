@@ -90,19 +90,30 @@ public class RC_TrinityForceSystem extends BaseShipSystemScript {
                             alive++;
                             ShipAPI newShip = null;
                             if (alive>newShips.size()){
+/*
                                 FleetMemberAPI newFleetMember = Global.getFactory().createFleetMember
                                         (FleetMemberType.SHIP, m.getVariant());
                                 newFleetMember.setOwner(ship.getOwner());
                                 newFleetMember.getCrewComposition().addCrew(newFleetMember.getNeededCrew());
                                 newFleetMember.getVariant().removePermaMod(CONVERTED_FIGHTERBAY);
-
                                 float height = engine.getMapHeight();
                                 Vector2f newLocation = new Vector2f(ship.getCollisionRadius() * 4, ship.getOwner() == 0 ? height / -2f - 20000f - ship.getCollisionRadius() * 4 : height / 2f + 20000f + ship.getCollisionRadius() * 4);
                                 newShip = manager.spawnFleetMember(newFleetMember, newLocation, m.getFacing(), 0f);
+*/
+                                float height = engine.getMapHeight();
+                                Vector2f newLocation = new Vector2f(ship.getCollisionRadius() * 4, ship.getOwner() == 0 ? height / -2f - 20000f - ship.getCollisionRadius() * 4 : height / 2f + 20000f + ship.getCollisionRadius() * 4);
+                                m.getVariant().removePermaMod(CONVERTED_FIGHTERBAY);
+                                newShip = engine.createFXDrone(m.getVariant());
+                                newShip.getLocation().set(newLocation);
+                                newShip.setFacing(m.getFacing());
+                                engine.addEntity(newShip);
+
                                 newShips.add(newShip);
+
                                 m.setCustomData(COLLISION_RADIUS, m.getCollisionClass());
                                 //生成完了加回去
-                                newFleetMember.getVariant().addPermaMod(CONVERTED_FIGHTERBAY);
+                                //newFleetMember.getVariant().addPermaMod(CONVERTED_FIGHTERBAY);
+                                m.getVariant().addPermaMod(CONVERTED_FIGHTERBAY);
                                 //子船原来的船关联
                                 newShip.setCustomData(ORIGINAL, m);
                                 newShip.setCustomData(MOTHERSHIP, ship);
@@ -140,7 +151,7 @@ public class RC_TrinityForceSystem extends BaseShipSystemScript {
                             copyShip(ship.getOwner(), newShip, m);
                             engine.applyDamage(newShip, newShip.getLocation(), 1f, DamageType.ENERGY, 0, true, false, newShip, false);
                             newShip.setCollisionClass(CollisionClass.NONE);
-                            newShip.getVelocity().set(MathUtils.getPoint(new Vector2f(), newShip.getMaxSpeed(), newShip.getFacing()));
+                            newShip.getVelocity().set(MathUtils.getPoint(new Vector2f(), m.getMaxSpeed(), newShip.getFacing()));
                             newShip.turnOnTravelDrive();
                             newShip.getEngineController().extendFlame(newShip, 4f, 3f, 2f);
 

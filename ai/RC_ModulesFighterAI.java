@@ -9,7 +9,7 @@ import org.lwjgl.util.vector.Vector2f;
 
 import java.util.*;
 
-public class RC_ModulesFighterAI extends RC_BaseShipAI {
+public class RC_ModulesFighterAI implements ShipAIPlugin {
     private final static String ID = "RC_ModulesFighterAI";
     private CombatEngineAPI engine = Global.getCombatEngine();
     private ShipwideAIFlags AIFlags = new ShipwideAIFlags();
@@ -18,16 +18,37 @@ public class RC_ModulesFighterAI extends RC_BaseShipAI {
     private ShipAPI backShip;
     private Vector2f landingLocation;
     private boolean isStartLanding = false;
-    public RC_ModulesFighterAI(ShipAPI drone,ShipAPI motherShip, ShipAPI backShip, FighterLaunchBayAPI fighterLaunchBay,Vector2f landingLocation) {
-        super(drone);
+    private ShipAPI ship;
+    protected float dontFireUntil = 0.0F;
+    public RC_ModulesFighterAI(ShipAPI ship,ShipAPI motherShip, ShipAPI backShip, FighterLaunchBayAPI fighterLaunchBay,Vector2f landingLocation) {
+        this.ship = ship;
         this.motherShip = motherShip;
         this.backShip = backShip;
         this.fighterLaunchBay = fighterLaunchBay;
         this.landingLocation = landingLocation;
     }
-    public RC_ModulesFighterAI(ShipAPI drone,ShipAPI motherShip) {
-        super(drone);
+    public RC_ModulesFighterAI(ShipAPI ship,ShipAPI motherShip) {
+        this.ship = ship;
         this.motherShip = motherShip;
+    }
+    public boolean mayFire() {
+        return this.dontFireUntil <= Global.getCombatEngine().getTotalElapsedTime(false);
+    }
+    public void evaluateCircumstances() {
+
+    }
+    @Override
+    public void setDoNotFireDelay(float amount) {
+        this.dontFireUntil = amount + Global.getCombatEngine().getTotalElapsedTime(false);
+    }
+
+    @Override
+    public void forceCircumstanceEvaluation() {
+        this.evaluateCircumstances();
+    }
+    @Override
+    public boolean needsRefit() {
+        return false;
     }
     /**
      * 40CR以下不修

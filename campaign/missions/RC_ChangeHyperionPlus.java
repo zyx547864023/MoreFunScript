@@ -169,7 +169,7 @@ public class RC_ChangeHyperionPlus extends HubMissionWithBarEvent { //implements
 		}
 		if ("change".equals(action)) {
 			boolean hasIndustry = market.hasIndustry(Industries.ORBITALWORKS);
-			if (!hasIndustry) {
+			if (!hasIndustry||market.getIndustry(Industries.ORBITALWORKS).isDisrupted()) {
 				//家没了
 				FireBest.fire(null, dialog, memoryMap, "RC_ChangeHyperionIndustry");
 			}

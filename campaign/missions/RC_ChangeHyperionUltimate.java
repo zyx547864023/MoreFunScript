@@ -11,12 +11,16 @@ import com.fs.starfarer.api.impl.campaign.econ.impl.ShipQuality;
 import com.fs.starfarer.api.impl.campaign.fleets.DefaultFleetInflaterParams;
 import com.fs.starfarer.api.impl.campaign.ids.*;
 import com.fs.starfarer.api.impl.campaign.intel.misc.ProductionReportIntel;
+import com.fs.starfarer.api.impl.campaign.intel.punitive.PunitiveExpeditionManager;
 import com.fs.starfarer.api.impl.campaign.missions.DelayedFleetEncounter;
+import com.fs.starfarer.api.impl.campaign.missions.PirateSystemBounty;
+import com.fs.starfarer.api.impl.campaign.missions.academy.GAAtTheGates;
 import com.fs.starfarer.api.impl.campaign.missions.academy.GABaseMission;
 import com.fs.starfarer.api.impl.campaign.missions.hub.BaseHubMission;
 import com.fs.starfarer.api.impl.campaign.missions.hub.HubMissionWithBarEvent;
 import com.fs.starfarer.api.impl.campaign.missions.hub.HubMissionWithSearch;
 import com.fs.starfarer.api.impl.campaign.rulecmd.AddRemoveCommodity;
+import com.fs.starfarer.api.impl.campaign.rulecmd.FireAll;
 import com.fs.starfarer.api.impl.campaign.rulecmd.FireBest;
 import com.fs.starfarer.api.impl.campaign.submarkets.StoragePlugin;
 import com.fs.starfarer.api.ui.Alignment;
@@ -26,7 +30,9 @@ import com.fs.starfarer.api.ui.TooltipMakerAPI;
 import com.fs.starfarer.api.util.CountingMap;
 import com.fs.starfarer.api.util.Misc;
 import com.fs.starfarer.api.util.Misc.Token;
+import org.lazywizard.lazylib.MathUtils;
 import org.lwjgl.util.vector.Vector2f;
+import real_combat.campaign.intel.punitive.RC_PunitiveExpeditionManager;
 
 import java.awt.*;
 import java.util.*;
@@ -75,6 +81,7 @@ public class RC_ChangeHyperionUltimate extends HubMissionWithBarEvent { //implem
 		setNoAbandon();
 		//经过多少天从这个状态到另一个状态
 		connectWithDaysElapsed(Stage.WAITING, Stage.DELIVERED, PROD_DAYS);
+		connectWithCustomCondition(Stage.WAITING, Stage.FAILED, new HasIndustryConditionChecker(market));
 		//connectWithDaysElapsed(Stage.WAITING, Stage.DELIVERED, 1f);
 		//set 阶段 On 市场 不文明
 		setStageOnMarketDecivilized(Stage.FAILED, market);
@@ -92,7 +99,31 @@ public class RC_ChangeHyperionUltimate extends HubMissionWithBarEvent { //implem
 								 Map<String, MemoryAPI> memoryMap) {
 		if ("change".equals(action)) {
 			boolean hasIndustry = market.hasIndustry(Industries.ORBITALWORKS);
-			if (!hasIndustry) {
+			if (!hasIndustry||market.getIndustry(Industries.ORBITALWORKS).isDisrupted()) {
+				//测试代码
+				/*
+				RC_PunitiveExpeditionManager punitiveExpeditionManager1 = new RC_PunitiveExpeditionManager(market,market.getIndustry(Industries.ORBITALWORKS));
+				PunitiveExpeditionManager.PunExData p = new PunitiveExpeditionManager.PunExData();
+				p.faction = Global.getSector().getFaction(Factions.LUDDIC_CHURCH);
+				punitiveExpeditionManager1.createExpedition(p);
+				RC_PunitiveExpeditionManager punitiveExpeditionManager2 = new RC_PunitiveExpeditionManager(market,market.getIndustry(Industries.ORBITALWORKS));
+				p.faction = Global.getSector().getFaction(Factions.HEGEMONY);
+				punitiveExpeditionManager2.createExpedition(p);
+				RC_PunitiveExpeditionManager punitiveExpeditionManager3 = new RC_PunitiveExpeditionManager(market,market.getIndustry(Industries.ORBITALWORKS));
+				p.faction = Global.getSector().getFaction(Factions.TRITACHYON);
+				punitiveExpeditionManager3.createExpedition(p);
+				*/
+				/*
+				genRandom = new Random();
+				setCurrentStage(Stage.START,dialog,memoryMap);
+
+				List<SectorEntityToken> jumpPoints = market.getStarSystem().getJumpPoints();
+				for (SectorEntityToken point : jumpPoints) {
+					for (int count = 0;count<100;count++){
+						spawnFleet(point);
+					}
+				}
+				*/
 				//家没了
 				FireBest.fire(null, dialog, memoryMap, "RC_ChangeHyperionIndustry");
 				return true;
@@ -105,6 +136,8 @@ public class RC_ChangeHyperionUltimate extends HubMissionWithBarEvent { //implem
 			FleetMemberAPI fury = null;
 			//奥德赛	odyssey
 			FleetMemberAPI odyssey = null;
+			//伯劳鸟	shrike
+			FleetMemberAPI shrike = null;
 			//圣甲虫	scarab
 			FleetMemberAPI scarab = null;
 			//折磨	afflictor
@@ -112,31 +145,36 @@ public class RC_ChangeHyperionUltimate extends HubMissionWithBarEvent { //implem
 			//预言者	harbinger
 			FleetMemberAPI harbinger = null;
 			for (FleetMemberAPI f:playerFleetMembers) {
-				if ("hyperion_meta".equals(f.getHullSpec().getHullId())&&hyperion==null) {
+				if (f.getHullSpec().getHullId()==null||f.getHullSpec().getHullId()=="") continue;
+				if (f.getHullSpec().getHullId().contains("hyperion_meta")&&hyperion==null) {
 					hyperion = f;
 				}
-				else if ("fury".equals(f.getHullSpec().getHullId())&&fury==null) {
+				else if (f.getHullSpec().getHullId().contains("fury")&&fury==null) {
 					fury = f;
 				}
-				else if ("odyssey".equals(f.getHullSpec().getHullId())&&odyssey==null) {
+				else if (f.getHullSpec().getHullId().contains("odyssey")&&odyssey==null) {
 					odyssey = f;
 				}
-				else if ("scarab".equals(f.getHullSpec().getHullId())&&scarab==null) {
+				else if (f.getHullSpec().getHullId().contains("scarab")&&scarab==null) {
 					scarab = f;
 				}
-				else if ("afflictor".equals(f.getHullSpec().getHullId())&&afflictor==null) {
+				else if (f.getHullSpec().getHullId().contains("shrike")&&shrike==null) {
+					shrike = f;
+				}
+				else if (f.getHullSpec().getHullId().contains("afflictor")&&afflictor==null) {
 					afflictor = f;
 				}
-				else if ("harbinger".equals(f.getHullSpec().getHullId())&&harbinger==null) {
+				else if (f.getHullSpec().getHullId().contains("harbinger")&&harbinger==null) {
 					harbinger = f;
 				}
 			}
 			CargoAPI cargo = fleetData.getFleet().getCargo();
-			if (hyperion==null||(fury==null&&odyssey==null)||scarab==null||afflictor==null||harbinger==null||cargo.getCommodityQuantity(Commodities.ALPHA_CORE)==0||cargo.getCredits().get()<cost) {
+			if (hyperion==null||(fury==null&&odyssey==null&&shrike==null)||scarab==null||afflictor==null||harbinger==null||cargo.getCommodityQuantity(Commodities.ALPHA_CORE)==0||cargo.getCredits().get()<cost) {
 				//材料不足
 				FireBest.fire(null, dialog, memoryMap, "RC_ChangeHyperionNeed");
 			}
 			else {
+				setStartingStage(Stage.WAITING);
 				convertProdToCargo();
 				accept(dialog, memoryMap);
 				FireBest.fire(null, dialog, memoryMap, "RC_ChangeHyperionSuccess");
@@ -176,6 +214,8 @@ public class RC_ChangeHyperionUltimate extends HubMissionWithBarEvent { //implem
 		set("$RC_ChangeHyperionUltimate_fury", "狂怒");
 		//奥德赛	odyssey
 		set("$RC_ChangeHyperionUltimate_odyssey", "奥德赛");
+		//伯劳鸟 shrike
+		set("$RC_ChangeHyperionUltimate_shrike", "伯劳鸟");
 		//圣甲虫	scarab
 		set("$RC_ChangeHyperionUltimate_scarab", "圣甲虫");
 		//折磨	afflictor
@@ -258,6 +298,7 @@ public class RC_ChangeHyperionUltimate extends HubMissionWithBarEvent { //implem
 		FleetMemberAPI hyperion = null;
 		FleetMemberAPI fury = null;
 		FleetMemberAPI odyssey = null;
+		FleetMemberAPI shrike = null;
 		FleetMemberAPI scarab = null;
 		FleetMemberAPI afflictor = null;
 		FleetMemberAPI harbinger = null;
@@ -265,28 +306,35 @@ public class RC_ChangeHyperionUltimate extends HubMissionWithBarEvent { //implem
 		for (FleetMemberAPI f:playerFleetMembers)
 		{
 			String hullId = f.getHullSpec().getHullId().replace("_default_D","");
-			if ("hyperion_meta".equals(hullId)) {
+			if (hullId.contains("hyperion_meta")) {
 				hyperion = f;
 			}
-			else if ("fury".equals(hullId)) {
+			else if (hullId.contains("fury")) {
 				fury = f;
 			}
-			else if ("odyssey".equals(hullId)) {
+			else if (hullId.contains("odyssey")) {
 				odyssey = f;
 			}
-			else if ("scarab".equals(hullId)) {
+			else if (hullId.contains("shrike")) {
+				shrike = f;
+			}
+			else if (hullId.contains("scarab")) {
 				scarab = f;
 			}
-			else if ("afflictor".equals(hullId)) {
+			else if (hullId.contains("afflictor")) {
 				afflictor = f;
 			}
-			else if ("harbinger".equals(hullId)) {
+			else if (hullId.contains("harbinger")) {
 				harbinger = f;
 			}
 		}
 		AddRemoveCommodity.addFleetMemberLossText(hyperion,dialog.getTextPanel());
 		fleetData.removeFleetMember(hyperion);
-		if (fury!=null) {
+		if (shrike!=null) {
+			AddRemoveCommodity.addFleetMemberLossText(shrike, dialog.getTextPanel());
+			fleetData.removeFleetMember(shrike);
+		}
+		else if (fury!=null) {
 			AddRemoveCommodity.addFleetMemberLossText(fury, dialog.getTextPanel());
 			fleetData.removeFleetMember(fury);
 		}
@@ -312,6 +360,20 @@ public class RC_ChangeHyperionUltimate extends HubMissionWithBarEvent { //implem
 		makeUnimportant(callisto,null);
 		//完成
 		Global.getSector().getMemoryWithoutUpdate().set("$RC_ChangeHyperionUltimate_completed",true);
+
+		RC_PunitiveExpeditionManager punitiveExpeditionManager1 = new RC_PunitiveExpeditionManager(market,market.getIndustry(Industries.ORBITALWORKS));
+		PunitiveExpeditionManager.PunExData p = new PunitiveExpeditionManager.PunExData();
+		p.faction = Global.getSector().getFaction(Factions.LUDDIC_CHURCH);
+		punitiveExpeditionManager1.createExpedition(p);
+		RC_PunitiveExpeditionManager punitiveExpeditionManager2 = new RC_PunitiveExpeditionManager(market,market.getIndustry(Industries.ORBITALWORKS));
+		p.faction = Global.getSector().getFaction(Factions.HEGEMONY);
+		punitiveExpeditionManager2.createExpedition(p);
+		RC_PunitiveExpeditionManager punitiveExpeditionManager3 = new RC_PunitiveExpeditionManager(market,market.getIndustry(Industries.ORBITALWORKS));
+		p.faction = Global.getSector().getFaction(Factions.TRITACHYON);
+		punitiveExpeditionManager3.createExpedition(p);
+		RC_PunitiveExpeditionManager punitiveExpeditionManager4 = new RC_PunitiveExpeditionManager(market,market.getIndustry(Industries.ORBITALWORKS));
+		p.faction = Global.getSector().getFaction(Factions.PERSEAN);
+		punitiveExpeditionManager4.createExpedition(p);
 	}
 
 	//定制生产订单
@@ -387,15 +449,196 @@ public class RC_ChangeHyperionUltimate extends HubMissionWithBarEvent { //implem
 			for (CargoAPI curr : data.data.values()) {
 				cargo.addAll(curr, true);
 			}
+
+			//刷一大堆 给玩家打
+			for (int count=0;count<20;count++) {
+				List<SectorEntityToken> jumpPoints = market.getStarSystem().getJumpPoints();
+				for (SectorEntityToken point : jumpPoints) {
+					spawnFleet(point);
+				}
+			}
+
 			//设置重要
 			makeImportant(callisto, "$RC_ChangeHyperionPlus_returnHere", null);
 			Global.getSector().getMemoryWithoutUpdate().set("$RC_ChangeHyperionPlus_returnHere",true);
+			makeImportant(callisto, "$RC_Merge_returnHere", null);
+			Global.getSector().getMemoryWithoutUpdate().set("$RC_Merge_returnHere",true);
 			//改造过后又新的理解
 			if (market != null) {
 				RC_ChangeHyperionPlus p = new RC_ChangeHyperionPlus();
 				p.create(market, false);
+				RC_Merge m = new RC_Merge();
+				m.create(market, false);
 			}
 		}
+	}
+
+	public class HasIndustryConditionChecker implements ConditionChecker {
+		protected boolean conditionsMet = false;
+		protected MarketAPI market;
+		protected float startDate = 0f;
+		protected int count = 0;
+		public HasIndustryConditionChecker(MarketAPI market){
+			this.market = market;
+		}
+		public boolean conditionsMet() {
+			doCheck();
+			return conditionsMet;
+		}
+
+		public void advance(float amount) {
+			if (conditionsMet) return;
+			float days = Global.getSector().getClock().convertToDays(amount);
+			if (startDate==0f) {
+				startDate = days;
+			}
+			else if(days-startDate>1){
+				startDate = days;
+
+				List<SectorEntityToken> jumpPoints = market.getStarSystem().getJumpPoints();
+				for (SectorEntityToken point : jumpPoints) {
+					float random = MathUtils.getRandomNumberInRange(1,100);
+					String factions = Factions.PIRATES;
+					if (random<20) {
+						factions = Factions.PIRATES;
+					} else if(random<40) {
+						factions = Factions.LUDDIC_CHURCH;
+					} else if(random<60) {
+						factions = Factions.HEGEMONY;
+					} else if(random<80) {
+						factions = Factions.TRITACHYON;
+					} else {
+						factions = Factions.LUDDIC_PATH;
+					}
+					beginWithinHyperspaceRangeTrigger(market.getStarSystem(), 3f, false, Stage.WAITING);
+					triggerCreateFleet(FleetSize.HUGE, FleetQuality.HIGHER, factions, FleetTypes.PATROL_LARGE, point);
+					triggerSetFleetFaction(factions);
+					triggerSetFleetOfficers(OfficerNum.MORE, OfficerQuality.HIGHER);
+					triggerAutoAdjustFleetStrengthMajor();
+					triggerMakeHostileAndAggressive();
+					triggerMakeNoRepImpact();
+					triggerFleetAllowLongPursuit();
+					triggerSetFleetAlwaysPursue();
+					triggerSpawnFleetNear(market.getStarSystem().getCenter(), null, null);
+					triggerOrderFleetPatrol(market.getStarSystem(), true, Tags.STATION, Tags.JUMP_POINT);
+					triggerOrderFleetAttackLocation(market.getPrimaryEntity());
+					endTrigger();
+				}
+			}
+		}
+
+		public void doCheck() {
+			if (conditionsMet) return;
+			count++;
+			if (count>120) {
+				count=0;
+				List<SectorEntityToken> jumpPoints = market.getStarSystem().getJumpPoints();
+				for (SectorEntityToken point : jumpPoints) {
+					float random = MathUtils.getRandomNumberInRange(1,100);
+					String factions = Factions.PIRATES;
+					if (random<20) {
+						factions = Factions.PIRATES;
+					} else if(random<40) {
+						factions = Factions.LUDDIC_CHURCH;
+					} else if(random<60) {
+						factions = Factions.HEGEMONY;
+					} else if(random<80) {
+						factions = Factions.TRITACHYON;
+					} else {
+						factions = Factions.LUDDIC_PATH;
+					}
+					beginWithinHyperspaceRangeTrigger(market.getStarSystem(), 3f, false, Stage.WAITING);
+					triggerCreateFleet(FleetSize.HUGE, FleetQuality.HIGHER, factions, FleetTypes.PATROL_LARGE, point);
+					triggerSetFleetFaction(factions);
+					triggerSetFleetOfficers(OfficerNum.MORE, OfficerQuality.HIGHER);
+					triggerAutoAdjustFleetStrengthMajor();
+					triggerMakeHostileAndAggressive();
+					triggerMakeNoRepImpact();
+					triggerFleetAllowLongPursuit();
+					triggerSetFleetAlwaysPursue();
+					triggerSpawnFleetNear(market.getStarSystem().getCenter(), null, null);
+					triggerOrderFleetPatrol(market.getStarSystem(), true, Tags.STATION, Tags.JUMP_POINT);
+					triggerOrderFleetAttackLocation(market.getPrimaryEntity());
+					endTrigger();
+				}
+			}
+
+			if (!market.hasIndustry(Industries.ORBITALWORKS)) {
+				conditionsMet = true;
+			}
+			//!market.getPrimaryEntity().isAlive()||!market.getPrimaryEntity().isExpired()||
+			else if (market.getIndustry(Industries.ORBITALWORKS).isDisrupted()) {
+				conditionsMet = true;
+			}
+		}
+	}
+
+	protected void spawnFleet(SectorEntityToken spawnPoint) {
+		float random = MathUtils.getRandomNumberInRange(1,100);
+		String factions = Factions.PIRATES;
+		if (random<20) {
+			factions = Factions.PIRATES;
+		} else if(random<40) {
+			factions = Factions.LUDDIC_CHURCH;
+		} else if(random<60) {
+			factions = Factions.HEGEMONY;
+		} else if(random<80) {
+			factions = Factions.TRITACHYON;
+		} else {
+			factions = Factions.LUDDIC_PATH;
+		}
+
+		beginWithinHyperspaceRangeTrigger(market.getStarSystem(), 3f, false, Stage.DELIVERED);//Stage.DELIVERED
+		triggerCreateFleet(FleetSize.HUGE, FleetQuality.HIGHER, factions, FleetTypes.PATROL_LARGE, spawnPoint);
+		triggerSetFleetFaction(factions);
+		triggerSetFleetOfficers(OfficerNum.MORE, OfficerQuality.HIGHER);
+		triggerAutoAdjustFleetStrengthMajor();
+		triggerMakeHostileAndAggressive();
+		triggerMakeNoRepImpact();
+		triggerFleetAllowLongPursuit();
+		triggerSetFleetAlwaysPursue();
+		triggerSetFleetFlag("$RC_fleetTalk");
+		//triggerPickLocationAroundEntity(spawnPoint, 100f);
+		triggerSpawnFleetNear(market.getStarSystem().getCenter(), null, null);
+		//triggerOrderFleetPatrol(market.getStarSystem(), true, Tags.STATION, Tags.JUMP_POINT);
+		triggerOrderFleetInterceptPlayer();
+		//triggerOrderFleetAttackLocation(market.getPrimaryEntity());
+		endTrigger();
+		/*
+		beginWithinHyperspaceRangeTrigger(market.getStarSystem(), 3f, false, Stage.START);
+		triggerCreateFleet(FleetSize.HUGE, FleetQuality.DEFAULT, market.getFactionId(), FleetTypes.PATROL_MEDIUM, market.getStarSystem());
+		triggerAutoAdjustFleetStrengthMajor();
+		triggerSetPirateFleet();
+		triggerSpawnFleetNear(market.getStarSystem().getCenter(), null, null);
+		triggerOrderFleetPatrol(market.getStarSystem(), true, Tags.STATION, Tags.JUMP_POINT);
+		endTrigger();
+		*/
+
+		/*
+		DelayedFleetEncounter e = new DelayedFleetEncounter(genRandom, getMissionId());
+		e.setDelayMedium();
+		float random = MathUtils.getRandomNumberInRange(1,100);
+		String factions = Factions.PIRATES;
+		if (random<20) {
+			factions = Factions.PIRATES;
+		} else if(random<40) {
+			factions = Factions.LUDDIC_CHURCH;
+		} else if(random<60) {
+			factions = Factions.HEGEMONY;
+		} else if(random<80) {
+			factions = Factions.TRITACHYON;
+		} else {
+			factions = Factions.LUDDIC_PATH;
+		}
+		e.setLocationInnerSector(true, factions);
+		e.beginCreate();
+		e.triggerCreateFleet(FleetSize.MEDIUM, FleetQuality.VERY_HIGH, Factions.MERCENARY, FleetTypes.PATROL_LARGE, new Vector2f());
+		e.triggerSetFleetOfficers(OfficerNum.MORE, OfficerQuality.HIGHER);
+		e.triggerFleetSetFaction(factions);
+		e.triggerMakeNoRepImpact();
+		e.triggerSetStandardAggroInterceptFlags();
+		e.endCreate();
+		*/
 	}
 }
 

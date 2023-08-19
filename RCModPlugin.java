@@ -8,11 +8,12 @@ import com.fs.starfarer.api.campaign.CampaignPlugin.PickPriority;
 import com.fs.starfarer.api.combat.*;
 import com.fs.starfarer.api.fleet.FleetMemberAPI;
 import com.fs.starfarer.api.impl.campaign.intel.bar.events.BarEventManager;
+import lunalib.lunaSettings.LunaSettings;
 import org.apache.log4j.Level;
 import org.json.JSONException;
 import real_combat.ai.RC_Drone_borerAI;
 import real_combat.campaign.RC_CampaignPlugin;
-import real_combat.campaign.missions.intel.bar.events.FamousShipBarEventCreator;
+//import real_combat.campaign.missions.intel.bar.events.FamousShipBarEventCreator;
 import real_combat.combat.RC_ComboEveryFrameCombatPlugin;
 import real_combat.combat.RC_MonsterBallEveryFrameCombatPlugin;
 import real_combat.weapons.ai.RC_MonsterBallAI;
@@ -68,10 +69,57 @@ public class RCModPlugin extends BaseModPlugin {
 
     @Override
     public void onGameLoad(boolean newGame) {
+        /*
         BarEventManager bar = BarEventManager.getInstance();
         if (!bar.hasEventCreator(FamousShipBarEventCreator.class)) {
             bar.addEventCreator(new FamousShipBarEventCreator());
-        }
+        }        */
         Global.getSector().registerPlugin(new RC_CampaignPlugin());
+    }
+
+    public static boolean isWarningEnabled = true;
+    public static boolean isRangeDamageEnabled = true;
+    public static boolean isEscortAccelerationEnabled = true;
+    public static boolean isQEEnabled = true;
+    public static boolean isSmartAIEnabled = true;
+    public static boolean isSightRadiusEnabled = true;
+    public static final String MOD_ID = "MoreFun";
+    public static boolean isWarningEnabled() {
+        if (Global.getSettings().getModManager().isModEnabled("lunalib")) {
+            return LunaSettings.getBoolean(MOD_ID, "isWarningEnabled");
+        }
+        return isWarningEnabled;
+    }
+    public static boolean isRangeDamageEnabled() {
+        if (Global.getSettings().getModManager().isModEnabled("lunalib")) {
+            return LunaSettings.getBoolean(MOD_ID, "isRangeDamageEnabled");
+        }
+        return isRangeDamageEnabled;
+    }
+    public static boolean isEscortAccelerationEnabled() {
+        if (Global.getSettings().getModManager().isModEnabled("lunalib")) {
+            return LunaSettings.getBoolean(MOD_ID, "isEscortAccelerationEnabled");
+        }
+        return isEscortAccelerationEnabled;
+    }
+    public static boolean isQEEnabled() {
+        if (Global.getSettings().getModManager().isModEnabled("lunalib")) {
+            return LunaSettings.getBoolean(MOD_ID, "isQEEnabled");
+        }
+        return isQEEnabled;
+    }
+
+    public static boolean isSmartAIEnabled() {
+        if (Global.getSettings().getModManager().isModEnabled("lunalib")) {
+            return LunaSettings.getBoolean(MOD_ID, "isSmartAIEnabled");
+        }
+        return isSmartAIEnabled;
+    }
+
+    public static boolean isSightRadiusEnabled() {
+        if (Global.getSettings().getModManager().isModEnabled("lunalib")) {
+            return LunaSettings.getBoolean(MOD_ID, "isSightRadiusEnabled");
+        }
+        return isSightRadiusEnabled;
     }
 }

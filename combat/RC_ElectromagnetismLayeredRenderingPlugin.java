@@ -28,6 +28,9 @@ import java.util.List;
 
 public class RC_ElectromagnetismLayeredRenderingPlugin extends BaseCombatLayeredRenderingPlugin {
     private final static String ID = "RC_ElectromagnetismLayeredRenderingPlugin";
+    private final static Color FRINGE = new Color(25, 100, 155, 255);
+    private final static Color CORE =  new Color(255, 255, 255, 255);
+    private final static float THICKNESS = 20f;
     private final static String ELECTROMAGNETISM_LIST="ELECTROMAGNETISM_LIST";
     private SpriteAPI sprite  = Global.getSettings().getSprite("graphics/missiles/shell_gauss_cannon.png");
     protected IntervalUtil tracker = new IntervalUtil(0.4f, 0.5f);
@@ -42,13 +45,13 @@ public class RC_ElectromagnetismLayeredRenderingPlugin extends BaseCombatLayered
                 List<RC_ElectromagnetismOnHitEffect.ElectromagnetismProj> removeList = new ArrayList<>();
                 for (RC_ElectromagnetismOnHitEffect.ElectromagnetismProj ep : electromagnetismProjList) {
                     ep.timeForExplosion -= amount;
+                    if (ep.timeForExplosion <= 0||(ep.shieldHit&&ep.target.getShield().isOff())||ep.target.isExpired()) {
+                        engine.spawnExplosion(ep.anchoredEntity.getLocation(), ep.target.getVelocity(), Color.BLUE, 10F, 2F);
+                        removeList.add(ep);
+                        break;
+                    }
                     float distance = MathUtils.getDistance(ep.weapon.getLocation(),ep.anchoredEntity.getLocation());
                     if (distance<ep.weapon.getRange()*0.8F) {
-                        if (ep.timeForExplosion <= 0||(ep.shieldHit&&ep.target.getShield().isOff())||ep.target.isExpired()) {
-                            engine.spawnExplosion(ep.anchoredEntity.getLocation(), ep.target.getVelocity(), Color.BLUE, 10F, 2F);
-                            removeList.add(ep);
-                            break;
-                        }
                         float emp = ep.projectile.getEmpAmount();
                         float dam = ep.projectile.getDamageAmount();
                         float epToTarget = VectorUtils.getAngle(ep.anchoredEntity.getLocation(),ep.target.getLocation());
@@ -64,9 +67,9 @@ public class RC_ElectromagnetismLayeredRenderingPlugin extends BaseCombatLayered
                                             emp, // emp
                                             100000f, // max range
                                             "tachyon_lance_emp_impact",
-                                            20f, // thickness
-                                            new Color(25, 100, 155, 255),
-                                            new Color(255, 255, 255, 255)
+                                            THICKNESS, // thickness
+                                            FRINGE,
+                                            CORE
                                     );
                                 } else if (ep.shieldHit) {
                                     if (1-((ShipAPI) ep.target).getMutableStats().getDynamic().getStat(Stats.SHIELD_PIERCED_MULT).getBaseValue()<MathUtils.getRandomNumberInRange(0F,1F)) {
@@ -76,9 +79,9 @@ public class RC_ElectromagnetismLayeredRenderingPlugin extends BaseCombatLayered
                                                 emp * ((ShipAPI) ep.target).getShield().getFluxPerPointOfDamage(),//.getMutableStats().getDynamic().getStat(Stats.SHIELD_PIERCED_MULT).getBaseValue(), // emp
                                                 100000f, // max range
                                                 "tachyon_lance_emp_impact",
-                                                20f, // thickness
-                                                new Color(25, 100, 155, 255),
-                                                new Color(255, 255, 255, 255)
+                                                THICKNESS, // thickness
+                                                FRINGE,
+                                                CORE
                                         );
                                     }
                                 } else {
@@ -88,9 +91,9 @@ public class RC_ElectromagnetismLayeredRenderingPlugin extends BaseCombatLayered
                                             emp, // emp
                                             100000f, // max range
                                             "tachyon_lance_emp_impact",
-                                            20f, // thickness
-                                            new Color(25, 100, 155, 255),
-                                            new Color(255, 255, 255, 255)
+                                            THICKNESS, // thickness
+                                            FRINGE,
+                                            CORE
                                     );
                                 }
                             }
@@ -104,18 +107,18 @@ public class RC_ElectromagnetismLayeredRenderingPlugin extends BaseCombatLayered
                                         emp, // emp
                                         100000f, // max range
                                         "tachyon_lance_emp_impact",
-                                        20f, // thickness
-                                        new Color(25, 100, 155, 255),
-                                        new Color(255, 255, 255, 255)
+                                        THICKNESS, // thickness
+                                        FRINGE,
+                                        CORE
                                 );
                             }
                         }
 
                         if (tracker.intervalElapsed()) {
                             EmpArcEntityAPI empArcEntity = engine.spawnEmpArcVisual(ep.weapon.getLocation(),ep.projectile.getSource(), ep.anchoredEntity.getLocation(), ep.anchoredEntity,
-                                    20f, // thickness
-                                    new Color(25, 100, 155, 255),
-                                    new Color(255, 255, 255, 255)
+                                    THICKNESS, // thickness
+                                    FRINGE,
+                                    CORE
                             );
                         }
 
@@ -129,6 +132,7 @@ public class RC_ElectromagnetismLayeredRenderingPlugin extends BaseCombatLayered
                     }
                 }
                 electromagnetismProjList.removeAll(removeList);
+                engine.getCustomData().put(ELECTROMAGNETISM_LIST,electromagnetismProjList);
             }
         }
     }
@@ -154,7 +158,7 @@ public class RC_ElectromagnetismLayeredRenderingPlugin extends BaseCombatLayered
     @Override
     public void render(CombatEngineLayers layer, ViewportAPI viewport) {
         CombatEngineAPI engine = Global.getCombatEngine();
-        if (!engine.isPaused()) {
+        //if (!engine.isPaused()) {
             if (engine.getCustomData().get(ELECTROMAGNETISM_LIST)!=null) {
                 List<RC_ElectromagnetismOnHitEffect.ElectromagnetismProj> electromagnetismProjList = (List<RC_ElectromagnetismOnHitEffect.ElectromagnetismProj>) engine.getCustomData().get(ELECTROMAGNETISM_LIST);
                 for (RC_ElectromagnetismOnHitEffect.ElectromagnetismProj ep : electromagnetismProjList) {
@@ -164,7 +168,7 @@ public class RC_ElectromagnetismLayeredRenderingPlugin extends BaseCombatLayered
                     sprite.renderAtCenter(ep.anchoredEntity.getLocation().getX(), ep.anchoredEntity.getLocation().getY());
                 }
             }
-        }
+        //}
     }
 
     @Override

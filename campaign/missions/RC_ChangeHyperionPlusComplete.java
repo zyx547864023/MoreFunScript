@@ -101,7 +101,7 @@ public class RC_ChangeHyperionPlusComplete extends HubMissionWithBarEvent implem
 		if (action.contains("showOption")) {
 			String index = action.replace("showOption","");
 			boolean hasIndustry = market.hasIndustry(Industries.ORBITALWORKS);
-			if (!hasIndustry)
+			if (!hasIndustry||market.getIndustry(Industries.ORBITALWORKS).isDisrupted())
 			{
 				//家没了
 				FireBest.fire(null, dialog, memoryMap, "RC_ChangeHyperionIndustry");

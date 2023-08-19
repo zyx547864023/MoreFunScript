@@ -10,6 +10,8 @@ import com.fs.starfarer.api.fleet.CrewCompositionAPI;
 import com.fs.starfarer.api.fleet.FleetMemberAPI;
 import com.fs.starfarer.api.fleet.FleetMemberType;
 import com.fs.starfarer.api.graphics.SpriteAPI;
+import com.fs.starfarer.api.impl.PlayerFleetPersonnelTracker;
+import com.fs.starfarer.api.impl.campaign.ids.Commodities;
 import com.fs.starfarer.api.impl.campaign.ids.HullMods;
 import com.fs.starfarer.api.input.InputEventAPI;
 import com.fs.starfarer.api.mission.FleetSide;
@@ -67,6 +69,7 @@ public class RC_MonsterBallEveryFrameCombatPlugin implements EveryFrameCombatPlu
     protected static Map<String,Set<String>> white = new HashMap<>();
     protected static Map<String,String> shipFromMod = new HashMap<>();
 
+    private float enemyTimer = 0;
     public static void reloadSettings(){
         SettingsAPI settings = Global.getSettings();
         List<ModSpecAPI> mods = settings.getModManager().getEnabledModsCopy();
@@ -137,7 +140,7 @@ public class RC_MonsterBallEveryFrameCombatPlugin implements EveryFrameCombatPlu
     }
 
     public void init(CombatEngineAPI engine) {
-
+        enemyTimer = 0;
     }
 
     public void setAmmo(ShipAPI s)
@@ -203,14 +206,18 @@ public class RC_MonsterBallEveryFrameCombatPlugin implements EveryFrameCombatPlu
         }
         return crew;
     }
-
+    protected PlayerFleetPersonnelTracker.PersonnelData marineData = new PlayerFleetPersonnelTracker.PersonnelData(Commodities.MARINES);
     public float getMult(ShipAPI s, float nowMarines)
     {
         //一个乘数
         float mult = getMultWithOutMarines(s);
         float crew = getCrew(s);
+        float rank = 1;
+        if (marineData!=null) {
+            rank += marineData.getRank().threshold;
+        }
         //陆战队船员数量
-        mult += (nowMarines * MARINES_TO_CREW - crew)/crew;
+        mult += (nowMarines * MARINES_TO_CREW * rank - crew)/crew;
         return mult;
     }
 
@@ -316,6 +323,8 @@ public class RC_MonsterBallEveryFrameCombatPlugin implements EveryFrameCombatPlu
     private void copyShip(FleetSide fleetSide,ShipAPI newShip, ShipAPI s,int nowMarines,List<ShipAPI> removeShip)
     {
         CombatEngineAPI engine = Global.getCombatEngine();
+        //newShip.getCustomData().putAll(s.getCustomData());
+
         newShip.setHitpoints(s.getHitpoints());
         newShip.getFluxTracker().setCurrFlux(s.getCurrFlux());
         newShip.getFluxTracker().setHardFlux(s.getMinFlux());
@@ -517,7 +526,11 @@ public class RC_MonsterBallEveryFrameCombatPlugin implements EveryFrameCombatPlu
                 Global.getSector().getPlayerFleet().getFleetData().removeFleetMember(Global.getSector().getPlayerFleet().getFleetData().getMembersListCopy().get(27));
             }
             */
+            int enemyCount = 0;
             for (ShipAPI s : shipList) {
+                if (s.getOwner()==1) {
+                    enemyCount++;
+                }
                 //如果船存活
                 if (!s.isFighter()&&s.isAlive()) {
                     if (!(engine.isSimulation() || engine.isMission())) {
@@ -766,6 +779,14 @@ public class RC_MonsterBallEveryFrameCombatPlugin implements EveryFrameCombatPlu
             {
                 //先移动到屏幕外面然后炸掉
                 engine.removeObject(r);
+            }
+            if (enemyCount==0) {
+                enemyTimer+=amount;
+            }
+            if (enemyTimer>10) {
+                CombatFleetManagerAPI manager = engine.getFleetManager(FleetSide.ENEMY);
+                CombatTaskManagerAPI task = manager.getTaskManager(false);
+                task.orderFullRetreat();
             }
         }
         catch (Exception e)

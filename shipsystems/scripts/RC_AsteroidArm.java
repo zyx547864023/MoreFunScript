@@ -3,18 +3,39 @@ package real_combat.shipsystems.scripts;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.*;
 import com.fs.starfarer.api.impl.combat.*;
+import com.fs.starfarer.api.util.IntervalUtil;
+import com.sun.javafx.image.BytePixelSetter;
 import org.lazywizard.lazylib.MathUtils;
 import org.lazywizard.lazylib.VectorUtils;
+import org.lazywizard.lazylib.combat.AIUtils;
+import org.lazywizard.lazylib.combat.CombatUtils;
 import org.lwjgl.util.vector.Vector2f;
+import real_combat.entity.RC_AnchoredEntity;
 
 import java.util.*;
 import java.util.List;
 
+/**
+ * 每一个陨石有三个状态
+ *
+ * 脚抖动 获取最近的陨石移动到 船和模块夹角的位置前方 然后发射 移动速度和chargeup相关 发射速度1000
+ *
+ * 重写逻辑
+ * 在外面 拉进圈
+ * 到圈内 虹吸旋转
+ * 吸进来甩出去吸进来
+ * 相对位置固定
+ * 一部分转圈
+ */
+
 public class RC_AsteroidArm extends BaseShipSystemScript {
+    protected IntervalUtil tracker = new IntervalUtil(5f, 6f);
     private final static String ID = "RC_AsteroidArm";
+    private final static String RC_AnchoredEntity = "RC_AnchoredEntity";
     private final static String IS_ON = "IS_ON";
     private final static String IS_SET = "IS_SET";
     private final static String WHO_CATCH = "WHO_CATCH";
+    private final static String STATUS = "STATUS";
     private static float maxSpeed = 10f;
     private static float minSpeed = 1f;
     private boolean init = false;
@@ -30,7 +51,7 @@ public class RC_AsteroidArm extends BaseShipSystemScript {
         }
         try {
             ship.setCustomData(ID+IS_ON,true);
-            ship.getMutableStats().getFluxDissipation().modifyPercent(ID,100);
+            //ship.getMutableStats().getFluxDissipation().modifyPercent(ID,100);
             ship.getMutableStats().getFighterRefitTimeMult().modifyPercent(ID,-100);
             if (!init) {
                 init = true;
@@ -52,7 +73,7 @@ public class RC_AsteroidArm extends BaseShipSystemScript {
         }
         try {
             ship.setCustomData(ID+IS_ON,false);
-            ship.getMutableStats().getFluxDissipation().unmodifyPercent(ID);
+            //ship.getMutableStats().getFluxDissipation().unmodifyPercent(ID);
             ship.getMutableStats().getFighterRefitTimeMult().unmodifyPercent(ID);
         }
         catch (Exception e)
@@ -96,22 +117,33 @@ public class RC_AsteroidArm extends BaseShipSystemScript {
                         Vector2f shipLocation = ship.getLocation();
                         float shipToHulkAngle = VectorUtils.getAngle(shipLocation, hulkLocation);
                         //h.setMass(h.getMass()*100);
-                        h.getVelocity().set(MathUtils.getPoint(new Vector2f(0, 0), maxSpeed * 10000, shipToHulkAngle));
+                        h.getVelocity().set(MathUtils.getPoint(new Vector2f(0, 0), maxSpeed*100, shipToHulkAngle));
+                        float distance = MathUtils.getDistance(ship,h);
+                        if (CollisionClass.NONE.equals(h.getCollisionClass())&&distance>ship.getCollisionRadius()*2){
+                            h.setCollisionClass(CollisionClass.ASTEROID);
+                        }
                     }
                     h.getCustomData().remove(WHO_CATCH);
                 }
                 hulkList.clear();
                 return;
             }
+            tracker.advance(amount);
+            if (tracker.intervalElapsed()) {
+                //int size, float x, float y, float dx, float dy
+                Vector2f spawnPonit = MathUtils.getRandomPointInCircle(ship.getLocation(), 0);
+                Vector2f spawnVelocity = MathUtils.getRandomPointInCircle(new Vector2f(0, 0), ship.getCollisionRadius() / 4);
+                CombatEntityAPI asteroid = engine.spawnAsteroid(MathUtils.getRandomNumberInRange(0, 3), spawnPonit.x, spawnPonit.y, spawnVelocity.x, spawnVelocity.y);
+                asteroid.setCollisionClass(CollisionClass.NONE);
+            }
             //搜寻船周围的残骸和陨石
-            for(ShipAPI s:engine.getShips()){
-                if(s.isHulk()) {
-                    giveSpeed(s);
+            for (ShipAPI s : engine.getShips()) {
+                if (s.isHulk()) {
+                    giveSpeed(s, amount);
                 }
             }
-            for(CombatEntityAPI a:engine.getAsteroids())
-            {
-                giveSpeed(a);
+            for (CombatEntityAPI a : engine.getAsteroids()) {
+                giveSpeed(a, amount);
             }
         }
 
@@ -142,17 +174,18 @@ public class RC_AsteroidArm extends BaseShipSystemScript {
             return new TwoAngle(leftAngle,rightAngle);
         }
 
-        public void giveSpeed(CombatEntityAPI s){
+        public void giveSpeed(CombatEntityAPI s, float amount){
             Vector2f shipLocation = ship.getLocation();
             Vector2f hulkLocation = s.getLocation();
             float shipToHulkAngle = VectorUtils.getAngle(shipLocation,hulkLocation);
             float hulkToshipAngle = VectorUtils.getAngle(hulkLocation,shipLocation);
             //获取完整距离
             float distance = MathUtils.getDistance(ship,s);
-            float nowSpeed = maxSpeed*distance/ship.getCollisionRadius()+minSpeed*100;
+            float nowSpeed = maxSpeed*distance/ship.getCollisionRadius()+minSpeed*10;
+            //float nowSpeed = distance/ship.getCollisionRadius()+minSpeed*10;
             //间距在一个半径内0.5半径外
-            if(distance<ship.getCollisionRadius()*100
-                    &&distance>=ship.getCollisionRadius()*1.5
+            if(distance<ship.getCollisionRadius()*10
+                    &&distance>=ship.getCollisionRadius()*0.25
             )
             {
                 hulkList.remove(s);
@@ -183,20 +216,37 @@ public class RC_AsteroidArm extends BaseShipSystemScript {
                         notIn = false;
                     }
                 }
-                 */
+                */
                 if(notIn)
                 {
                     Map<String, Object> customData = s.getCustomData();
                     if (customData!=null) {
-                        ShipAPI whoCatch = (ShipAPI) customData.get(s + WHO_CATCH);
+                        ShipAPI whoCatch = (ShipAPI) customData.get(WHO_CATCH);
                         try {
                             if (whoCatch == null) {
                                 s.setCustomData(WHO_CATCH, ship);
                             }
-                            if (ship.equals(customData.get(WHO_CATCH))) {
+                            if (ship.equals(whoCatch)) {
                                 //向内移动
                                 Vector2f newSpeed = MathUtils.getPoint(new Vector2f(0, 0), nowSpeed, hulkToshipAngle);
                                 s.getVelocity().set(newSpeed);
+                                if (s.getCustomData().get(ID+STATUS)==null) {
+                                    if (MathUtils.getRandomNumberInRange(0,2)==0) {
+                                        s.setCustomData(ID+STATUS,"OUT");
+                                    }
+                                    else {
+                                        s.setCustomData(ID+STATUS,"IN");
+                                    }
+                                }
+                                s.setCollisionClass(CollisionClass.ASTEROID);
+                                for (DamagingProjectileAPI p:engine.getProjectiles()) {
+                                    if (ship.getOwner() == p.getOwner()) {
+                                        if (p.getCollisionRadius() > MathUtils.getDistance(p, s)||MathUtils.getDistance(p, s)==0) {
+                                            s.setCollisionClass(CollisionClass.NONE);
+                                            break;
+                                        }
+                                    }
+                                }
                             }
                         } catch (Exception e) {
                             Global.getLogger(this.getClass()).info(e);
@@ -205,12 +255,22 @@ public class RC_AsteroidArm extends BaseShipSystemScript {
                 }
             }
             //只有在内环有相切速度
-            else if(distance<ship.getCollisionRadius()*1.5){
+            else if (distance<ship.getCollisionRadius()*0.25) {
+                Map<String, Object> customData = s.getCustomData();
+                if (customData!=null) {
+                    try {
+                        if (!ship.equals(customData.get(WHO_CATCH))) {
+                            return;
+                        }
+                    } catch (Exception e) {
+                        Global.getLogger(this.getClass()).info(e);
+                    }
+                }
                 //将所有在内环里面的东西加入List
                 if(hulkList.indexOf(s)==-1)
                 {
                     hulkList.add(s);
-                    Map<String, Object> customData = s.getCustomData();
+                    customData = s.getCustomData();
                     if(customData.get(ID+IS_SET)==null)
                     {
                         s.setCustomData(ID+IS_SET,true);
@@ -218,20 +278,35 @@ public class RC_AsteroidArm extends BaseShipSystemScript {
                         //s.setMass(s.getMass()*3);
                     }
                 }
-                //越外围给越多相切速度
-                //获取相切速度方向
-                float newAngle = MathUtils.clampAngle(hulkToshipAngle-90);
-                s.getVelocity().set(ship.getVelocity());
-                float addAngle = 0.1f;
-                addAngle = ship.getCollisionRadius()*2/distance;
-                if(addAngle>1)
-                {
-                    addAngle = 1f;
+                if (s.getCustomData().get(ID+STATUS)=="IN") {
+                    s.setCollisionClass(CollisionClass.NONE);
+                    //记录现在的位置
+                    RC_AnchoredEntity anchoredEntity = new RC_AnchoredEntity(ship,new Vector2f(s.getLocation()),hulkToshipAngle);
+                    if (s.getCustomData().get(ID+RC_AnchoredEntity)!=null){
+                        anchoredEntity = (RC_AnchoredEntity)s.getCustomData().get(ID+RC_AnchoredEntity);
+                    }
+                    //s.getLocation().set(anchoredEntity.getLocation());
+                    //s.getVelocity().set(MathUtils.getPoint(new Vector2f(0,0),nowSpeed,VectorUtils.getAngle(s.getLocation(),anchoredEntity.getLocation())));
+                    if (distance>=ship.getCollisionRadius()*0.15) {
+                        s.getVelocity().set(MathUtils.getPoint(new Vector2f(0, 0), distance, hulkToshipAngle));
+                    }
                 }
-                //越远转的越慢
-                s.getLocation().set(MathUtils.getPointOnCircumference(shipLocation,distance+s.getCollisionRadius()+ship.getCollisionRadius(),
-                        MathUtils.clampAngle(shipToHulkAngle+addAngle)
-                ));
+                else {
+                    s.getVelocity().set(ship.getVelocity());
+                    //越远转的越慢
+                    s.getLocation().set(MathUtils.getPointOnCircumference(shipLocation,distance+s.getCollisionRadius()+ship.getCollisionRadius(),
+                            MathUtils.clampAngle(shipToHulkAngle+0.5f)
+                    ));
+                    s.setCollisionClass(CollisionClass.ASTEROID);
+                    for (DamagingProjectileAPI p:engine.getProjectiles()) {
+                        if (ship.getOwner() == p.getOwner()) {
+                            if (p.getCollisionRadius() > MathUtils.getDistance(p, s)||MathUtils.getDistance(p, s)==0) {
+                                s.setCollisionClass(CollisionClass.NONE);
+                                break;
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -245,7 +320,7 @@ public class RC_AsteroidArm extends BaseShipSystemScript {
 
         @Override
         public float getRenderRadius() {
-            return 1000000f;
+            return 0f;
         }
 
         @Override

@@ -5,9 +5,10 @@ import org.lazywizard.lazylib.MathUtils;
 import org.lwjgl.util.vector.Vector2f;
 
 import java.util.List;
+import java.util.Map;
 
 public class RC_AsteroidArmAI implements ShipSystemAIScript {
-
+    private final static String WHO_SHOOT = "WHO_SHOOT";
     private CombatEngineAPI engine;
     private ShipAPI ship;
     float timer;
@@ -23,6 +24,7 @@ public class RC_AsteroidArmAI implements ShipSystemAIScript {
     @Override
     public void advance(float amount, Vector2f missileDangerDir, Vector2f collisionDangerDir, ShipAPI target) {
         //如果武器或引擎坏了
+        /*
         boolean isWeaponOrEngineDisabled = false;
         List<ShipEngineControllerAPI.ShipEngineAPI> shipEngines = ship.getEngineController().getShipEngines();
         for (int e = 0; e < shipEngines.size(); e++) {
@@ -61,6 +63,7 @@ public class RC_AsteroidArmAI implements ShipSystemAIScript {
             float range = MathUtils.getDistance(ship, s);
             if (range<=ship.getCollisionRadius()*6&&s.getOwner()!=ship.getOwner()&&s.isAlive()&!s.isFighter()) {
                 isNoEnemy = false;
+                count++;
                 break;
             }
         }
@@ -68,23 +71,35 @@ public class RC_AsteroidArmAI implements ShipSystemAIScript {
         if (ship.getCurrFlux() > ship.getMaxFlux() / 2) {
             isFlux = true;
         }
+        */
+        if(ship.getSystem().isActive()&&ship.getCurrFlux() > ship.getMaxFlux() * 0.8f)
+        {
+            if (ship.getShield()!=null) {
+                if (ship.getShield().isOn()) {
+                    ship.giveCommand(ShipCommand.TOGGLE_SHIELD_OR_PHASE_CLOAK,null,0);
+                }
+            }
+            return;
+        }
+        //在范围内有陨石
+        int count = 0;
+        for (CombatEntityAPI a : engine.getAsteroids()) {
+            float distance = MathUtils.getDistance(ship, a);
+            Map<String, Object> customData = a.getCustomData();
+            if (customData != null) {
+                if (customData.get(WHO_SHOOT) == null&&distance < ship.getCollisionRadius() * 10f) {
+                    count++;
+                }
+            }
+        }
         //
+        if (count<=5&&ship.areAnyEnemiesInRange()) {
+            ship.giveCommand(ShipCommand.VENT_FLUX,null,0);
+            //ship.getSystem().deactivate();
+            return;
+        }
         if (!ship.getSystem().isActive()&&!ship.getSystem().isStateActive()&&!ship.getSystem().isCoolingDown()&&!ship.getSystem().isChargeup()&&!ship.getSystem().isChargedown()) {
             ship.useSystem();
-            /*
-            if (isWeaponOrEngineDisabled||isProjectileMany||isFlux||!isNoEnemy) {
-                ship.useSystem();
-            }
-            else {
-                //ship.giveCommand(ShipCommand.VENT_FLUX,null,0);
-            }
-             */
         }
-        /*
-        if(ship.getSystem().isActive()&&ship.getCurrFlux() < ship.getMaxFlux() / 4&&isNoEnemy)
-        {
-            ship.giveCommand(ShipCommand.VENT_FLUX,null,0);
-        }
-         */
     }
 }

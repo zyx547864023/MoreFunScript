@@ -29,7 +29,8 @@ public class RC_LightsaberEffect implements BeamEffectPlugin {
 			Vector2f shipV = ship.getVelocity();
 			Vector2f targetV = target.getVelocity();
 			float difference = Vector2f.sub(shipV, targetV, null).length();
-			beam.getDamage().setDamage(beam.getDamage().getBaseDamage()+difference*amount);
+			float dv = Math.abs(ship.getAngularVelocity() - target.getAngularVelocity());
+			beam.getDamage().setDamage(beam.getDamage().getBaseDamage()+(difference+dv)*amount);
 		}
 	}
 }

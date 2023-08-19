@@ -27,7 +27,7 @@ public class RC_ComboEveryFrameCombatPlugin implements EveryFrameCombatPlugin {
 	private static int listeningKey = -1;
 	private static boolean initialized = false;
 	private static final String SETTINGS_FILE = "KEY.ini";
-	private static final String MOD_ID = "real_combat";
+	private static final String MOD_ID = "MoreFun";
 	private CombatEngineAPI engine = Global.getCombatEngine();
 
 	public static void reloadSettings() throws IOException, JSONException {

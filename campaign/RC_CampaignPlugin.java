@@ -21,7 +21,7 @@ public class RC_CampaignPlugin extends BaseCampaignPlugin {
     @Override
     public PluginPick<InteractionDialogPlugin> pickInteractionDialogPlugin(SectorEntityToken interactionTarget) {
         if ((interactionTarget instanceof CampaignFleetAPI) && interactionTarget.getFaction().getId().contentEquals("famous_bounty")) {
-            return new PluginPick<InteractionDialogPlugin>(new RC_IBBInteractionDialogPlugin(), PickPriority.HIGHEST);
+            return new PluginPick<InteractionDialogPlugin>(new RC_InteractionDialogPlugin(), PickPriority.HIGHEST);
         }
         return null;
     }

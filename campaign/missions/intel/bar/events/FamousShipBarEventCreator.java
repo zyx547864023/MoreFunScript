@@ -14,7 +14,8 @@ public class FamousShipBarEventCreator extends BaseBarEventCreator {
 
 	@Override
 	public float getBarEventActiveDuration() {
-		return 5f + (float) Math.random() * 5f;
+		//return 5f + (float) Math.random() * 5f;
+		return 0f;
 	}
 
 	@Override

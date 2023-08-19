@@ -1,6 +1,7 @@
 package real_combat.hullmods;
 
 import com.fs.starfarer.api.Global;
+import com.fs.starfarer.api.campaign.SectorEntityToken;
 import com.fs.starfarer.api.characters.MutableCharacterStatsAPI;
 import com.fs.starfarer.api.combat.*;
 import com.fs.starfarer.api.combat.ShipAPI.HullSize;
@@ -8,6 +9,11 @@ import com.fs.starfarer.api.fleet.FleetMemberAPI;
 import com.fs.starfarer.api.impl.campaign.ids.HullMods;
 import com.fs.starfarer.api.impl.campaign.ids.Stats;
 import com.fs.starfarer.api.loading.VariantSource;
+import com.fs.starfarer.api.util.Misc;
+import com.fs.starfarer.campaign.CampaignEngine;
+import com.fs.starfarer.campaign.fleet.CampaignFleet;
+import com.fs.starfarer.campaign.ui.intel.OOoO;
+import com.fs.starfarer.campaign.ui.intel.SortablePlanetList;
 import org.lazywizard.lazylib.MathUtils;
 import org.lazywizard.lazylib.VectorUtils;
 import org.lwjgl.opengl.GL11;
@@ -68,6 +74,12 @@ public class RC_TrinityForceCore extends BaseHullMod {
         if(stats.getFleetMember()!=null)
         {
             float deploymentPointsCost = stats.getFleetMember().getHullSpec().getSuppliesPerMonth();
+            float fuel = stats.getFleetMember().getHullSpec().getFuel();
+            float cargo = stats.getFleetMember().getHullSpec().getCargo();
+            float minCrew = stats.getFleetMember().getHullSpec().getMinCrew();
+            float maxCrew = stats.getFleetMember().getHullSpec().getMaxCrew();
+            float suppliesPerMonth = stats.getFleetMember().getHullSpec().getSuppliesPerMonth();
+
             if(stats.getFleetMember().getVariant()!=null)
             {
                 if (stats.getFleetMember().getVariant()!=null) {
@@ -93,6 +105,11 @@ public class RC_TrinityForceCore extends BaseHullMod {
                             }
                             */
                             deploymentPointsCost += variant.getHullSpec().getSuppliesPerMonth();
+                            fuel += variant.getHullSpec().getFuel();
+                            cargo += variant.getHullSpec().getCargo();
+                            minCrew += variant.getHullSpec().getMinCrew();
+                            maxCrew += variant.getHullSpec().getMaxCrew();
+                            suppliesPerMonth += variant.getHullSpec().getSuppliesPerMonth();
                         }
                     }
                     catch (Exception e)
@@ -102,6 +119,12 @@ public class RC_TrinityForceCore extends BaseHullMod {
                 }
             }
             stats.getDynamic().getMod(Stats.DEPLOYMENT_POINTS_MOD).modifyMult(ID, deploymentPointsCost/stats.getFleetMember().getHullSpec().getSuppliesPerMonth());
+            stats.getCargoMod().modifyFlat(id, cargo);
+            stats.getMinCrewMod().modifyFlat(id, minCrew);
+            stats.getMaxCrewMod().modifyFlat(id, maxCrew);
+            stats.getFuelMod().modifyFlat(id, fuel);
+            stats.getSuppliesPerMonth().modifyFlat(id, suppliesPerMonth);
+            //stats.getFuelUseMod().modifyFlat(id, mod);
         }
     }
 

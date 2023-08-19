@@ -23,6 +23,8 @@ public class FairyJump extends HubMissionWithBarEvent {
 	
 	@Override
 	protected boolean create(MarketAPI createdAt, boolean barEvent) {
+		return false;
+		/*
 		try {
 			if (barEvent) {
 				findOrCreateGiver(createdAt, false, false);
@@ -50,7 +52,7 @@ public class FairyJump extends HubMissionWithBarEvent {
 			Global.getLogger(this.getClass()).info(e);
 			return false;
 		}
-
+		*/
 	}
 	
 	protected void updateInteractionDataImpl() {

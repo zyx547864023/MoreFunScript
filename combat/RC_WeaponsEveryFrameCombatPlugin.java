@@ -2,22 +2,14 @@ package real_combat.combat;
 
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.*;
-import com.fs.starfarer.api.combat.listeners.DamageDealtModifier;
-import com.fs.starfarer.api.combat.listeners.WeaponRangeModifier;
 import com.fs.starfarer.api.input.InputEventAPI;
-import org.lwjgl.util.vector.Vector2f;
 
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 只用于加载渲染
  */
 public class RC_WeaponsEveryFrameCombatPlugin implements EveryFrameCombatPlugin {
-	private final static String IS_CATCH = "IS_CATCH";
 	private CombatEngineAPI engine = Global.getCombatEngine();
 	@Override
 	public void processInputPreCoreControls(float amount, List<InputEventAPI> events) {
@@ -74,5 +66,6 @@ public class RC_WeaponsEveryFrameCombatPlugin implements EveryFrameCombatPlugin 
 		engine.addLayeredRenderingPlugin(new RC_ElectromagnetismLayeredRenderingPlugin());
 		engine.addLayeredRenderingPlugin(new RC_RepairCombatLayeredRenderingPlugin());
 		engine.addLayeredRenderingPlugin(new RC_HyperionEngineLayeredRenderingPlugin());
+		engine.addLayeredRenderingPlugin(new RC_StrongAcidCannonLayeredRenderingPlugin());
 	}
 }

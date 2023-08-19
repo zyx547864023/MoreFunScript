@@ -213,12 +213,10 @@ public class RC_ComboSystem extends BaseShipSystemScript {
         if (ship == null) {
             return false;
         }
-        /*
         if (!ship.getId().equals(engine.getPlayerShip().getId()))
         {
             return false;
         }
-        */
         try {
             String skill = (String) ship.getCustomData().get("Combo");
             if(skill==null)
