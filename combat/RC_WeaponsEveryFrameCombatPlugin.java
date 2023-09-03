@@ -17,8 +17,8 @@ public class RC_WeaponsEveryFrameCombatPlugin implements EveryFrameCombatPlugin 
 	}
 	@Override
 	public void advance(float amount, List<InputEventAPI> events) {
-		if (engine==null) {return;}
-		if (engine.isPaused()) {return;}
+		//if (engine==null) {return;}
+		//if (engine.isPaused()) {return;}
 		/*
 		if(engine.getCustomData().get(IS_CATCH)!=null)
 		{
@@ -67,5 +67,6 @@ public class RC_WeaponsEveryFrameCombatPlugin implements EveryFrameCombatPlugin 
 		engine.addLayeredRenderingPlugin(new RC_RepairCombatLayeredRenderingPlugin());
 		engine.addLayeredRenderingPlugin(new RC_HyperionEngineLayeredRenderingPlugin());
 		engine.addLayeredRenderingPlugin(new RC_StrongAcidCannonLayeredRenderingPlugin());
+		engine.addLayeredRenderingPlugin(new RC_MirrorLayeredRenderingPlugin());
 	}
 }

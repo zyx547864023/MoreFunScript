@@ -213,7 +213,7 @@ public class RC_MonsterBallEveryFrameCombatPlugin implements EveryFrameCombatPlu
         float mult = getMultWithOutMarines(s);
         float crew = getCrew(s);
         float rank = 1;
-        if (marineData!=null) {
+        if (marineData!=null&&s.getOwner() == 1) {
             rank += marineData.getRank().threshold;
         }
         //陆战队船员数量
@@ -615,16 +615,16 @@ public class RC_MonsterBallEveryFrameCombatPlugin implements EveryFrameCombatPlu
                         stats.getTurnAcceleration().modifyPercent(ID,percent);
                         stats.getAcceleration().modifyPercent(ID,percent);
 
-                        stats.getBallisticAmmoRegenMult().modifyPercent(ID,percent);
-                        stats.getEnergyAmmoRegenMult().modifyPercent(ID,percent);
-                        stats.getMissileAmmoRegenMult().modifyPercent(ID,percent);
+                        stats.getBallisticAmmoRegenMult().modifyPercent(ID,-percent);
+                        stats.getEnergyAmmoRegenMult().modifyPercent(ID,-percent);
+                        stats.getMissileAmmoRegenMult().modifyPercent(ID,-percent);
 
-                        stats.getCombatEngineRepairTimeMult().modifyPercent(ID,percent);
-                        stats.getCombatWeaponRepairTimeMult().modifyPercent(ID,percent);
+                        stats.getCombatEngineRepairTimeMult().modifyPercent(ID,-percent);
+                        stats.getCombatWeaponRepairTimeMult().modifyPercent(ID,-percent);
 
                         stats.getShieldTurnRateMult().modifyPercent(ID,percent);
 
-                        stats.getFighterRefitTimeMult().modifyPercent(ID,percent);
+                        stats.getFighterRefitTimeMult().modifyPercent(ID,-percent);
                     }
                     else
                     {

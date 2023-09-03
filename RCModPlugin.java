@@ -16,6 +16,7 @@ import real_combat.campaign.RC_CampaignPlugin;
 //import real_combat.campaign.missions.intel.bar.events.FamousShipBarEventCreator;
 import real_combat.combat.RC_ComboEveryFrameCombatPlugin;
 import real_combat.combat.RC_MonsterBallEveryFrameCombatPlugin;
+import real_combat.combat.RC_SmartAIEveryFrameCombatPlugin;
 import real_combat.weapons.ai.RC_MonsterBallAI;
 import real_combat.weapons.ai.RC_MonsterBallShoterAI;
 
@@ -62,6 +63,11 @@ public class RCModPlugin extends BaseModPlugin {
         }
         try {
             RC_MonsterBallEveryFrameCombatPlugin.reloadSettings();
+        } catch (Exception e) {
+            Global.getLogger(RCModPlugin.class).log(Level.ERROR, "ComboKey load failed: " + e.getMessage());
+        }
+        try {
+            RC_SmartAIEveryFrameCombatPlugin.reloadSettings();
         } catch (Exception e) {
             Global.getLogger(RCModPlugin.class).log(Level.ERROR, "ComboKey load failed: " + e.getMessage());
         }

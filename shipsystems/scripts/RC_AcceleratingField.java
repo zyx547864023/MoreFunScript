@@ -10,10 +10,8 @@ import org.lwjgl.util.vector.Vector2f;
 import real_combat.hullmods.RC_SpiderCore;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.EnumSet;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 每一个陨石有三个状态
@@ -53,7 +51,7 @@ public class RC_AcceleratingField extends BaseShipSystemScript {
                 init = true;
                 count++;
                 Global.getCombatEngine().addLayeredRenderingPlugin(new RC_AcceleratingFieldCombatPlugin(ship));
-                Global.getLogger(this.getClass()).info("count" + count);
+                Global.getLogger(this.getClass()).info("addLayeredRenderingPlugincount" + count);
             }
         }
         catch (Exception e)
@@ -104,6 +102,8 @@ public class RC_AcceleratingField extends BaseShipSystemScript {
                if (customData.get(WHO_CATCH) != null&&customData.get(WHO_SHOOT) == null&&distance < ship.getCollisionRadius() * 1.5f) {
                    ShipAPI target = motherShip.getShipTarget();
                    if (target==null) {
+                       target = ship.getShipTarget();
+                       /*
                        float minDistance = motherShip.getCollisionRadius()*10f;
                        List<ShipAPI> enemyList = AIUtils.getNearbyEnemies(motherShip,minDistance);
                        for (ShipAPI e :enemyList) {
@@ -113,11 +113,12 @@ public class RC_AcceleratingField extends BaseShipSystemScript {
                                target = e;
                            }
                        }
+                        */
                        if (target==null) {
                            return false;
                        }
                    }
-                   if (target.isFighter()) {
+                   if (!target.isAlive()||target.isFighter()||target.getOwner()==ship.getOwner()) {
                        return false;
                    }
                    return true;
@@ -142,7 +143,7 @@ public class RC_AcceleratingField extends BaseShipSystemScript {
             if (engine.isPaused()) {return;}
             if (!ship.isAlive()) {return;}
 
-            if (!isShoot) {
+            if (!isShoot&&proj==null) {
                 //获取最近的陨石
                 float minDistance = ship.getCollisionRadius()*1.5f;
                 for(CombatEntityAPI a:engine.getAsteroids())
@@ -151,35 +152,60 @@ public class RC_AcceleratingField extends BaseShipSystemScript {
                     if (customData!=null) {
                         ShipAPI whoCatch = (ShipAPI) customData.get(WHO_CATCH);
                         ShipAPI whoShoot = (ShipAPI) customData.get(WHO_SHOOT);
-                        if (whoCatch!=null&&whoShoot==null) {
+                        if (customData.get("RC_AsteroidArmSTATUS")==null) {
+                            continue;
+                        }
+                        String status =  customData.get("RC_AsteroidArmSTATUS").toString();
+                        if (whoCatch!=null&&whoShoot==null&&!"SHOOT".equals(status)) {
                             float distance = MathUtils.getDistance(ship,a);
                             if (distance < minDistance && whoCatch.equals(ship.getCustomData().get(RC_SpiderCore.ID))) {
                                 minDistance = distance;
                                 proj = a;
+                                if (minDistance==0) {
+                                    proj.setCustomData(WHO_CATCH,ship);
+                                    break;
+                                }
                             }
                         }
                     }
                 }
             }
             if (proj!=null&&!isShoot) {
-                proj.removeCustomData("RC_AsteroidArmSTATUS");
                 proj.setCollisionClass(CollisionClass.NONE);
-                float distance = MathUtils.getDistance(ship,proj);
-                if (distance>ship.getCollisionRadius()) {
-                    proj.getVelocity().set(new Vector2f((ship.getLocation().x - proj.getLocation().x), (ship.getLocation().y - proj.getLocation().y)));
+                float distance = MathUtils.getDistance(ship.getLocation(),proj.getLocation());
+                if (distance>proj.getCollisionRadius()) {
+                    proj.setCustomData("RC_AsteroidArmSTATUS","SET");
+                    proj.getVelocity().set(MathUtils.getPoint(new Vector2f(0,0),distance, VectorUtils.getAngle(proj.getLocation(),ship.getLocation())));
                 }
                 else {
                     Vector2f hulkLocation = proj.getLocation();
-                    ShipAPI target = motherShip.getShipTarget();
+                    ShipAPI target = null;//motherShip.getShipTarget();
+                    /*
+                    if (target!=null) {
+                        if (target.getFluxTracker().getFluxLevel()>=0.5||target.getHitpoints()/target.getMaxHitpoints()<=0.5f||target.getFluxTracker().isOverloaded()||target.getCurrentCR()<=0.4f||target.getFluxTracker().isVenting()) {
+                            target = null;
+                        }
+                    }
+                     */
                     if (target==null) {
-                        float minDistance = motherShip.getCollisionRadius()*10f;
-                        List<ShipAPI> enemyList = AIUtils.getNearbyEnemies(motherShip,minDistance);
+                        float maxDistance = 0;
+                        float range = motherShip.getCollisionRadius()*10f;
+                        List<ShipAPI> enemyList = AIUtils.getNearbyEnemies(motherShip,range);
                         for (ShipAPI e :enemyList) {
+                            if (e.getFluxTracker().getFluxLevel()>=0.7||e.getHitpoints()/e.getMaxHitpoints()<=0.3f||e.getFluxTracker().isOverloaded()||e.getCurrentCR()<=0.4f||e.getFluxTracker().isVenting()||e.isRetreating()) {
+                                continue;
+                            }
+                            if (e.isAlive()&&!e.isFighter()&&!e.equals(motherShip.getShipTarget())) {
+                                target = e;
+                                break;
+                            }
+                            /*
                             float newdistance = MathUtils.getDistance(motherShip,e);
-                            if (distance<minDistance&&!e.isFighter()){
-                                minDistance = newdistance;
+                            if (newdistance>maxDistance&&!e.isFighter()&&!e.equals(motherShip.getShipTarget())){
+                                maxDistance = newdistance;
                                 target = e;
                             }
+                             */
                         }
                         if (target==null) {
                             return;
@@ -188,16 +214,23 @@ public class RC_AcceleratingField extends BaseShipSystemScript {
                     Vector2f targetLocation = target.getLocation();
                     float shipToHulkAngle = VectorUtils.getAngle(hulkLocation, targetLocation);
                     //Global.getLogger(this.getClass()).info(ID+"||"+proj);
-                    proj.setMass(proj.getMass()*3);
-                    proj.getVelocity().set(MathUtils.getPoint(new Vector2f(0, 0), maxSpeed, shipToHulkAngle));
-                    //proj.getCustomData().remove(WHO_CATCH);
-                    proj.setCustomData(WHO_CATCH, ship);
-                    proj.setCustomData(WHO_SHOOT, ship);
 
-                    float maxRangeBonus = 25f;
-                    ship.setJitterUnder(this, new Color(255, 165, 90, 55), 1, 11, 0f, 3f + maxRangeBonus);
-                    ship.setJitter(this, new Color(255, 165, 90, 55), 1, 4, 0f, 0 + maxRangeBonus);
-                    isShoot = true;
+                    String status =  proj.getCustomData().get("RC_AsteroidArmSTATUS").toString();
+                    if (proj.getCustomData().get("RC_AsteroidArmSTATUS")==null) {
+                        return;
+                    }
+                    if (!"SHOOT".equals(status)) {
+                        proj.setMass(proj.getMass()*3);
+                        proj.getVelocity().set(MathUtils.getPoint(new Vector2f(0, 0), maxSpeed, shipToHulkAngle));
+                        //proj.getCustomData().remove(WHO_CATCH);
+                        proj.setCustomData(WHO_CATCH, ship);
+                        proj.setCustomData(WHO_SHOOT, ship);
+                        proj.setCustomData("RC_AsteroidArmSTATUS","SHOOT");
+                        float maxRangeBonus = 25f;
+                        ship.setJitterUnder(this, new Color(255, 165, 90, 55), 1, 11, 0f, 3f + maxRangeBonus);
+                        ship.setJitter(this, new Color(255, 165, 90, 55), 1, 4, 0f, 0 + maxRangeBonus);
+                        isShoot = true;
+                    }
                 }
             }
         }
@@ -207,8 +240,7 @@ public class RC_AcceleratingField extends BaseShipSystemScript {
         }
 
         public void init(CombatEngineAPI engine) {
-            count = 0;
-            init = false;
+
         }
 
         @Override
@@ -228,13 +260,16 @@ public class RC_AcceleratingField extends BaseShipSystemScript {
 
         @Override
         public boolean isExpired() {
-            //发射之后删除
-            if (proj!=null&&motherShip!=null) {
-                if (MathUtils.getDistance(motherShip, proj) > motherShip.getCollisionRadius()*0.25f) {
-                    proj.setCollisionClass(CollisionClass.ASTEROID);
-                    count--;
-                    Global.getLogger(this.getClass()).info("count"+count);
-                    return isShoot;
+            if (isShoot) {
+                //发射之后删除
+                if (proj != null && motherShip != null) {
+                    if (MathUtils.getDistance(motherShip, proj) > motherShip.getCollisionRadius()) {
+                        proj.setCollisionClass(CollisionClass.ASTEROID);
+                        proj.removeCustomData("RC_AsteroidArmSTATUS");
+                        count--;
+                        Global.getLogger(this.getClass()).info("isExpiredcount" + count);
+                        return isShoot;
+                    }
                 }
             }
             return false;

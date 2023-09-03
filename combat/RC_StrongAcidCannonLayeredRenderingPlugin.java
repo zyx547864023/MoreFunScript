@@ -25,21 +25,19 @@ public class RC_StrongAcidCannonLayeredRenderingPlugin extends BaseCombatLayered
         if (engine==null) {return;}
         if (engine.isPaused()) {return;}
         List<DamagingProjectileAPI> projList = new ArrayList<>();
-        for (ShipAPI s:engine.getShips()) {
-            if (s.getCustomData().get(ID)!=null) {
-                List<DamagingProjectileAPI> newProjList = (List<DamagingProjectileAPI>)s.getCustomData().get(ID);
-                List<DamagingProjectileAPI> removeList = new ArrayList<>();
-                for (DamagingProjectileAPI n:newProjList) {
-                    if(n.isFading()||n.isExpired()) {
-                        removeList.add(n);
-                    }
-                    else {
-                        projList.add(n);
-                    }
+        if (engine.getCustomData().get(ID)!=null) {
+            List<DamagingProjectileAPI> newProjList = (List<DamagingProjectileAPI>)engine.getCustomData().get(ID);
+            List<DamagingProjectileAPI> removeList = new ArrayList<>();
+            for (DamagingProjectileAPI n:newProjList) {
+                if(n.isFading()||n.isExpired()) {
+                    removeList.add(n);
                 }
-                newProjList.removeAll(removeList);
-                s.setCustomData(ID,newProjList);
+                else {
+                    projList.add(n);
+                }
             }
+            newProjList.removeAll(removeList);
+            engine.getCustomData().put(ID,newProjList);
         }
         for (DamagingProjectileAPI p:projList) {
             for (int i = 0; i < 7; i++) {

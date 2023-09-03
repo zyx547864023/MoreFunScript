@@ -23,6 +23,7 @@ import com.fs.starfarer.api.ui.TooltipMakerAPI;
 import com.fs.starfarer.api.util.CountingMap;
 import com.fs.starfarer.api.util.Misc;
 import com.fs.starfarer.api.util.Misc.Token;
+import org.lazywizard.lazylib.MathUtils;
 
 import java.awt.*;
 import java.util.*;
@@ -73,6 +74,7 @@ public class RC_ChangeHyperionPlus extends HubMissionWithBarEvent { //implements
 		setNoAbandon();
 		//经过多少天从这个状态到另一个状态
 		connectWithDaysElapsed(Stage.WAITING, Stage.DELIVERED, PROD_DAYS);
+		connectWithCustomCondition(Stage.WAITING, Stage.FAILED, new HasIndustryConditionChecker(market));
 		//connectWithDaysElapsed(Stage.WAITING, Stage.DELIVERED, 1f);
 		//set 阶段 On 市场 不文明
 		setStageOnMarketDecivilized(Stage.FAILED, market);
@@ -98,7 +100,7 @@ public class RC_ChangeHyperionPlus extends HubMissionWithBarEvent { //implements
 			FleetMemberAPI conquestL = null;
 			FleetMemberAPI conquestR = null;
 			for (FleetMemberAPI f:playerFleetMembers) {
-				String hullId = f.getHullSpec().getHullId().replace("_default_D","");
+				String hullId = f.getHullSpec().getBaseHullId();//f.getHullSpec().getHullId().replace("_default_D","");
 				if ("hyperion".equals(hullId)&&hyperion==null) {
 					hyperion = f;
 				}
@@ -123,11 +125,15 @@ public class RC_ChangeHyperionPlus extends HubMissionWithBarEvent { //implements
 				//合一个大概出来给玩家看看
 				CampaignFleetAPI ships = Global.getFactory().createEmptyFleet(market.getFactionId(), "temp", true);
 				ships.getFleetData().addFleetMember("hyperion_plus_Hull");
+
 				for (FleetMemberAPI member : ships.getFleetData().getMembersListCopy()) {
 					member.getVariant().setSource(VariantSource.REFIT);
+					member.getVariant().removePermaMod("RC_TrinityForceCore");
+					/*
 					for (String s :hyperion.getVariant().getPermaMods()) {
 						member.getVariant().addPermaMod(s,true);
 					}
+					 */
 					List<String> slotIds = member.getVariant().getModuleSlots();
 					for (int i=0;i<slotIds.size();i++)
 					{
@@ -185,7 +191,7 @@ public class RC_ChangeHyperionPlus extends HubMissionWithBarEvent { //implements
 			FleetMemberAPI conquestL = null;
 			FleetMemberAPI conquestR = null;
 			for (FleetMemberAPI f:playerFleetMembers) {
-				String hullId = f.getHullSpec().getHullId().replace("_default_D","");
+				String hullId = f.getHullSpec().getBaseHullId();//f.getHullSpec().getHullId().replace("_default_D","");
 				if ("hyperion".equals(hullId)&&hyperion==null) {
 					hyperion = f;
 				}
@@ -208,6 +214,7 @@ public class RC_ChangeHyperionPlus extends HubMissionWithBarEvent { //implements
 				FireBest.fire(null, dialog, memoryMap, "RC_ChangeHyperionNeed");
 			}
 			else {
+				setStartingStage(Stage.WAITING);
 				convertProdToCargo(hyperion,onslaught,paragon,conquestL,conquestR,dialog);
 				accept(dialog, memoryMap);
 				FireBest.fire(null, dialog, memoryMap, "RC_ChangeHyperionSuccess");
@@ -240,8 +247,18 @@ public class RC_ChangeHyperionPlus extends HubMissionWithBarEvent { //implements
 		FleetDataAPI fleetData = Global.getSector().getPlayerFleet().getFleetData();
 
 		for (FleetMemberAPI member : ships.getFleetData().getMembersListCopy()) {
+			/*
 			member.getVariant().setSource(VariantSource.REFIT);
+			for (String s :hyperion.getVariant().getPermaMods()) {
+				member.getVariant().addPermaMod(s,true);
+			}
+			 */
+			TextPanelAPI text = dialog.getTextPanel();
+			for (String s :hyperion.getVariant().getPermaMods()) {
+				Global.getSector().getPlayerStats().addStoryPoints(1, text, false);
+			}
 			List<String> slotIds = member.getVariant().getModuleSlots();
+			member.getVariant().setSource(VariantSource.REFIT);
 			for(int i=0;i<slotIds.size();i++)
 			{
 				String s = slotIds.get(i);
@@ -458,6 +475,31 @@ public class RC_ChangeHyperionPlus extends HubMissionWithBarEvent { //implements
 			if (market != null) {
 				RC_ChangeHyperionPlusComplete c = new RC_ChangeHyperionPlusComplete();
 				c.create(market,false);
+			}
+		}
+	}
+
+
+	public class HasIndustryConditionChecker implements ConditionChecker {
+		protected boolean conditionsMet = false;
+		protected MarketAPI market;
+		protected int count = 0;
+		public HasIndustryConditionChecker(MarketAPI market){
+			this.market = market;
+		}
+		public boolean conditionsMet() {
+			doCheck();
+			return conditionsMet;
+		}
+
+		public void doCheck() {
+			if (conditionsMet) return;
+			if (!market.hasIndustry(Industries.ORBITALWORKS)) {
+				conditionsMet = true;
+			}
+			//!market.getPrimaryEntity().isAlive()||!market.getPrimaryEntity().isExpired()||
+			else if (market.getIndustry(Industries.ORBITALWORKS).isDisrupted()) {
+				conditionsMet = true;
 			}
 		}
 	}

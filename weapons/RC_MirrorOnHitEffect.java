@@ -12,7 +12,7 @@ import real_combat.entity.RC_AnchoredEntity;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RC_MirrorOnHitEffect implements OnHitEffectPlugin,EveryFrameWeaponEffectPlugin {
+public class RC_MirrorOnHitEffect implements OnHitEffectPlugin,EveryFrameWeaponEffectPlugin,OnFireEffectPlugin  {
 	private final static String ID="RC_MirrorOnHitEffect";
 	private final static String WEAPON = "mirror";
 	private final static String RANGE = "RANGE";
@@ -22,29 +22,38 @@ public class RC_MirrorOnHitEffect implements OnHitEffectPlugin,EveryFrameWeaponE
 	private final static String POINT = "POINT";
 	public void onHit(DamagingProjectileAPI projectile, CombatEntityAPI target,
 					  Vector2f point, boolean shieldHit, ApplyDamageResultAPI damageResult, CombatEngineAPI engine) {
-		List<CombatEntityAPI> projectileList = new ArrayList<>();
+		if (projectile.isFading()) {
+			return;
+		}
+		List<MirrorProj> projectileList = new ArrayList<>();
 		if (engine.getCustomData().get(ID)!=null) {
-			projectileList = (List<CombatEntityAPI>) engine.getCustomData().get(ID);
+			projectileList = (List<MirrorProj>) engine.getCustomData().get(ID);
+		}
+		float range = projectile.getWeapon().getRange();
+		Vector2f newPoint = projectile.getSpawnLocation();
+		MirrorProj old = null;
+		for (MirrorProj m:projectileList) {
+			if (m.projectile.equals(projectile)) {
+				old = m;
+				range = m.range;
+				newPoint = m.point;
+			}
 		}
 		CombatEntityAPI newprojectile = engine.spawnProjectile(projectile.getSource(), projectile.getWeapon(), projectile.getWeapon().getId(),
-			point, VectorUtils.getAngle(point,projectile.getWeapon().getLocation()), projectile.getSource().getVelocity());
+			point, VectorUtils.getAngle(point,projectile.getWeapon().getFirePoint(0)), new Vector2f(0,0));
 		newprojectile.setCollisionClass(CollisionClass.NONE);
-		newprojectile.setCustomData(ID+STATUS,BACK);
-		newprojectile.setCustomData(ID+POINT,new Vector2f(point));
-		float range = projectile.getWeapon().getRange();
-		if (projectile.getCustomData().get(ID+RANGE)!=null)
-		{
-			range = (Float) projectile.getCustomData().get(ID+RANGE);
-			if (projectile.getCustomData().get(ID+POINT)==null) {
-				range = range - MathUtils.getDistance(point,projectile.getSpawnLocation());
-			}
-			else{
-				range = range - MathUtils.getDistance(point,(Vector2f) projectile.getCustomData().get(ID+POINT));
-			}
+		range = range - MathUtils.getDistance(point,newPoint);
+		if (old==null) {
+			MirrorProj mirrorProj = new MirrorProj(1,0,(DamagingProjectileAPI) newprojectile,BACK,range,new Vector2f(point));
+			projectileList.add(mirrorProj);
+			engine.getCustomData().put(ID,projectileList);
 		}
-		newprojectile.setCustomData(ID+RANGE,range);
-		projectileList.add(newprojectile);
-		engine.getCustomData().put(ID,projectileList);
+		else {
+			old.status = BACK;
+			old.range = range;
+			old.point = new Vector2f(point);
+			old.projectile = (DamagingProjectileAPI) newprojectile;
+		}
 	}
 
 	@Override
@@ -59,16 +68,17 @@ public class RC_MirrorOnHitEffect implements OnHitEffectPlugin,EveryFrameWeaponE
 			return;
 		}
 
-		List<CombatEntityAPI> projectileList = new ArrayList<>();
+		List<MirrorProj> projectileList = new ArrayList<>();
 		if (engine.getCustomData().get(ID)!=null) {
-			projectileList = (List<CombatEntityAPI>) engine.getCustomData().get(ID);
+			projectileList = (List<MirrorProj>) engine.getCustomData().get(ID);
 		}
-		List<CombatEntityAPI> removeList = new ArrayList<>();
-		for (CombatEntityAPI p:projectileList) {
+		List<MirrorProj> removeList = new ArrayList<>();
+		for (MirrorProj p:projectileList) {
+			/*
 			if (!(p instanceof DamagingProjectileAPI)) {
 				continue;
 			}
-			float range = 0;
+			float range = p.range;
 			if (p.getCustomData().get(ID+RANGE)!=null)
 			{
 				range = (Float) p.getCustomData().get(ID+RANGE);
@@ -76,28 +86,69 @@ public class RC_MirrorOnHitEffect implements OnHitEffectPlugin,EveryFrameWeaponE
 			if (p.getCustomData().get(ID+STATUS)==null||p.getCustomData().get(ID+POINT)==null) {
 				return;
 			}
-			if (range<=MathUtils.getDistance(p.getLocation(),(Vector2f) p.getCustomData().get(ID+POINT))) {
-				removeList.add(p);
-				continue;
+			 */
+			p.angle-=amount*1800;
+			if (p.range<=MathUtils.getDistance(p.projectile.getLocation(),p.point)||p.projectile.isFading()) {
+				p.alphaMult-=amount*2;
+				if (p.alphaMult<0) {
+					p.alphaMult=0;
+					removeList.add(p);
+					continue;
+				}
+				/**
+				 * 增加一个飞并且慢慢渐变的尸体
+				 */
 			}
-
-			if (BACK.equals(p.getCustomData().get(ID+STATUS).toString())){
-				p.getVelocity().set(MathUtils.getPoint(new Vector2f(0,0),p.getVelocity().length(),VectorUtils.getAngle(p.getLocation(),((DamagingProjectileAPI) p).getWeapon().getLocation())));
-				if (MathUtils.getDistance(p.getLocation(),((DamagingProjectileAPI) p).getWeapon().getLocation())<p.getCollisionRadius()) {
-					p.getVelocity().set(MathUtils.getPoint(new Vector2f(),p.getVelocity().length(),((DamagingProjectileAPI) p).getWeapon().getCurrAngle()));
-					p.setCollisionClass(CollisionClass.PROJECTILE_FF);
-					p.setCustomData(ID+STATUS,GO);
+			if (BACK.equals(p.status)){
+				if (MathUtils.getDistance(p.projectile.getLocation(),p.projectile.getWeapon().getFirePoint(0))<=10f) {
+					p.projectile.getVelocity().set(MathUtils.getPoint(new Vector2f(0,0),p.projectile.getVelocity().length(),p.projectile.getWeapon().getCurrAngle()));
+					p.projectile.setCollisionClass(CollisionClass.PROJECTILE_FF);
+					p.status = GO;
+					//p.setCustomData(ID+STATUS,GO);
 					//计算剩余距离
-					range = range - MathUtils.getDistance(p.getLocation(),(Vector2f) p.getCustomData().get(ID+POINT));
-					p.setCustomData(ID+RANGE,range);
-					p.setCustomData(ID+POINT,new Vector2f(((DamagingProjectileAPI) p).getWeapon().getLocation()));
+					p.range = p.range - MathUtils.getDistance(p.projectile.getLocation(),p.point);
+					p.projectile.setCustomData(ID+RANGE,p.range );
+					p.projectile.setCustomData(ID+POINT,new Vector2f(p.projectile.getWeapon().getFirePoint(0)));
+				}
+				else {
+					p.projectile.getVelocity().set(MathUtils.getPoint(new Vector2f(0,0),p.projectile.getVelocity().length(),VectorUtils.getAngle(p.projectile.getLocation(),p.projectile.getWeapon().getFirePoint(0))));
 				}
 			}
 		}
-		for (CombatEntityAPI r:removeList) {
+		for (MirrorProj r:removeList) {
 			projectileList.remove(r);
-			engine.removeObject(r);
+			engine.removeObject(r.projectile);
 		}
 		engine.getCustomData().put(ID,projectileList);
+	}
+
+	@Override
+	public void onFire(DamagingProjectileAPI projectile, WeaponAPI weapon, CombatEngineAPI engine) {
+		List<MirrorProj> projectileList = new ArrayList<>();
+		if (engine.getCustomData().get(ID)!=null) {
+			projectileList = (List<MirrorProj>) engine.getCustomData().get(ID);
+		}
+		MirrorProj mirrorProj = new MirrorProj(1,0,(DamagingProjectileAPI) projectile,BACK,weapon.getRange(),projectile.getSpawnLocation());
+		projectileList.add(mirrorProj);
+		engine.getCustomData().put(ID,projectileList);
+	}
+
+	public class MirrorProj{
+		public float alphaMult;
+		public float angle;
+		public DamagingProjectileAPI projectile;
+		public String status;
+		public float range;
+		public Vector2f point;
+		public MirrorProj(float alphaMult,float angle,DamagingProjectileAPI projectile,String status,float range,Vector2f point)
+		{
+			this.alphaMult = alphaMult;
+			this.angle = angle;
+			this.projectile = projectile;
+			this.status = status;
+			this.range = range;
+			this.point = point;
+
+		}
 	}
 }

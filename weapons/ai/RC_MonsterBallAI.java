@@ -242,7 +242,7 @@ public class RC_MonsterBallAI extends RC_BaseMissile {
     }
 
     private void missileCommandNoSheild(float mi,float missileToShipAngle, float amount){
-        if( mi - Math.abs(missile.getAngularVelocity() * amount) > missile.getMaxSpeed() * amount )
+        if( mi - Math.abs(missile.getAngularVelocity() * amount) > missile.getMaxTurnRate() * amount )
         {
             if (MathUtils.getShortestRotation(MathUtils.clampAngle(missile.getFacing()), missileToShipAngle) > 0) {
                 missile.giveCommand(ShipCommand.TURN_LEFT);

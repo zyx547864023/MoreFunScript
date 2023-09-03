@@ -2,8 +2,10 @@ package real_combat.combat;
 
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.*;
+import com.fs.starfarer.api.graphics.SpriteAPI;
 import com.fs.starfarer.api.input.InputEventAPI;
 import org.lazywizard.lazylib.MathUtils;
+import org.lazywizard.lazylib.VectorUtils;
 import org.lazywizard.lazylib.ui.FontException;
 import org.lazywizard.lazylib.ui.LazyFont;
 import org.lwjgl.opengl.GL11;
@@ -53,6 +55,9 @@ public class RC_QEEveryFrameCombatPlugin implements EveryFrameCombatPlugin {
 		drawArc(COLOR, viewport.getAlphaMult(), 361f, point, SYSTEM_AMMO_FONT_SIZE*viewport.getViewMult(), 0f, 0f, 0f, 0f, THICKNESS);
 		point = MathUtils.getPoint(playerShip.getLocation(),playerShip.getCollisionRadius()*2F,playerShip.getFacing()-90);
 		drawArc(COLOR, viewport.getAlphaMult(), 361f, point, SYSTEM_AMMO_FONT_SIZE*viewport.getViewMult(), 0f, 0f, 0f, 0f, THICKNESS);
+		//测试画线
+		//SpriteAPI sprite = Global.getSettings().getSprite("beamfringec", "beamfringec");
+		//newRenderLine(Color.GREEN, playerShip.getLocation(), sprite, playerShip.getMouseTarget(), 1f, 5f);
 	}
 
 	public void processInputPreCoreControls(float amount, List<InputEventAPI> events) {
@@ -91,6 +96,30 @@ public class RC_QEEveryFrameCombatPlugin implements EveryFrameCombatPlugin {
 					loc.y + (radius * (float)Math.sin(Math.toRadians(aimAngleTop + i)) + x * (float)Math.sin(Math.toRadians(aimAngle - 90f)) + y * (float)Math.cos(Math.toRadians(aimAngle - 90f)))
 			);
 		}
+		GL11.glEnd();
+		GL11.glPopMatrix();
+	}
+
+	public void newRenderLine(Color paramColor, Vector2f anchor, SpriteAPI lineTex, Vector2f target, float alphaMult, float width) {
+		GL11.glPushMatrix();
+		GL11.glTranslatef(0f, 0f, 0f);
+		GL11.glRotatef(0f, 0f, 0f, 1f);
+
+		GL11.glEnable(GL11.GL_TEXTURE_2D);
+		lineTex.bindTexture();
+
+		GL11.glEnable(GL11.GL_LINE_SMOOTH);
+		GL11.glEnable(GL11.GL_BLEND);
+		GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+
+		GL11.glColor4ub((byte) paramColor.getRed(), (byte) paramColor.getGreen(), (byte) paramColor.getBlue(), (byte) (paramColor.getAlpha() * alphaMult));
+		GL11.glLineWidth(width);
+
+		GL11.glBegin(GL11.GL_LINES);
+		GL11.glTexCoord2f(anchor.x, anchor.y);
+		GL11.glVertex2f(anchor.x, anchor.y);
+		GL11.glTexCoord2f(target.x, target.y);
+		GL11.glVertex2f(target.x, target.y);
 		GL11.glEnd();
 		GL11.glPopMatrix();
 	}

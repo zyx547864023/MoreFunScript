@@ -5,6 +5,7 @@ import com.fs.starfarer.api.campaign.econ.MarketAPI;
 import com.fs.starfarer.api.campaign.rules.MemoryAPI;
 import com.fs.starfarer.api.characters.ImportantPeopleAPI;
 import com.fs.starfarer.api.characters.PersonAPI;
+import com.fs.starfarer.api.combat.ShipAPI;
 import com.fs.starfarer.api.fleet.FleetMemberAPI;
 import com.fs.starfarer.api.impl.campaign.CoreReputationPlugin;
 import com.fs.starfarer.api.impl.campaign.econ.impl.ShipQuality;
@@ -23,6 +24,7 @@ import com.fs.starfarer.api.impl.campaign.rulecmd.AddRemoveCommodity;
 import com.fs.starfarer.api.impl.campaign.rulecmd.FireAll;
 import com.fs.starfarer.api.impl.campaign.rulecmd.FireBest;
 import com.fs.starfarer.api.impl.campaign.submarkets.StoragePlugin;
+import com.fs.starfarer.api.loading.VariantSource;
 import com.fs.starfarer.api.ui.Alignment;
 import com.fs.starfarer.api.ui.LabelAPI;
 import com.fs.starfarer.api.ui.SectorMapAPI;
@@ -175,7 +177,7 @@ public class RC_ChangeHyperionUltimate extends HubMissionWithBarEvent { //implem
 			}
 			else {
 				setStartingStage(Stage.WAITING);
-				convertProdToCargo();
+				convertProdToCargo(hyperion, dialog);
 				accept(dialog, memoryMap);
 				FireBest.fire(null, dialog, memoryMap, "RC_ChangeHyperionSuccess");
 			}
@@ -183,7 +185,7 @@ public class RC_ChangeHyperionUltimate extends HubMissionWithBarEvent { //implem
 		}
 		return super.callAction(action, ruleId, dialog, params, memoryMap);
 	}
-	protected void convertProdToCargo() {
+	protected void convertProdToCargo(FleetMemberAPI hyperion,InteractionDialogAPI dialog) {
 		data = new ProductionReportIntel.ProductionData();
 		CargoAPI cargo = data.getCargo("Order manifest");
 		//D插
@@ -205,6 +207,16 @@ public class RC_ChangeHyperionUltimate extends HubMissionWithBarEvent { //implem
 		ships.getFleetData().addFleetMember("hyperion_ultimate_variant");
 
 		for (FleetMemberAPI member : ships.getFleetData().getMembersListCopy()) {
+			/*
+			member.getVariant().setSource(VariantSource.REFIT);
+			for (String s :hyperion.getVariant().getPermaMods()) {
+				member.getVariant().addPermaMod(s,true);
+			}
+			*/
+			TextPanelAPI text = dialog.getTextPanel();
+			for (String s :hyperion.getVariant().getPermaMods()) {
+				Global.getSector().getPlayerStats().addStoryPoints(1, text, false);
+			}
 			cargo.getMothballedShips().addFleetMember(member);
 		}
 	}

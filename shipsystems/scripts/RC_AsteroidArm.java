@@ -111,6 +111,7 @@ public class RC_AsteroidArm extends BaseShipSystemScript {
             if (!ship.isAlive()) {return;}
             if (ship.getCustomData().get(ID+IS_ON)==null) {return;}
             if (!(boolean)ship.getCustomData().get(ID+IS_ON)) {
+                int count = 0;
                 for(CombatEntityAPI h:hulkList) {
                     if (!ship.getFluxTracker().isOverloaded()) {
                         Vector2f hulkLocation = h.getLocation();
@@ -119,13 +120,19 @@ public class RC_AsteroidArm extends BaseShipSystemScript {
                         //h.setMass(h.getMass()*100);
                         h.getVelocity().set(MathUtils.getPoint(new Vector2f(0, 0), maxSpeed*100, shipToHulkAngle));
                         float distance = MathUtils.getDistance(ship,h);
-                        if (CollisionClass.NONE.equals(h.getCollisionClass())&&distance>ship.getCollisionRadius()*2){
+                        if (CollisionClass.NONE.equals(h.getCollisionClass())&&distance>0){
                             h.setCollisionClass(CollisionClass.ASTEROID);
+                            count++;
                         }
                     }
                     h.getCustomData().remove(WHO_CATCH);
                 }
-                hulkList.clear();
+                if (count==0) {
+                    for (CombatEntityAPI h:hulkList) {
+                        h.setCollisionClass(CollisionClass.ASTEROID);
+                    }
+                    hulkList.clear();
+                }
                 return;
             }
             tracker.advance(amount);
@@ -238,12 +245,15 @@ public class RC_AsteroidArm extends BaseShipSystemScript {
                                         s.setCustomData(ID+STATUS,"IN");
                                     }
                                 }
-                                s.setCollisionClass(CollisionClass.ASTEROID);
-                                for (DamagingProjectileAPI p:engine.getProjectiles()) {
-                                    if (ship.getOwner() == p.getOwner()) {
-                                        if (p.getCollisionRadius() > MathUtils.getDistance(p, s)||MathUtils.getDistance(p, s)==0) {
-                                            s.setCollisionClass(CollisionClass.NONE);
-                                            break;
+                                if (distance<ship.getCollisionRadius()*2) {
+                                    s.setCollisionClass(CollisionClass.ASTEROID);
+                                    for (MissileAPI p : engine.getMissiles()) {
+                                        //for (DamagingProjectileAPI p:engine.getProjectiles()) {
+                                        if (ship.getOwner() == p.getOwner() && !p.isExpired() && !p.isFading()) {
+                                            if (p.getCollisionRadius() > MathUtils.getDistance(p, s) || MathUtils.getDistance(p, s) == 0) {
+                                                s.setCollisionClass(CollisionClass.NONE);
+                                                break;
+                                            }
                                         }
                                     }
                                 }
@@ -299,7 +309,8 @@ public class RC_AsteroidArm extends BaseShipSystemScript {
                     ));
                     s.setCollisionClass(CollisionClass.ASTEROID);
                     for (DamagingProjectileAPI p:engine.getProjectiles()) {
-                        if (ship.getOwner() == p.getOwner()) {
+                    //for (DamagingProjectileAPI p:engine.getProjectiles()) {
+                        if (ship.getOwner() == p.getOwner()&&!p.isExpired()&&!p.isFading()) {
                             if (p.getCollisionRadius() > MathUtils.getDistance(p, s)||MathUtils.getDistance(p, s)==0) {
                                 s.setCollisionClass(CollisionClass.NONE);
                                 break;

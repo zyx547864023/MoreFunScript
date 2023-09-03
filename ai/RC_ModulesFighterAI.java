@@ -148,7 +148,7 @@ public class RC_ModulesFighterAI implements ShipAIPlugin {
     }
 
     private void turn(float needTurnAngle, float toTargetAngle, float amount){
-        if( needTurnAngle - Math.abs(ship.getAngularVelocity() * amount) > ship.getMaxSpeed() * amount )
+        if( needTurnAngle - Math.abs(ship.getAngularVelocity() * amount) > ship.getMaxTurnRate() * amount )
         {
             if (MathUtils.getShortestRotation(MathUtils.clampAngle(ship.getFacing()), toTargetAngle) > 0) {
                 ship.giveCommand(ShipCommand.TURN_LEFT, (Object)null ,0);

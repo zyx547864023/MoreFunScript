@@ -23,6 +23,14 @@ public class RC_ComboSystemAI implements ShipSystemAIScript {
 
     @Override
     public void advance(float amount, Vector2f missileDangerDir, Vector2f collisionDangerDir, ShipAPI target) {
+        if (engine == null) return;
+        if (engine.isPaused()) {return;}
+        if (!ship.isAlive()) {
+            return;
+        }
+        if (ship.getSystem().isActive() || ship.getSystem().isStateActive() || ship.getSystem().isCoolingDown() || ship.getSystem().isChargeup() || ship.getSystem().isChargedown()) {
+            return;
+        }
         //如果武器或引擎坏了
         boolean isWeaponOrEngineDisabled = false;
         float maxWeaponRange = 0;

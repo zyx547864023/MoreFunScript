@@ -6,6 +6,8 @@ import com.fs.starfarer.api.combat.ShipAPI.HullSize;
 import com.fs.starfarer.api.fleet.FleetMemberAPI;
 import com.fs.starfarer.api.impl.campaign.ids.HullMods;
 import com.fs.starfarer.api.impl.campaign.ids.Stats;
+import com.fs.starfarer.api.loading.WingRole;
+import real_combat.ai.RC_FighterAI;
 
 import java.util.List;
 import java.util.Map;
@@ -40,9 +42,33 @@ public class RC_SpiderCore extends BaseHullMod {
 
     @Override
     public void advanceInCombat(final ShipAPI ship, float amount) {
+        if (!ship.isPullBackFighters()) {
+            for (FighterWingAPI w : ship.getAllWings()) {
+                if (WingRole.FIGHTER.equals(w.getRole())) {
+                    for (ShipAPI f:w.getWingMembers()) {
+                        if (f.getCustomData().get("RC_FighterAI")==null&&f.isAlive()) {
+                            f.setCustomData("RC_FighterAI",f.getShipAI());
+                            f.setShipAI(new RC_FighterAI(f));
+                        }
+                    }
+                }
+            }
+        }
         for (ShipAPI m : ship.getChildModulesCopy()) {
             if (m.getCustomData().get(ID)==null) {
                 m.setCustomData(ID,ship);
+            }
+            if (!m.isPullBackFighters()) {
+                for (FighterWingAPI w : m.getAllWings()) {
+                    if (WingRole.FIGHTER.equals(w.getRole())) {
+                        for (ShipAPI f:w.getWingMembers()) {
+                            if (f.getCustomData().get("RC_FighterAI")==null&&f.isAlive()) {
+                                f.setCustomData("RC_FighterAI",f.getShipAI());
+                                f.setShipAI(new RC_FighterAI(f));
+                            }
+                        }
+                    }
+                }
             }
         }
     }

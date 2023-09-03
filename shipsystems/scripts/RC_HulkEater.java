@@ -51,6 +51,7 @@ public class RC_HulkEater extends BaseShipSystemScript {
                                 if (s.getCustomData().get(WHO_CATCH).equals(ship.getCustomData().get(RC_SpiderCore.ID))) {
                                     minDistance = distance;
                                     hulk = s;
+                                    break;
                                 }
                             }
                         }
@@ -130,6 +131,7 @@ public class RC_HulkEater extends BaseShipSystemScript {
                 }
                 else {
                     timer = 0;
+                    engine.removeEntity(hulk);
                     hulk = null;
                     ship.getMutableStats().getFighterRefitTimeMult().unmodifyMult(ID);
                 }

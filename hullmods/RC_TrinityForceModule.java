@@ -18,7 +18,8 @@ public class RC_TrinityForceModule extends BaseHullMod {
 
     @Override
     public void applyEffectsAfterShipCreation(ShipAPI ship, String id) {
-
+        //Global.getSector().getMemoryWithoutUpdate().set("$RC_ChangeHyperionPlus_returnHere",true);
+        //Global.getSector().getMemoryWithoutUpdate().set("$RC_ChangeHyperionPlus_completed",true);
     }
 
     @Override
@@ -37,7 +38,6 @@ public class RC_TrinityForceModule extends BaseHullMod {
                 {
                     Global.getLogger(this.getClass()).info(e);
                 }
-
             }
         }
     }

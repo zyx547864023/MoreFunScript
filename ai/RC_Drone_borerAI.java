@@ -11,48 +11,31 @@ import org.lwjgl.util.vector.Vector2f;
 import java.util.*;
 import java.util.List;
 
-public class RC_Drone_borerAI implements ShipAIPlugin {
+public class RC_Drone_borerAI extends RC_BaseShipAI {
     private final static String ID = "RC_RepairCombatLayeredRenderingPlugin";
     private static final float REPAIR_POINT = 10f;
     private static final float ARMOR_REPAIR_POINT = 1f;
-    private CombatEngineAPI engine = Global.getCombatEngine();
-    private ShipwideAIFlags AIFlags = new ShipwideAIFlags();
-    private ShipAPI ship;
-    protected float dontFireUntil = 0.0F;
-    public RC_Drone_borerAI(ShipAPI ship) {
-        this.ship = ship;
-    }
-    public boolean mayFire() {
-        return this.dontFireUntil <= Global.getCombatEngine().getTotalElapsedTime(false);
-    }
-    public void evaluateCircumstances() {
 
+    public RC_Drone_borerAI(ShipAPI ship) {
+        super(ship);
     }
-    @Override
-    public void setDoNotFireDelay(float amount) {
-        this.dontFireUntil = amount + Global.getCombatEngine().getTotalElapsedTime(false);
-    }
-    @Override
-    public void forceCircumstanceEvaluation() {
-        this.evaluateCircumstances();
-    }
-    @Override
-    public boolean needsRefit() {
-        return false;
-    }
+
     /**
      * 40CR以下不修
      * 不修的时候返回母船
      * 母船炸了
      * @param amount
      */
+    @Override
     public void advance(float amount) {
         try {
+            if (engine == null) return;
+            if (engine.isPaused()) {return;}
+            if (!ship.isAlive()) {return;}
             //获取飞机的半径
             FighterWingAPI wing = ship.getWing();
             if (wing != null) {
-                usePhase();
-
+                //ship.giveCommand(ShipCommand.FIRE,wing.getSourceShip().getLocation(),0);
                 float shipRange = wing.getRange();
                 //获取母船的坐标
                 ShipAPI motherShip = ship.getWing().getSourceShip();
@@ -105,6 +88,14 @@ public class RC_Drone_borerAI implements ShipAIPlugin {
                     Iterator i$ = Global.getCombatEngine().getShips().iterator();
                     while (i$.hasNext()) {
                         ShipAPI s = (ShipAPI) i$.next();
+                        /*
+                        if (s.getOwner() == motherShip.getOwner() && !s.equals(ship)) {
+                            continue;
+                        }
+                        */
+                        if (s.getOwner() != motherShip.getOwner() || s.equals(ship)) {
+                            continue;
+                        }
                         float distance = MathUtils.getDistance(s, motherShip);
                         float maxArmor = 0;
                         if (distance < shipRange) {
@@ -170,6 +161,14 @@ public class RC_Drone_borerAI implements ShipAIPlugin {
                     }
                 }
                  */
+                if (needCR==0) {
+                    if (ship.getPhaseCloak()!=null) {
+                        usePhase(amount);
+                    }
+                    else if (ship.getShield()!=null) {
+
+                    }
+                }
                 //飞过去
                 if (hpTarget!=null)
                 {
@@ -188,18 +187,6 @@ public class RC_Drone_borerAI implements ShipAIPlugin {
         {
             Global.getLogger(this.getClass()).info("");
         }
-    }
-
-    public ShipwideAIFlags getAIFlags() {
-        return this.AIFlags;
-    }
-
-    public void cancelCurrentManeuver() {
-
-    }
-
-    public ShipAIConfig getConfig() {
-        return null;
     }
 
     /**
@@ -282,7 +269,6 @@ public class RC_Drone_borerAI implements ShipAIPlugin {
                 isGet = true;
             }
         }
-
         //如果距离比较远就加速
         //距离很近那就减速和飞船同步
         float toTargetAngle = VectorUtils.getAngle(ship.getLocation(),targetLocation);
@@ -304,7 +290,7 @@ public class RC_Drone_borerAI implements ShipAIPlugin {
                     turn(needTurnAngle, toTargetAngle, amount);
                     ship.giveCommand(ShipCommand.STRAFE_LEFT, (Object)null ,0);
                 }
-                if (ship.isPhased()) {
+                if (ship.isPhased()||target.isPhased()) {
                     return;
                 }
                 Map<ShipAPI,NeedDrawLine> allDrawShip = (Map<ShipAPI,NeedDrawLine>) engine.getCustomData().get(ID);
@@ -345,6 +331,7 @@ public class RC_Drone_borerAI implements ShipAIPlugin {
                 target.syncWeaponDecalsWithArmorDamage();
             }
             else {
+                /*
                 //如果周围有导弹
                 MissileAPI missile = AIUtils.getNearestMissile(ship);
                 float range = ship.getAllWeapons().get(0).getRange();
@@ -372,49 +359,7 @@ public class RC_Drone_borerAI implements ShipAIPlugin {
                         ship.giveCommand(ShipCommand.HOLD_FIRE, (Object)null ,0);
                     }
                 }
-            }
-        }
-    }
-
-    private void turn(float needTurnAngle, float toTargetAngle, float amount){
-        if( needTurnAngle - Math.abs(ship.getAngularVelocity() * amount) > ship.getMaxSpeed() * amount )
-        {
-            if (MathUtils.getShortestRotation(MathUtils.clampAngle(ship.getFacing()), toTargetAngle) > 0) {
-                ship.giveCommand(ShipCommand.TURN_LEFT, (Object)null ,0);
-            } else {
-                ship.giveCommand(ShipCommand.TURN_RIGHT, (Object)null ,0);
-            }
-        }
-        else {
-            if (ship.getAngularVelocity() > 1) {
-                ship.giveCommand(ShipCommand.TURN_RIGHT, (Object) null, 0);
-            } else if ((ship.getAngularVelocity() < -1)) {
-                ship.giveCommand(ShipCommand.TURN_LEFT, (Object) null, 0);
-            }
-        }
-    }
-
-    private void usePhase(){
-        float useRange = ship.getCollisionRadius() * 3;
-        //如果周围很多子弹
-        int count = 0;
-        boolean isProjectileMany = false;
-        List<DamagingProjectileAPI> damagingProjectiles = engine.getProjectiles();
-        for (DamagingProjectileAPI damagingProjectile : damagingProjectiles) {
-            float range = MathUtils.getDistance(ship, damagingProjectile);
-            if(range<=useRange&&damagingProjectile.getOwner()!=ship.getOwner()) {
-                isProjectileMany = true;
-            }
-        }
-
-        if(isProjectileMany) {
-            if (!ship.isPhased()) {
-                ship.giveCommand(ShipCommand.TOGGLE_SHIELD_OR_PHASE_CLOAK,null, 0);
-            }
-        }
-        else {
-            if (ship.isPhased()&&ship.getFluxTracker().getCurrFlux()>ship.getMaxFlux()/2) {
-                ship.giveCommand(ShipCommand.TOGGLE_SHIELD_OR_PHASE_CLOAK,null, 0);
+                 */
             }
         }
     }

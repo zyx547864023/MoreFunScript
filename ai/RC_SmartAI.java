@@ -278,10 +278,14 @@ public class RC_SmartAI {
         //先获取自己范围内敌方大船 连线 线段是否与范围内 己方大船相交 参考获取遮挡物
         //只要有一个没遮挡
         int count = 0;
+        List<ShipAPI> moduleCopy = ship.getChildModulesCopy();
         for (ShipAPI e:enemyList) {
             float shipToEAngle = VectorUtils.getAngle(ship.getLocation(), e.getLocation());
             float eDistance = MathUtils.getDistance(ship,e);
             for (ShipAPI f:engine.getShips()) {
+                if (moduleCopy.indexOf(f)<0) {
+                    continue;
+                }
                 float fDistance = MathUtils.getDistance(ship,f);
                 if (f.getOwner()==ship.getOwner()&& f.getHullSize().compareTo(ship.getHullSize())>=0&&eDistance>=fDistance) {
                     float radius = f.getCollisionRadius();
@@ -374,7 +378,7 @@ public class RC_SmartAI {
     }
 
     private void turn(float needTurn,float shipToTarget, float amount){
-        if( needTurn - Math.abs(ship.getAngularVelocity() * amount) > ship.getMaxSpeed() * amount )
+        if( needTurn - Math.abs(ship.getAngularVelocity() * amount) > ship.getMaxTurnRate() * amount )
         {
             if (MathUtils.getShortestRotation(MathUtils.clampAngle(ship.getFacing()), shipToTarget) > 0) {
                 ship.giveCommand(ShipCommand.TURN_LEFT,null,0);

@@ -57,6 +57,9 @@ public class RC_PhaseSpyOnFighterAI implements ShipAIPlugin {
      */
     public void advance(float amount) {
         try {
+            if (engine == null) return;
+            if (engine.isPaused()) {return;}
+            if (!ship.isAlive()) {return;}
             flyToTarget(amount);
         }
         catch (Exception e)
@@ -83,7 +86,9 @@ public class RC_PhaseSpyOnFighterAI implements ShipAIPlugin {
      */
     private void flyToTarget(float amount) {
         //首先判断周围有没有非友军子弹
-        usePhase();
+        if (ship.getShield()!=null||ship.getPhaseCloak()!=null) {
+            usePhase();
+        }
         //首先判断周围有没有敌人
         if (ship.areAnyEnemiesInRange()) {
             ship.resetDefaultAI();
@@ -145,7 +150,7 @@ public class RC_PhaseSpyOnFighterAI implements ShipAIPlugin {
     }
 
     private void turn(float needTurnAngle, float toTargetAngle, float amount){
-        if( needTurnAngle - Math.abs(ship.getAngularVelocity() * amount) > ship.getMaxSpeed() * amount )
+        if( needTurnAngle - Math.abs(ship.getAngularVelocity() * amount) > ship.getMaxTurnRate() * amount )
         {
             if (MathUtils.getShortestRotation(MathUtils.clampAngle(ship.getFacing()), toTargetAngle) > 0) {
                 ship.giveCommand(ShipCommand.TURN_LEFT, (Object)null ,0);
@@ -163,7 +168,7 @@ public class RC_PhaseSpyOnFighterAI implements ShipAIPlugin {
     }
 
     private void usePhase(){
-        float useRange = ship.getCollisionRadius() * 3;
+        float useRange = ship.getCollisionRadius();
         //如果周围很多子弹
         int count = 0;
         boolean isProjectileMany = false;
@@ -172,6 +177,7 @@ public class RC_PhaseSpyOnFighterAI implements ShipAIPlugin {
             float range = MathUtils.getDistance(ship, damagingProjectile);
             if(range<=useRange&&damagingProjectile.getOwner()!=ship.getOwner()) {
                 isProjectileMany = true;
+                break;
             }
         }
 

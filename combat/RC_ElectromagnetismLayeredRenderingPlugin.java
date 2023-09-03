@@ -59,6 +59,11 @@ public class RC_ElectromagnetismLayeredRenderingPlugin extends BaseCombatLayered
                         if (ep.target instanceof ShipAPI) {
                             tracker.advance(amount);
                             if (tracker.intervalElapsed()) {
+                                /*
+                                float pierceChance = ((ShipAPI) ep.target).getHardFluxLevel() - 0.1f;
+                                pierceChance *= ((ShipAPI) ep.target).getMutableStats().getDynamic().getValue(Stats.SHIELD_PIERCED_MULT);
+                                boolean piercedShield = ep.shieldHit && (float) Math.random() < pierceChance;
+                                 */
                                 if (ep.shieldHit && ep.target.getShield().getActiveArc() == 360) {
                                     Vector2f point = MathUtils.getPoint(ep.target.getLocation(), ((ShipAPI) ep.target).getShieldRadiusEvenIfNoShield(), epToTarget);
                                     EmpArcEntityAPI empArcEntity = engine.spawnEmpArc(ep.projectile.getSource(), ep.anchoredEntity.getLocation(), new SimpleEntity(ep.anchoredEntity.getLocation()), new SimpleEntity(point),
@@ -72,7 +77,7 @@ public class RC_ElectromagnetismLayeredRenderingPlugin extends BaseCombatLayered
                                             CORE
                                     );
                                 } else if (ep.shieldHit) {
-                                    if (1-((ShipAPI) ep.target).getMutableStats().getDynamic().getStat(Stats.SHIELD_PIERCED_MULT).getBaseValue()<MathUtils.getRandomNumberInRange(0F,1F)) {
+                                    if (1-((ShipAPI) ep.target).getMutableStats().getDynamic().getValue(Stats.SHIELD_PIERCED_MULT)>MathUtils.getRandomNumberInRange(0F,1F)) {
                                         EmpArcEntityAPI empArcEntity = engine.spawnEmpArcPierceShields(ep.projectile.getSource(), ep.anchoredEntity.getLocation(), ep.target, ep.target,
                                                 DamageType.ENERGY,
                                                 dam,
@@ -125,9 +130,9 @@ public class RC_ElectromagnetismLayeredRenderingPlugin extends BaseCombatLayered
                         if (distance>ep.weapon.getRange()*0.5&&ep.distance!=0) {
                             float shipToEp = VectorUtils.getAngle(ep.weapon.getShip().getLocation(), ep.anchoredEntity.getLocation());
                             //给目标一个力
-                            CombatUtils.applyForce(ep.target, shipToEp+180, ep.weapon.getShip().getMass() * amount * 0.2f);
+                            CombatUtils.applyForce(ep.target, shipToEp+180, ep.weapon.getShip().getMass() * amount * 0.1f);
                             //给自己一个力
-                            CombatUtils.applyForce(ep.weapon.getShip(), shipToEp, ep.target.getMass() * amount * 0.2f);
+                            CombatUtils.applyForce(ep.weapon.getShip(), shipToEp, ep.target.getMass() * amount * 0.1f);
                         }
                     }
                 }

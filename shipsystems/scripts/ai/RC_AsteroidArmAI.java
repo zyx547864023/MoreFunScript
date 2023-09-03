@@ -1,6 +1,7 @@
 package real_combat.shipsystems.scripts.ai;
 
 import com.fs.starfarer.api.combat.*;
+import com.fs.starfarer.api.util.IntervalUtil;
 import org.lazywizard.lazylib.MathUtils;
 import org.lwjgl.util.vector.Vector2f;
 
@@ -23,6 +24,8 @@ public class RC_AsteroidArmAI implements ShipSystemAIScript {
 
     @Override
     public void advance(float amount, Vector2f missileDangerDir, Vector2f collisionDangerDir, ShipAPI target) {
+        if (engine == null) return;
+        if (engine.isPaused()) {return;}
         //如果武器或引擎坏了
         /*
         boolean isWeaponOrEngineDisabled = false;
@@ -82,6 +85,7 @@ public class RC_AsteroidArmAI implements ShipSystemAIScript {
             return;
         }
         //在范围内有陨石
+        /*
         int count = 0;
         for (CombatEntityAPI a : engine.getAsteroids()) {
             float distance = MathUtils.getDistance(ship, a);
@@ -92,12 +96,15 @@ public class RC_AsteroidArmAI implements ShipSystemAIScript {
                 }
             }
         }
+         */
         //
+        /*
         if (count<=5&&ship.areAnyEnemiesInRange()) {
             ship.giveCommand(ShipCommand.VENT_FLUX,null,0);
             //ship.getSystem().deactivate();
             return;
         }
+         */
         if (!ship.getSystem().isActive()&&!ship.getSystem().isStateActive()&&!ship.getSystem().isCoolingDown()&&!ship.getSystem().isChargeup()&&!ship.getSystem().isChargedown()) {
             ship.useSystem();
         }

@@ -28,6 +28,7 @@ public class RC_RepairCombatLayeredRenderingPlugin extends BaseCombatLayeredRend
     @Override
     public void advance(float amount) {
         CombatEngineAPI engine = Global.getCombatEngine();
+        if (engine.isPaused()) {return;}
         //获取要绘制的直线
         Map<ShipAPI, RC_Drone_borerAI.NeedDrawLine> allDrawShip = (Map<ShipAPI, RC_Drone_borerAI.NeedDrawLine>) engine.getCustomData().get(ID);
         if (allDrawShip!=null){
@@ -89,7 +90,7 @@ public class RC_RepairCombatLayeredRenderingPlugin extends BaseCombatLayeredRend
                 for (int i=0;i<needDrawLine.getStartList().size();i++){
                     Vector2f start = needDrawLine.getStartList().get(i);
                     Vector2f end = needDrawLine.getEndList().get(i);
-
+                    /*
                     float r = 1f;
                     float arg = 0;
                     if (start.getY() > end.getY()) {
@@ -101,6 +102,8 @@ public class RC_RepairCombatLayeredRenderingPlugin extends BaseCombatLayeredRend
                     Vector2f p2 = new Vector2f(start.getX() - r * (float) Math.cos(Math.toRadians(arg)), start.getY() - r * (float) Math.sin(Math.toRadians(arg)));
 
                     renderLine(Color.GREEN, p1, sprite, p2, 0.1f, 1, 3f , 3f, needDrawLine.getAngle());
+                    */
+                    newRenderLine(Color.GREEN, start, sprite, end, 0.5f, 2);
                 }
                 if (needDrawLine.getEndList().size()>0) {
                     SpriteAPI ball = Global.getSettings().getSprite("campaignEntities", "fusion_lamp_glow");
@@ -181,6 +184,30 @@ public class RC_RepairCombatLayeredRenderingPlugin extends BaseCombatLayeredRend
             leftEdgeOfShowingTex += distance;
         }
 
+        GL11.glEnd();
+        GL11.glPopMatrix();
+    }
+
+    public void newRenderLine(Color paramColor, Vector2f anchor, SpriteAPI lineTex, Vector2f target, float alphaMult, float width) {
+        GL11.glPushMatrix();
+        GL11.glTranslatef(0f, 0f, 0f);
+        GL11.glRotatef(0f, 0f, 0f, 1f);
+
+        GL11.glEnable(GL11.GL_TEXTURE_2D);
+        lineTex.bindTexture();
+
+        GL11.glEnable(GL11.GL_LINE_SMOOTH);
+        GL11.glEnable(GL11.GL_BLEND);
+        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+
+        GL11.glColor4ub((byte) paramColor.getRed(), (byte) paramColor.getGreen(), (byte) paramColor.getBlue(), (byte) (paramColor.getAlpha() * alphaMult));
+        GL11.glLineWidth(width);
+
+        GL11.glBegin(GL11.GL_LINES);
+        GL11.glTexCoord2f(anchor.x, anchor.y);
+        GL11.glVertex2f(anchor.x, anchor.y);
+        GL11.glTexCoord2f(target.x, target.y);
+        GL11.glVertex2f(target.x, target.y);
         GL11.glEnd();
         GL11.glPopMatrix();
     }

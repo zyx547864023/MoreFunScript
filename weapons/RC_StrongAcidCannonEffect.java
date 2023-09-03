@@ -33,13 +33,10 @@ public class RC_StrongAcidCannonEffect extends BaseCombatLayeredRenderingPlugin 
 		//if (shieldHit) return;
 		//if (projectile.isFading()) return;
 		//if (!(target instanceof ShipAPI)) return;
-		if(projectile.getSource()!=null)
-		{
-			if (projectile.getSource().getCustomData().get(ID)!=null) {
-				projList = (List<DamagingProjectileAPI>) projectile.getSource().getCustomData().get(ID);
-				projList.remove(projectile);
-				projectile.getSource().setCustomData(ID,projList);
-			}
+		if (engine.getCustomData().get(ID)!=null) {
+			projList = (List<DamagingProjectileAPI>) engine.getCustomData().get(ID);
+			projList.remove(projectile);
+			engine.getCustomData().put(ID,projList);
 		}
 		RC_AnchoredEntity a = new RC_AnchoredEntity(target,point, projectile.getFacing());
 		RC_StrongAcidCannonEffect effect = new RC_StrongAcidCannonEffect(new ElectromagnetismProj(a, target, projectile.getWeapon(), projectile, shieldHit));
@@ -121,14 +118,11 @@ public class RC_StrongAcidCannonEffect extends BaseCombatLayeredRenderingPlugin 
 	private List<DamagingProjectileAPI> projList = new ArrayList<DamagingProjectileAPI>();
 	@Override
 	public void onFire(DamagingProjectileAPI projectile, WeaponAPI weapon, CombatEngineAPI engine) {
-		if(projectile.getSource()!=null)
-		{
-			if (projectile.getSource().getCustomData().get(ID)!=null) {
-				projList = (List<DamagingProjectileAPI>) projectile.getSource().getCustomData().get(ID);
-			}
-			projList.add(projectile);
-			projectile.getSource().setCustomData(ID,projList);
+		if (engine.getCustomData().get(ID)!=null) {
+			projList = (List<DamagingProjectileAPI>) engine.getCustomData().get(ID);
 		}
+		projList.add(projectile);
+		engine.getCustomData().put(ID,projList);
 	}
 
 	public class ElectromagnetismProj{

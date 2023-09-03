@@ -117,7 +117,10 @@ public class RC_Merge extends HubMissionWithBarEvent { //implements ShipRecovery
 					}
 				}
 				HullModSpecAPI hullMod = Global.getSettings().getHullModSpec(ss);
-				double chance = (1f - 1f/(count+1f))*100f+mergeCount;
+				double chance = (1f - 1f/((count-1)*2+2f))*100f+mergeCount;
+				if (chance>100) {
+					chance = 100;
+				}
 				chanceMap.put(ss,chance);
 
 				//显示概率
@@ -125,7 +128,7 @@ public class RC_Merge extends HubMissionWithBarEvent { //implements ShipRecovery
 				if (chance<=34) {
 					color = Color.RED;
 				}
-				else if (chance<=50) {
+				else if (chance<=80) {
 					color = Color.YELLOW;
 				}
 				text.addPara(merge.get(0).getHullSpec().getHullName() + " " + merge.get(0).getShipName() + " " +hullMod.getDisplayName()+" 改造后保留概率为： %s", color, (new BigDecimal(chance).setScale(2, RoundingMode.UP)+"%"));
@@ -144,7 +147,10 @@ public class RC_Merge extends HubMissionWithBarEvent { //implements ShipRecovery
 							}
 						}
 						HullModSpecAPI hullMod = Global.getSettings().getHullModSpec(ss);
-						double chance = (1f - 1f/(count+1f))*100f+mergeCount;
+						double chance = (1f - 1f/((count-1)*2f+2f))*100f+mergeCount;
+						if (chance>100) {
+							chance = 100;
+						}
 						soltChanceMap.put(ss,chance);
 
 						//显示概率
@@ -152,7 +158,7 @@ public class RC_Merge extends HubMissionWithBarEvent { //implements ShipRecovery
 						if (chance<=34) {
 							color = Color.RED;
 						}
-						else if (chance<=50) {
+						else if (chance<=80) {
 							color = Color.YELLOW;
 						}
 						text.addPara(merge.get(0).getVariant().getModuleVariant(slotId).getHullSpec().getHullName() + " " +hullMod.getDisplayName()+" 改造后保留概率为： %s", color, (new BigDecimal(chance).setScale(2, RoundingMode.UP)+"%"));
@@ -162,7 +168,7 @@ public class RC_Merge extends HubMissionWithBarEvent { //implements ShipRecovery
 			}
 			mergeCount++;
 			Global.getSector().getMemoryWithoutUpdate().set("$RC_Merge_mergeCount", mergeCount);
-			text.addPara("%s",Color.RED,"注意！改造完成后仅保留第一艘船素材！");
+			text.addPara("%s",Color.RED,"注意！改造完成后仅保留第一艘船素材！S插的数量最少等于素材的数量！");
 			dialog.getVisualPanel().showFleetMemberInfo(merge.get(0), true);
 			return true;
 		}
@@ -187,26 +193,39 @@ public class RC_Merge extends HubMissionWithBarEvent { //implements ShipRecovery
 			while(matcher.find()) {
 				seed+=matcher.group();
 			}
+			if (seed.length()>19){
+				seed = seed.substring(0,19);
+			}
 			Random random = Misc.getRandom(Long.parseLong(seed), 11);
 			Set<String> smodsSet = new HashSet<>();
 			smodsSet.addAll(smods);
 			first.getVariant().setSource(VariantSource.REFIT);
-			for (String s:smodsSet) {
-				first.getVariant().removePermaMod(s);
-				double chance = chanceMap.get(s);
-				if (random.nextDouble()<=chance/100f) {
-					first.getVariant().addPermaMod(s,true);
+			while (first.getVariant().getSMods().size()<merge.size()) {
+				for (String s : smodsSet) {
+					first.getVariant().removePermaMod(s);
+					double chance = chanceMap.get(s);
+					if (random.nextDouble() <= chance / 100f) {
+						first.getVariant().addPermaMod(s, true);
+					}
+				}
+				if (first.getVariant().getSMods().size() == smodsSet.size()) {
+					break;
 				}
 			}
-			for (String slotId:first.getVariant().getModuleSlots()) {
-				Set<String> mSmodsSet = new HashSet<>();
-				mSmodsSet.addAll(moduleSmods.get(slotId));
-				first.getVariant().getModuleVariant(slotId).setSource(VariantSource.REFIT);
-				for (String s:mSmodsSet) {
-					first.getVariant().removePermaMod(s);
-					double chance = moduleChanceMap.get(slotId).get(s);
-					if (random.nextDouble()<=chance/100f) {
-						first.getVariant().getModuleVariant(slotId).addPermaMod(s,true);
+			for (String slotId : first.getVariant().getModuleSlots()) {
+				while (first.getVariant().getModuleVariant(slotId).getSMods().size()<merge.size()) {
+					Set<String> mSmodsSet = new HashSet<>();
+					mSmodsSet.addAll(moduleSmods.get(slotId));
+					first.getVariant().getModuleVariant(slotId).setSource(VariantSource.REFIT);
+					for (String s : mSmodsSet) {
+						first.getVariant().removePermaMod(s);
+						double chance = moduleChanceMap.get(slotId).get(s);
+						if (random.nextDouble() <= chance / 100f) {
+							first.getVariant().getModuleVariant(slotId).addPermaMod(s, true);
+						}
+					}
+					if (first.getVariant().getModuleVariant(slotId).getSMods().size() == mSmodsSet.size()) {
+						break;
 					}
 				}
 			}
@@ -241,7 +260,7 @@ public class RC_Merge extends HubMissionWithBarEvent { //implements ShipRecovery
 						if (members.isEmpty()) return;
 						String baseHullId = members.get(0).getHullSpec().getBaseHullId();
 						for (FleetMemberAPI m:members) {
-							if (!baseHullId.equals(m.getHullSpec().getHullId())) {
+							if (!baseHullId.equals(m.getHullSpec().getBaseHullId())) {
 								FireAll.fire(null, dialog, memoryMap, "RC_Merge_NotSame");
 								return;
 							}

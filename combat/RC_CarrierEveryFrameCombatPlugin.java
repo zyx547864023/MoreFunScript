@@ -44,7 +44,7 @@ public class RC_CarrierEveryFrameCombatPlugin implements EveryFrameCombatPlugin 
 	}
 
 	public void advance(float amount, List<InputEventAPI> events) {
-
+		/*
 		if (engine == null) return;
 		if (!engine.isPaused()) {
 			//获取玩家的船
@@ -101,23 +101,18 @@ public class RC_CarrierEveryFrameCombatPlugin implements EveryFrameCombatPlugin 
 				CombatFleetManagerAPI manager = engine.getFleetManager(lastShip.getOwner());
 				CombatTaskManagerAPI task = manager.getTaskManager(false);
 				for (RC_Command c : commandList) {
-					/*
-					task.giveAssignment(
-									engine.getFleetManager(c.ship.getOwner()).getDeployedFleetMember(c.ship),
-									task.createAssignment(c.command, manager.createWaypoint(c.location, false), false),
-									false);
 
-					 */
+					//task.giveAssignment(
+					//				engine.getFleetManager(c.ship.getOwner()).getDeployedFleetMember(c.ship),
+					//				task.createAssignment(c.command, manager.createWaypoint(c.location, false), false),
+					//				false);
+
+
 				}
 				commandList.clear();
 			}
 		}
-
-
-
-
-
-
+		*/
 
 		//R锁定+F1进攻/护卫
 
@@ -125,6 +120,7 @@ public class RC_CarrierEveryFrameCombatPlugin implements EveryFrameCombatPlugin 
 	}
 
 	public void renderInUICoords(ViewportAPI viewport) {
+
 	}
 
 	public void init(CombatEngineAPI engine) {
@@ -144,15 +140,14 @@ public class RC_CarrierEveryFrameCombatPlugin implements EveryFrameCombatPlugin 
 
 
 	public void renderInWorldCoords(ViewportAPI viewport) {
-		if(hide()) return;
-		ShipAPI playerShip = engine.getPlayerShip();
-		drawFont("Q", COLOR, 90, playerShip.getCollisionRadius()*2, 0, SYSTEM_AMMO_FONT_SIZE*viewport.getViewMult());
-		drawFont("E", COLOR, -90, playerShip.getCollisionRadius()*2, 0, SYSTEM_AMMO_FONT_SIZE*viewport.getViewMult());
-
-		Vector2f point = MathUtils.getPoint(playerShip.getLocation(),playerShip.getCollisionRadius()*2F,playerShip.getFacing()+90);
-		drawArc(COLOR, viewport.getAlphaMult(), 361f, point, SYSTEM_AMMO_FONT_SIZE*viewport.getViewMult(), 0f, 0f, 0f, 0f, THICKNESS);
-		point = MathUtils.getPoint(playerShip.getLocation(),playerShip.getCollisionRadius()*2F,playerShip.getFacing()-90);
-		drawArc(COLOR, viewport.getAlphaMult(), 361f, point, SYSTEM_AMMO_FONT_SIZE*viewport.getViewMult(), 0f, 0f, 0f, 0f, THICKNESS);
+		//if (engine.isPaused()) return;
+		/*
+		for (ShipAPI s:engine.getShips()) {
+			if (s.getMouseTarget()!=null&&!s.equals(engine.getPlayerShip())) {
+				drawArc(COLOR, viewport.getAlphaMult(), 361f, s.getMouseTarget(), SYSTEM_AMMO_FONT_SIZE * viewport.getViewMult(), 0f, 0f, 0f, 0f, THICKNESS);
+			}
+		}
+		*/
 	}
 
 	public void processInputPreCoreControls(float amount, List<InputEventAPI> events) {

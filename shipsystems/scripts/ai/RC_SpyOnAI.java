@@ -23,7 +23,12 @@ public class RC_SpyOnAI implements ShipSystemAIScript {
 
     @Override
     public void advance(float amount, Vector2f missileDangerDir, Vector2f collisionDangerDir, ShipAPI target) {
+        if (engine == null) return;
+        if (engine.isPaused()) {return;}
         if (!ship.isAlive()) {
+            return;
+        }
+        if (ship.getSystem().isActive() || ship.getSystem().isStateActive() || ship.getSystem().isCoolingDown() || ship.getSystem().isChargeup() || ship.getSystem().isChargedown()) {
             return;
         }
         CombatFleetManagerAPI manager = engine.getFleetManager(ship.getOwner());
