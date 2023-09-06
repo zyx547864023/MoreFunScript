@@ -320,7 +320,7 @@ public class RC_MonsterBallEveryFrameCombatPlugin implements EveryFrameCombatPlu
         GL11.glPopMatrix();
     }
 
-    private void copyShip(FleetSide fleetSide,ShipAPI newShip, ShipAPI s,int nowMarines,List<ShipAPI> removeShip)
+    private void copyShip(FleetSide fleetSide,ShipAPI newShip, ShipAPI s,int nowMarines,Set<ShipAPI> removeShip)
     {
         CombatEngineAPI engine = Global.getCombatEngine();
         //newShip.getCustomData().putAll(s.getCustomData());
@@ -512,7 +512,7 @@ public class RC_MonsterBallEveryFrameCombatPlugin implements EveryFrameCombatPlu
 
             //设置武器弹药
             List<ShipAPI> shipList = engine.getShips();
-            List<ShipAPI> removeShip = new ArrayList<>();
+            Set<ShipAPI> removeShip = new HashSet<>();
             ShipAPI player = engine.getPlayerShip();
             /* 由于某些情况无法结束游戏
             List<FleetMemberAPI> removeFleetMember = new ArrayList<>();
@@ -677,7 +677,7 @@ public class RC_MonsterBallEveryFrameCombatPlugin implements EveryFrameCombatPlu
                 //移除非法目标
                 if(s.getShipTarget()!=null)
                 {
-                    if (removeShip.indexOf(s.getShipTarget())!=-1)
+                    if (removeShip.contains(s.getShipTarget()))
                     {
                         s.setShipTarget(null);
                     }

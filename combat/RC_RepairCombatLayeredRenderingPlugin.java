@@ -14,6 +14,7 @@ import org.lazywizard.lazylib.combat.WeaponUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.vector.Vector2f;
 import real_combat.ai.RC_Drone_borerAI;
+import real_combat.entity.RC_NeedDrawLine;
 import real_combat.util.MyMath;
 
 import javax.swing.*;
@@ -30,15 +31,15 @@ public class RC_RepairCombatLayeredRenderingPlugin extends BaseCombatLayeredRend
         CombatEngineAPI engine = Global.getCombatEngine();
         if (engine.isPaused()) {return;}
         //获取要绘制的直线
-        Map<ShipAPI, RC_Drone_borerAI.NeedDrawLine> allDrawShip = (Map<ShipAPI, RC_Drone_borerAI.NeedDrawLine>) engine.getCustomData().get(ID);
+        Map<ShipAPI, RC_NeedDrawLine> allDrawShip = (Map<ShipAPI, RC_NeedDrawLine>) engine.getCustomData().get(ID);
         if (allDrawShip!=null){
             for(ShipAPI s : allDrawShip.keySet())
             {
-                RC_Drone_borerAI.NeedDrawLine needDrawLine = allDrawShip.get(s);
+                RC_NeedDrawLine needDrawLine = allDrawShip.get(s);
                 if(needDrawLine.getStartList().size()>0) {
                     float timer = needDrawLine.getTimer();
                     float targetJitterLevel = 0;
-                    if (timer == 0) {
+                    if (timer == 0 && needDrawLine.getColor()==Color.GREEN) {
                         Global.getCombatEngine().addFloatingText(s.getLocation(), "修理中", 50f, Color.GREEN, s, 5f, 10f);
                     }
                     //开始维修
@@ -47,7 +48,9 @@ public class RC_RepairCombatLayeredRenderingPlugin extends BaseCombatLayeredRend
                     } else {
                         targetJitterLevel = (5 - timer) / 2.5f;
                     }
-                    s.setJitter(s, Color.GREEN, targetJitterLevel, 0, 0f, 0f);
+                    if (needDrawLine.getColor()==Color.GREEN) {
+                        s.setJitter(s, Color.GREEN, targetJitterLevel, 0, 0f, 0f);
+                    }
                     timer += amount;
                     if (timer > 5) {
                         timer = 0;
@@ -80,12 +83,12 @@ public class RC_RepairCombatLayeredRenderingPlugin extends BaseCombatLayeredRend
     public void render(CombatEngineLayers layer, ViewportAPI viewport) {
         CombatEngineAPI engine = Global.getCombatEngine();
         //获取要绘制的直线
-        Map<ShipAPI, RC_Drone_borerAI.NeedDrawLine> allDrawShip = (Map<ShipAPI, RC_Drone_borerAI.NeedDrawLine>) engine.getCustomData().get(ID);
+        Map<ShipAPI, RC_NeedDrawLine> allDrawShip = (Map<ShipAPI, RC_NeedDrawLine>) engine.getCustomData().get(ID);
         SpriteAPI sprite = Global.getSettings().getSprite("beamfringec", "beamfringec");
         if (allDrawShip!=null){
             for(ShipAPI s : allDrawShip.keySet())
             {
-                RC_Drone_borerAI.NeedDrawLine needDrawLine = allDrawShip.get(s);
+                RC_NeedDrawLine needDrawLine = allDrawShip.get(s);
 
                 for (int i=0;i<needDrawLine.getStartList().size();i++){
                     Vector2f start = needDrawLine.getStartList().get(i);
@@ -103,13 +106,13 @@ public class RC_RepairCombatLayeredRenderingPlugin extends BaseCombatLayeredRend
 
                     renderLine(Color.GREEN, p1, sprite, p2, 0.1f, 1, 3f , 3f, needDrawLine.getAngle());
                     */
-                    newRenderLine(Color.GREEN, start, sprite, end, 0.5f, 2);
+                    newRenderLine(needDrawLine.getColor(), start, sprite, end, 0.5f, 2);
                 }
                 if (needDrawLine.getEndList().size()>0) {
                     SpriteAPI ball = Global.getSettings().getSprite("campaignEntities", "fusion_lamp_glow");
                     ball.setAngle(MyMath.getRandomAngle());
                     ball.setSize(ball.getWidth()/1.5f, ball.getHeight()/1.5f);
-                    ball.setColor(Color.GREEN);
+                    ball.setColor(needDrawLine.getColor());
                     ball.renderAtCenter(needDrawLine.getEndList().get(0).getX(), needDrawLine.getEndList().get(0).getY());
                     ball.setAlphaMult(1 / needDrawLine.getStartList().size());
                     if (!engine.isPaused()) {
@@ -120,7 +123,7 @@ public class RC_RepairCombatLayeredRenderingPlugin extends BaseCombatLayeredRend
                             float size = MathUtils.getRandomNumberInRange(1.0F, 5.0F);
                             float damage = MathUtils.getRandomNumberInRange(0.6F, 1.0F);
                             float brightness = MathUtils.getRandomNumberInRange(0.1F, 0.5F);
-                            engine.addSmoothParticle(partstartloc, partvec, size, brightness, damage, Color.green);
+                            engine.addSmoothParticle(partstartloc, partvec, size, brightness, damage, needDrawLine.getColor());
                             engine.addSmoothParticle(partstartloc, partvec, size, 1F, damage, Color.white);
                         }
                     }

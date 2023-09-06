@@ -7,7 +7,9 @@ import org.lazywizard.lazylib.VectorUtils;
 import org.lazywizard.lazylib.combat.AIUtils;
 import org.lazywizard.lazylib.combat.DefenseUtils;
 import org.lwjgl.util.vector.Vector2f;
+import real_combat.entity.RC_NeedDrawLine;
 
+import java.awt.*;
 import java.util.*;
 import java.util.List;
 
@@ -277,35 +279,35 @@ public class RC_Drone_borerAI extends RC_BaseShipAI {
         float distance = MathUtils.getDistance(target,ship);
         if(distance>0)
         {
-            turn(needTurnAngle, toTargetAngle, amount);
+            RC_BaseAIAction.turn(ship, needTurnAngle, toTargetAngle, amount);
             ship.giveCommand(ShipCommand.ACCELERATE, (Object)null ,0);
         }
         //如果很近那就围绕飞船转圈
         else{
             if (isGet) {
                 if (MathUtils.getShortestRotation(shipFacing, toTargetAngle) > 0) {
-                    turn(needTurnAngle, toTargetAngle, amount);
+                    RC_BaseAIAction.turn(ship, needTurnAngle, toTargetAngle, amount);
                     ship.giveCommand(ShipCommand.STRAFE_RIGHT, (Object)null ,0);
                 } else {
-                    turn(needTurnAngle, toTargetAngle, amount);
+                    RC_BaseAIAction.turn(ship, needTurnAngle, toTargetAngle, amount);
                     ship.giveCommand(ShipCommand.STRAFE_LEFT, (Object)null ,0);
                 }
                 if (ship.isPhased()||target.isPhased()) {
                     return;
                 }
-                Map<ShipAPI,NeedDrawLine> allDrawShip = (Map<ShipAPI,NeedDrawLine>) engine.getCustomData().get(ID);
+                Map<ShipAPI,RC_NeedDrawLine> allDrawShip = (Map<ShipAPI,RC_NeedDrawLine>) engine.getCustomData().get(ID);
                 if(allDrawShip==null)
                 {
                     allDrawShip = new HashMap<>();
                 }
-                NeedDrawLine thisDrawShip = allDrawShip.get(target);
+                RC_NeedDrawLine thisDrawShip = allDrawShip.get(target);
                 if(thisDrawShip==null)
                 {
-                    thisDrawShip = new NeedDrawLine(target,0,new ArrayList<Vector2f>(),new ArrayList<Vector2f>(),toTargetAngle);
+                    thisDrawShip = new RC_NeedDrawLine(target,0,new ArrayList<Vector2f>(),new ArrayList<Vector2f>(), Color.GREEN);
                 }
                 thisDrawShip.startList.add(ship.getLocation());
                 thisDrawShip.endList.add(targetLocation);
-                thisDrawShip.angle = toTargetAngle;
+                //thisDrawShip.angle = toTargetAngle;
                 allDrawShip.put(target,thisDrawShip);
                 engine.getCustomData().put(ID,allDrawShip);
 
@@ -361,41 +363,6 @@ public class RC_Drone_borerAI extends RC_BaseShipAI {
                 }
                  */
             }
-        }
-    }
-
-
-    public class NeedDrawLine{
-        ShipAPI ship;
-        float angle;
-        float timer;
-        List<Vector2f> startList = new ArrayList<>();
-        List<Vector2f> endList = new ArrayList<>();
-        public NeedDrawLine(ShipAPI ship,float timer,List<Vector2f> startList,List<Vector2f> endList,float angle){
-            this.ship = ship;
-            this.timer = timer;
-            this.startList = startList;
-            this.endList = endList;
-        }
-        public List<Vector2f> getStartList()
-        {
-            return startList;
-        }
-        public List<Vector2f> getEndList()
-        {
-            return endList;
-        }
-
-        public float getAngle() {
-            return angle;
-        }
-
-        public float getTimer() {
-            return timer;
-        }
-
-        public void setTimer(float timer) {
-            this.timer = timer;
         }
     }
 }

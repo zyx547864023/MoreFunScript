@@ -135,26 +135,26 @@ public class RC_FighterAI extends RC_BaseShipAI {
                     Vector2f targetPoint = MathUtils.getPointOnCircumference(target.getLocation(),range,toTargetAngle);
                     toTargetAngle = VectorUtils.getAngle(ship.getLocation(),targetPoint);
                     float mi = Math.abs(MathUtils.getShortestRotation(shipFacing + ship.getAngularVelocity() * amount,toTargetAngle));
-                    turn(mi, toTargetAngle, amount);
+                    RC_BaseAIAction.turn(ship, mi, toTargetAngle, amount);
                 } else {
                     toTargetAngle = toTargetAngle+90;
                     Vector2f targetPoint = MathUtils.getPointOnCircumference(target.getLocation(),range,toTargetAngle);
                     toTargetAngle = VectorUtils.getAngle(ship.getLocation(),targetPoint);
                     float mi = Math.abs(MathUtils.getShortestRotation(shipFacing + ship.getAngularVelocity() * amount,toTargetAngle));
-                    turn(mi, toTargetAngle, amount);
+                    RC_BaseAIAction.turn(ship, mi, toTargetAngle, amount);
                 }
             }
             else {
-                turn(needTurnAngle, toTargetAngle, amount);
+                RC_BaseAIAction.turn(ship, needTurnAngle, toTargetAngle, amount);
             }
             ship.giveCommand(ShipCommand.ACCELERATE, (Object) null, 0);
         }
         //如果很近那就围绕飞船转圈
         else{
-            turn(needTurnAngle, toTargetAngle, amount);
+            RC_BaseAIAction.turn(ship, needTurnAngle, toTargetAngle, amount);
             if (!target.getFluxTracker().isOverloaded()||!target.getFluxTracker().isVenting()) {
                 if (Math.abs(MathUtils.getShortestRotation(toTargetAngle,target.getFacing()))>30) {
-                    shift(toTargetAngle,target.getFacing());
+                    RC_BaseAIAction.shift(ship, toTargetAngle, target.getFacing());
                 }
                 else {
                     if (ship.getVelocity().length()>ship.getMaxSpeed()/2) {
@@ -221,13 +221,13 @@ public class RC_FighterAI extends RC_BaseShipAI {
                     Vector2f targetPoint = MathUtils.getPointOnCircumference(target.getLocation(), range * 1.5f, toTargetAngle);
                     toTargetAngle = VectorUtils.getAngle(ship.getLocation(), targetPoint);
                     float mi = Math.abs(MathUtils.getShortestRotation(shipFacing + ship.getAngularVelocity() * amount, toTargetAngle));
-                    turn(mi, toTargetAngle, amount);
+                    RC_BaseAIAction.turn(ship, mi, toTargetAngle, amount);
                 } else {
                     toTargetAngle = toTargetAngle + 90;
                     Vector2f targetPoint = MathUtils.getPointOnCircumference(target.getLocation(), range * 1.5f, toTargetAngle);
                     toTargetAngle = VectorUtils.getAngle(ship.getLocation(), targetPoint);
                     float mi = Math.abs(MathUtils.getShortestRotation(shipFacing + ship.getAngularVelocity() * amount, toTargetAngle));
-                    turn(mi, toTargetAngle, amount);
+                    RC_BaseAIAction.turn(ship, mi, toTargetAngle, amount);
                 }
                 ship.giveCommand(ShipCommand.ACCELERATE, (Object) null, 0);
                 return;
@@ -246,7 +246,7 @@ public class RC_FighterAI extends RC_BaseShipAI {
                 ship.getWeaponGroupsCopy().get(groupNumber).toggleOff();
             }
         }
-        turn(needTurnAngle, toTargetAngle, amount);
+        RC_BaseAIAction.turn(ship, needTurnAngle, toTargetAngle, amount);
         //到达屁股
         if (Math.abs(MathUtils.getShortestRotation(toTargetAngle,target.getFacing()))<=30) {
             Vector2f targetV = target.getVelocity();
@@ -291,7 +291,7 @@ public class RC_FighterAI extends RC_BaseShipAI {
             else {
                 //减速完成以后要面向目标 然后漂移
                 if (Math.abs(MathUtils.getShortestRotation(target.getFacing(),ship.getFacing()))>10) {
-                    shift(ship.getFacing(),target.getFacing());
+                    RC_BaseAIAction.shift(ship, ship.getFacing(),target.getFacing());
                 }
             }
             if (needTurnAngle<10) {
@@ -305,7 +305,7 @@ public class RC_FighterAI extends RC_BaseShipAI {
             }
         }
         else {
-            shift(ship.getFacing(),target.getFacing());
+            RC_BaseAIAction.shift(ship, ship.getFacing(),target.getFacing());
             //直接向着目标加速
             if (distance>minDistance) {
                 ship.giveCommand(ShipCommand.ACCELERATE, (Object) null, 0);

@@ -17,7 +17,7 @@ public class RC_CarrirCombatAI extends RC_BaseShipAI {
         super(ship);
     }
     @Override
-    public void useDriveSystem(Vector2f targetLocation) {
+    public void useDriveSystem() {
         if (target!=null) {
             if (target.getHullSize().compareTo(ship.getHullSize()) >= 0) {
                 int numFighters = 0;
@@ -33,10 +33,11 @@ public class RC_CarrirCombatAI extends RC_BaseShipAI {
                 }
             }
         }
-        super.useDriveSystem(targetLocation);
+        super.useDriveSystem();
     }
     @Override
     public float getWeight(ShipAPI target) {
+        /*
         float weight = 1f;
         if (ship.getHullSize().equals(ShipAPI.HullSize.CAPITAL_SHIP))
         {
@@ -103,6 +104,7 @@ public class RC_CarrirCombatAI extends RC_BaseShipAI {
                 weight *= numFighters / maxNumFighters;
             }
         }
-        return weight;
+         */
+        return super.getWeight(target);
     }
 }

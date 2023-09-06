@@ -471,10 +471,17 @@ public class RC_ChangeHyperionPlus extends HubMissionWithBarEvent { //implements
 			makeImportant(callisto, "$RC_ChangeHyperionPlusComplete_returnHere", null);
 			//给下一步添加感叹号
 			Global.getSector().getMemoryWithoutUpdate().set("$RC_ChangeHyperionPlusComplete_returnHere",true);
+
+			makeImportant(callisto, "$RC_Merge_returnHere", null);
+			Global.getSector().getMemoryWithoutUpdate().set("$RC_Merge_returnHere",true);
+
 			//改造之后可以接着改造
 			if (market != null) {
 				RC_ChangeHyperionPlusComplete c = new RC_ChangeHyperionPlusComplete();
 				c.create(market,false);
+
+				RC_Merge m = new RC_Merge();
+				m.create(market, false);
 			}
 		}
 	}

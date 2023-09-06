@@ -98,7 +98,7 @@ public class RC_AsteroidArm extends BaseShipSystemScript {
 
     public class RC_AsteroidsArmCombatPlugin extends BaseCombatLayeredRenderingPlugin {
         private final ShipAPI ship;
-        private List<CombatEntityAPI> hulkList = new ArrayList<>();
+        private Set<CombatEntityAPI> hulkList = new HashSet<>();
         private CombatEngineAPI engine = Global.getCombatEngine();
         public RC_AsteroidsArmCombatPlugin(ShipAPI ship) {
             this.ship = ship;
@@ -277,7 +277,7 @@ public class RC_AsteroidArm extends BaseShipSystemScript {
                     }
                 }
                 //将所有在内环里面的东西加入List
-                if(hulkList.indexOf(s)==-1)
+                if(!hulkList.contains(s))
                 {
                     hulkList.add(s);
                     customData = s.getCustomData();

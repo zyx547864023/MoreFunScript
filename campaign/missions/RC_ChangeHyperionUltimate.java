@@ -473,14 +473,10 @@ public class RC_ChangeHyperionUltimate extends HubMissionWithBarEvent { //implem
 			//设置重要
 			makeImportant(callisto, "$RC_ChangeHyperionPlus_returnHere", null);
 			Global.getSector().getMemoryWithoutUpdate().set("$RC_ChangeHyperionPlus_returnHere",true);
-			makeImportant(callisto, "$RC_Merge_returnHere", null);
-			Global.getSector().getMemoryWithoutUpdate().set("$RC_Merge_returnHere",true);
 			//改造过后又新的理解
 			if (market != null) {
 				RC_ChangeHyperionPlus p = new RC_ChangeHyperionPlus();
 				p.create(market, false);
-				RC_Merge m = new RC_Merge();
-				m.create(market, false);
 			}
 		}
 	}

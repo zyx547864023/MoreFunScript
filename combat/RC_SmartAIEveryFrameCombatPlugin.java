@@ -10,6 +10,7 @@ import com.fs.starfarer.api.fleet.FleetMemberAPI;
 import com.fs.starfarer.api.impl.campaign.ids.HullMods;
 import com.fs.starfarer.api.input.InputEventAPI;
 import com.fs.starfarer.api.mission.FleetSide;
+import com.fs.starfarer.api.util.IntervalUtil;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.lazywizard.lazylib.MathUtils;
@@ -25,12 +26,13 @@ import java.util.*;
 public class RC_SmartAIEveryFrameCombatPlugin implements EveryFrameCombatPlugin {
 	private CombatEngineAPI engine = Global.getCombatEngine();
 	private static final String AISET = "data/config/aiset.csv";
+	private static final String ID = "RC_SmartAIEveryFrameCombatPlugin";
 
 	private static Map<String,String> aiSet = new HashMap<>();
 	private static boolean initialized = false;
 	private float enemyOP = 0;
 	private float playerOP =0;
-
+	protected IntervalUtil tracker = new IntervalUtil(10f, 11f);
 	public static void reloadSettings(){
 		SettingsAPI settings = Global.getSettings();
 		List<ModSpecAPI> mods = settings.getModManager().getEnabledModsCopy();
@@ -75,6 +77,32 @@ public class RC_SmartAIEveryFrameCombatPlugin implements EveryFrameCombatPlugin 
 		if (engine==null) {return;}
 		if (engine.isPaused()) {return;}
 		if (!RCModPlugin.isSmartAIEnabled()) {return;}
+		/*
+		if (playerOP==0&&enemyOP==0) {
+			for (ShipAPI s : engine.getShips()) {
+				if (s.getOwner() == 0 && s.isAlive() && !s.isFighter()) {
+					playerOP += s.getHullSpec().getFleetPoints();
+				} else if (s.getOwner() == 1 && s.isAlive() && !s.isFighter()) {
+					enemyOP += s.getHullSpec().getFleetPoints();
+				}
+			}
+		}
+		else {
+			tracker.advance(amount);
+			if(tracker.intervalElapsed()) {
+				playerOP=0;
+				enemyOP=0;
+				for (ShipAPI s : engine.getShips()) {
+					if (s.getOwner() == 0 && s.isAlive() && !s.isFighter()) {
+						playerOP += s.getHullSpec().getFleetPoints();
+					} else if (s.getOwner() == 1 && s.isAlive() && !s.isFighter()) {
+						enemyOP += s.getHullSpec().getFleetPoints();
+					}
+				}
+			}
+		}
+		 */
+		/*
 		if (Global.getSector().getPlayerFleet()!=null){
 			if (Global.getSector().getPlayerFleet().getBattle()!=null){
 				if (Global.getSector().getPlayerFleet().getBattle().getNonPlayerCombined()!=null){
@@ -82,6 +110,11 @@ public class RC_SmartAIEveryFrameCombatPlugin implements EveryFrameCombatPlugin 
 					enemyOP = getTotalCombatOP(Global.getSector().getPlayerFleet().getBattle().getNonPlayerCombined().getFleetData());
 				}
 			}
+		}
+		*/
+		Set<ShipAPI> enemyList = new HashSet<>();
+		if (engine.getCustomData().get(ID+"enemyList")!=null) {
+			enemyList = (Set<ShipAPI>) engine.getCustomData().get(ID+"enemyList");
 		}
 		for (ShipAPI s:engine.getShips()) {
 			if (s.getOwner() == 1&&!s.isFighter()&&s!=Global.getCombatEngine().getPlayerShip() && s.isAlive()) {
@@ -114,24 +147,46 @@ public class RC_SmartAIEveryFrameCombatPlugin implements EveryFrameCombatPlugin 
 								if ("base".equals(aiSet.get(s.getHullSpec().getBaseHullId()))) {
 									s.setCustomData("RC_ShipAI", "base");
 									s.setShipAI(new RC_BaseShipAI(s));
+
+									enemyList.add(s);
 								}
 								else if("frigate".equals(aiSet.get(s.getHullSpec().getBaseHullId()))){
 									s.setCustomData("RC_ShipAI", "frigate");
 									s.setShipAI(new RC_FrigateAI(s));
+
+									enemyList.add(s);
 								}
 								else if("carrir_combat".equals(aiSet.get(s.getHullSpec().getBaseHullId()))){
 									s.setCustomData("RC_ShipAI", "carrir_combat");
 									s.setShipAI(new RC_CarrirCombatAI(s));
+
+									enemyList.add(s);
+								}
+								else if("carrir".equals(aiSet.get(s.getHullSpec().getBaseHullId()))){
+									s.setCustomData("RC_ShipAI", "carrir");
+									s.setShipAI(new RC_CarrirAI(s));
+
+									enemyList.add(s);
 								}
 								else if("onslaught".equals(aiSet.get(s.getHullSpec().getBaseHullId()))){
 									s.setCustomData("RC_ShipAI", "onslaught");
 									s.setShipAI(new RC_OnslaughtAI(s));
+
+									enemyList.add(s);
+								}
+								else {
+									s.setCustomData("RC_ShipAI", "base");
+									s.setShipAI(new RC_BaseShipAI(s));
+
+									enemyList.add(s);
 								}
 							}
 						}
 					}
 					else {
+						//
 						if(playerOP>enemyOP) {
+							enemyList.remove(s);
 							s.removeCustomData("RC_ShipAI");
 							s.resetDefaultAI();
 						}
@@ -139,11 +194,18 @@ public class RC_SmartAIEveryFrameCombatPlugin implements EveryFrameCombatPlugin 
 				}
 				else {
 					if (s.getCustomData().get("RC_ShipAI") != null) {
+						enemyList.remove(s);
 						s.removeCustomData("RC_ShipAI");
 						s.resetDefaultAI();
 					}
 				}
+				//刷新
+				if (s.getCustomData().get("RC_ShipAI") != null) {
+
+				}
 			}
+			//可供支配的队友
+			engine.getCustomData().put(ID+"enemyList",enemyList);
 		}
 	}
 
