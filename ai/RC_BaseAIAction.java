@@ -70,7 +70,6 @@ public class RC_BaseAIAction {
         float toTargetAngle = VectorUtils.getAngle(ship.getLocation(),targetLocation);
         float shipFacing = MathUtils.clampAngle(ship.getFacing());
         float needTurnAngle = Math.abs(MathUtils.getShortestRotation(shipFacing + ship.getAngularVelocity() * amount, toTargetAngle));
-
         if( needTurnAngle - Math.abs(ship.getAngularVelocity() * amount) > ship.getMaxTurnRate() * amount )
         {
             if (MathUtils.getShortestRotation(MathUtils.clampAngle(ship.getFacing()), toTargetAngle) > 0) {

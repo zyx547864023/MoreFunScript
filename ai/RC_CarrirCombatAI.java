@@ -27,7 +27,7 @@ public class RC_CarrirCombatAI extends RC_BaseShipAI {
                     numFighters += w.getWingMembers().size();
                 }
                 if (maxNumFighters != 0) {
-                    if(numFighters / maxNumFighters<0.5f) {
+                    if(numFighters==0) {
                         return;
                     };
                 }

@@ -55,7 +55,7 @@ public class RC_MonsterBallShoterAI implements AutofireAIPlugin {
                 return;
             }
             //找范围内mult最大的
-            else if(mult>minMult)
+            else if(mult>minMult&&(e.getHullSize().compareTo(ShipAPI.HullSize.FRIGATE)>0||e.getOwner()==0))
             {
                 minMult = mult;
                 target = e;

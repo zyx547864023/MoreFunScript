@@ -47,7 +47,7 @@ public class RC_FrigateAI extends RC_BaseShipAI {
     }
 
     /**
-     *
+     * 有敌人 面相自己 远离到最远攻击距离
      * @param target
      * @param other
      * @param amount
@@ -55,12 +55,15 @@ public class RC_FrigateAI extends RC_BaseShipAI {
     @Override
     public void flyToTarget(ShipAPI target, ShipAPI other, float amount) {
         float shipFacing = MathUtils.clampAngle(ship.getFacing());
+        //如果敌人看着我我就后退
         if (target!=null) {
             //如果没瞄准配股就远离
-            if (Math.abs(MathUtils.getShortestRotation(VectorUtils.getAngle(ship.getLocation(),target.getLocation()), target.getFacing())) > 30) {
+            if (Math.abs(MathUtils.getShortestRotation(VectorUtils.getAngle(ship.getLocation(),target.getLocation()), target.getFacing())) > 45
+            ||Math.abs(MathUtils.getShortestRotation(shipFacing, target.getFacing())) > 30) {
                 //原理最近的敌人
                 if (nearestBiggerShip != null && nearestBiggerAlly != null) {
                     if (nearestBiggerShip.minDistance > minWeaponRange&&nearestBiggerAlly.minDistance > nearestBiggerAlly.ship.getCollisionRadius()) {
+                    //if (Math.abs(MathUtils.getShortestRotation(nearestBiggerShip.ship.getFacing(),VectorUtils.getAngle(nearestBiggerShip.ship.getLocation(),ship.getLocation())))<30&&nearestBiggerShip.minDistance<maxWeaponRange) {
                         RC_BaseAIAction.move(ship, shipFacing, VectorUtils.getAngle(ship.getLocation(), nearestBiggerAlly.ship.getLocation()));
                         return;
                     }
@@ -77,7 +80,7 @@ public class RC_FrigateAI extends RC_BaseShipAI {
     public void beforeFlyToTarget() {
         //与最近的船保持一个半径距离
         if (nearestShip!=null) {
-            if (nearestShip.minDistance < (target.getCollisionRadius())) {
+            if (nearestShip.minDistance < (nearestShip.ship.getCollisionRadius())) {
                 RC_BaseAIAction.move(ship, ship.getFacing(), VectorUtils.getAngle(nearestShip.ship.getLocation(), ship.getLocation()));
                 isDodge = true;
             }
@@ -87,6 +90,12 @@ public class RC_FrigateAI extends RC_BaseShipAI {
             if (nearestBiggerShip.minDistance < minWeaponRange) {
                 RC_BaseAIAction.move(ship, ship.getFacing(), VectorUtils.getAngle(nearestBiggerShip.ship.getLocation(), ship.getLocation()));
                 isDodge = true;
+            }
+            else if (nearestBiggerShip.minDistance < maxWeaponRange) {
+                if (Math.abs(MathUtils.getShortestRotation(nearestBiggerShip.ship.getFacing(),  VectorUtils.getAngle(nearestBiggerShip.ship.getLocation(), ship.getLocation()))) < 30) {
+                    RC_BaseAIAction.move(ship, ship.getFacing(), VectorUtils.getAngle(nearestBiggerShip.ship.getLocation(), ship.getLocation()));
+                    isDodge = true;
+                }
             }
         }
     }

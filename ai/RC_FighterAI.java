@@ -92,11 +92,13 @@ public class RC_FighterAI extends RC_BaseShipAI {
                         }
                     }
                     if (targetProjectile != null) {
-                        if(dodge(targetProjectile, target, amount)){
+                        if(dodge(targetProjectile)){
+                            turn(amount);
                             return;
                         }
                     }
                 }
+
                 //飞过去
                 flyToTargetNew(target,amount);
             }

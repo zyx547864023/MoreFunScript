@@ -2160,29 +2160,34 @@ public class RC_BaseShipAIBack implements ShipAIPlugin {
         }
     }
 
+    /**
+     * 距离优先
+     * 距离内幅能优先 过载优先
+     * 角度优先
+     *
+     *
+     * 同等级船优先
+     * 目标数量少优先
+     * @param target
+     * @return
+     */
+
     public float getWeight(ShipAPI target) {
         float weight = 1f;
-        int count = 0;
         if (target.getCustomData().get("findBestTarget") != null) {
-            count = (int) target.getCustomData().get("findBestTarget");
+            int count = (int) target.getCustomData().get("findBestTarget");
             if (count>1) {
-                weight/=ship.getHullSpec().getFleetPoints()*target.getHullSize().ordinal();//count*2;
+                weight/=1;
             }
             else {
                 weight *= target.getHullSize().ordinal();
-            }
-        }
-        if (ship.getHullSize().equals(ShipAPI.HullSize.CAPITAL_SHIP))
-        {
-            if (target.getCustomData().get("findBestTargetCAPITAL_SHIP")!=null) {
-                weight/=ship.getHullSpec().getFleetPoints()/target.getHullSize().ordinal();
             }
         }
         //是否过载或者散福能 + 福能
         if (target.getCurrFlux()!=0) {
             weight+=target.getCurrFlux();
             if (target.getFluxTracker().isOverloadedOrVenting()) {
-                weight*=2;
+                weight *= target.getHullSize().ordinal();
             }
             if (target.getFluxLevel()>0.5f) {
                 //舰船强度 处以
@@ -2200,38 +2205,35 @@ public class RC_BaseShipAIBack implements ShipAIPlugin {
 
         //舰船屁股插值 处以
         float angle = Math.abs(MathUtils.getShortestRotation(VectorUtils.getAngle(ship.getLocation(),target.getLocation()),target.getFacing()));
-        if (angle!=0) {
+        if (angle>=120) {
+            weight /= angle*ship.getHullSize().ordinal();
+        }
+        else if (angle>=30) {
             weight /= angle;
         }
         else {
-            weight*=180;
+            weight*=30-angle;
         }
-        //舰船转向 处以
-        /*
-        angle = Math.abs(MathUtils.getShortestRotation(ship.getFacing(),VectorUtils.getAngle(ship.getLocation(),target.getLocation())));
-        if (angle!=0) {
-            weight /= angle;
-        }
-        else {
-            weight*=18;
-        }
-        */
         float distance = MathUtils.getDistance(ship,target);
         if (distance>minWeaponRange) {
-            weight/=distance*2;
+            weight/=distance*distance/target.getHullSpec().getHullSize().ordinal()*target.getMaxHitpoints()/target.getHitpoints();
         }
         else if (distance>0) {
-            weight/=distance;
+            weight/=distance/target.getHullSpec().getHullSize().ordinal();
+        }
+        else {
+            weight*=target.getHullSpec().getHullSize().ordinal();
         }
 
         if (target.getHullSize().equals(ship.getHullSize())) {
             weight *= ship.getHullSize().ordinal();
         }
 
-        if (target.getHullSize().compareTo(ship.getHullSize())>0&&ship.getFluxLevel()>0.5) {
-            weight *= 1+ship.getFluxLevel();
+        if (target.getHullSize().compareTo(ship.getHullSize())>0) {
+            if (target.getFluxLevel()>0.5) {
+                weight *= 1 + target.getFluxLevel();
+            }
         }
-
         return weight;
     }
 
