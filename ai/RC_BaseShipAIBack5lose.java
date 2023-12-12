@@ -2,7 +2,6 @@ package real_combat.ai;
 
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.*;
-import com.fs.starfarer.api.loading.WeaponGroupSpec;
 import com.fs.starfarer.api.util.IntervalUtil;
 import org.lazywizard.lazylib.MathUtils;
 import org.lazywizard.lazylib.VectorUtils;
@@ -54,19 +53,14 @@ import java.util.*;
  * 优先解决 最边缘的 舰船 不对 判断x差值和y差值 取差值最大的一方
  *
  */
-public class RC_BaseShipAI implements ShipAIPlugin {
+public class RC_BaseShipAIBack5lose implements ShipAIPlugin {
     public CombatEngineAPI engine = Global.getCombatEngine();
     public ShipAPI ship;
+    public Relationship relationship;
     public ShipAPI oldTarget = null;
-    public ShipAPI target;
-
-    public Vector2f moveLocation;
     public Vector2f faceLocation;
-
-    public ShipAPI leader = null;
     public boolean isLeader = false;
     public boolean isDodge = false;
-    public int beTargetCount = 0;
     /**
      * 变为不是leader或者死亡时释放team成员 更换目标也需要
      */
@@ -75,59 +69,20 @@ public class RC_BaseShipAI implements ShipAIPlugin {
     private ShipwideAIFlags AIFlags = new ShipwideAIFlags();
     protected IntervalUtil tracker = new IntervalUtil(1.0f, 2.0f);
     private Map<WeaponGroupAPI,List<WeaponAPI>> weaponGroup = new HashMap<>();
-    private Map<WeaponGroupSpec,List<String>> weaponGroupSpec = new HashMap<>();
 
-    public float maxWeaponRange = 0.0F;
-    public float minWeaponRange = 9999F;
-    public float minWingRange = 9999F;
     float maxDamage = 0;
-
     float maxFleetPoint = 0;
 
-    float myFleetPoint = 0;
-    float enemyFleetPoint = 0;
-
-    //一次循环找到所有目标
-    //最近的目标
-    ShipAndDistance nearestEnemy = null;
-    ShipAndDistance nearestEnemyNotFighter =null;
-    //最近且比自己大的目标
-    ShipAndDistance nearestBiggerEnemy = null;
-    //最近的船
-    ShipAndDistance nearestShip = null;
-    //最近且比自己大的船
-    ShipAndDistance nearestBiggerShip = null;
-    ShipAndDistance nearestBiggerAlly = null;
-    //
-    ShipAndDistance backBiggerAlly = null;
-    //挡路的船
-    ShipAndDistance other = null;
-    //比自己大的船
-    List<ShipAPI> biggerList = new ArrayList<>();
-    List<ShipAPI> biggerEnemyInRangeList = new ArrayList<>();
-    List<ShipAPI> enemyList = new ArrayList<>();
-    List<ShipAPI> fighterList = new ArrayList<>();
-    List<ShipAPI> coverList = new ArrayList<>();
-
-    List<ShipAPI> myFighterList = new ArrayList<>();
     Set<MissileAPI> missileList = new HashSet<>();
     Set<WeaponAPI> missileWeaponList = new HashSet<>();
     Set<WeaponAPI> disabledWeaponList = new HashSet<>();
-
     Set<BeamAPI> mayHitBeam = new HashSet<>();
-
     Set<CombatEntityAPI> mayHitProj = new HashSet<>();
-
     Set<ShipAPI> allyList = new HashSet<>();
-
-    //用来装载屁股后卫
-    //ShipAPI backShip;
-    //ShipAPI leftShip;
-    //ShipAPI rightShip;
 
     //最大非导弹伤害武器 保证主武器在射程内
 
-    public RC_BaseShipAI(ShipAPI ship) {
+    public RC_BaseShipAIBack5lose(ShipAPI ship) {
         this.ship = ship;
     }
     //
@@ -144,6 +99,10 @@ public class RC_BaseShipAI implements ShipAIPlugin {
         if (engine.getCustomData().get("RC_SmartAIEveryFrameCombatPluginenemyList")!=null) {
             allyList = (Set<ShipAPI>) engine.getCustomData().get("RC_SmartAIEveryFrameCombatPluginenemyList");
         }
+        relationship = new Relationship();
+        if (engine.getCustomData().get("RC_BaseShipAI.Relationship"+ship.getId())!=null) {
+            relationship = (Relationship) engine.getCustomData().get("RC_BaseShipAI.Relationship"+ship.getId());
+        }
         if (!ship.isAlive()) {
             //刷新可用队友
             allyList.remove(ship);
@@ -153,13 +112,13 @@ public class RC_BaseShipAI implements ShipAIPlugin {
             //这里有put
             engine.getCustomData().put("RC_SmartAIEveryFrameCombatPluginenemyList", allyList);
 
-            if (target!=null) {
+            if (relationship.targetShip!=null) {
                 int count = 0;
-                if (target.getCustomData().get("findBestTarget") != null) {
-                    count = (int) target.getCustomData().get("findBestTarget");
+                if (relationship.targetShip.ship.getCustomData().get("findBestTarget") != null) {
+                    count = (int) relationship.targetShip.ship.getCustomData().get("findBestTarget");
                     count--;
                 }
-                target.setCustomData("findBestTarget",count);
+                relationship.targetShip.ship.setCustomData("findBestTarget",count);
             }
             return;
         }
@@ -181,9 +140,9 @@ public class RC_BaseShipAI implements ShipAIPlugin {
         findAlly();
         drawLine();
 
-        if (target == null) {
+        if (relationship.targetShip == null) {
             Global.getLogger(this.getClass()).info("怎么可能1");
-        } else if (target.isHulk() || !target.isAlive()) {
+        } else if (relationship.targetShip.ship.isHulk() || !relationship.targetShip.ship.isAlive()) {
             Global.getLogger(this.getClass()).info("怎么可能2");
         }
 
@@ -195,21 +154,14 @@ public class RC_BaseShipAI implements ShipAIPlugin {
         }
         //如果屁股后面有
         if (!isDodge) {
-            //如果没有发现任何敌人
-            if (target != null) {
+            if (relationship.targetShip != null) {
                 turn(amount);
             }
             if (!isDodge) {
                 beforeFlyToTarget();
             }
-            if (target != null && !isDodge) {
-                if (other == null) {
-                    flyToTarget(target, null, amount);
-                } else if (other.ship.isFighter()) {
-                    flyToTarget(target, null, amount);
-                } else {
-                    flyToTarget(target, other.ship, amount);
-                }
+            if (relationship.targetShip != null && !isDodge) {
+                flyToTarget(relationship.targetShip.ship,amount);
             } else {
                 //Global.getLogger(this.getClass()).info("怎么可能3");
             }
@@ -228,13 +180,13 @@ public class RC_BaseShipAI implements ShipAIPlugin {
                     hasAIScript = true;
                 }
             }
-            if (hasAIScript && target != null) {
-                ship.getSystem().getSpecAPI().getAIScript().advance(amount, ship.getLocation(), ship.getLocation(), target);
+            if (hasAIScript && relationship.targetShip != null) {
+                ship.getSystem().getSpecAPI().getAIScript().advance(amount, ship.getLocation(), ship.getLocation(), relationship.targetShip.ship);
             } else {
                 useSystem();
             }
         }
-
+        engine.getCustomData().put("RC_BaseShipAI.Relationship"+ship.getId(), relationship);
     }
 
     /**
@@ -336,8 +288,9 @@ public class RC_BaseShipAI implements ShipAIPlugin {
 
      */
     public void usePhase(float amount){
-        if (nearestBiggerShip!=null) {
-            if (((nearestBiggerShip.ship.getHitpoints()/nearestBiggerShip.ship.getHitpoints()<0.1f&&nearestBiggerShip.minDistance<(ship.getCollisionRadius()+target.getCollisionRadius())))) {
+        if (relationship.nearestBiggerShip!=null) {
+            //要爆炸了
+            if (((relationship.nearestBiggerShip.ship.getHitpoints()/relationship.nearestBiggerShip.ship.getHitpoints()<0.1f&&relationship.nearestBiggerShip.minDistance<(ship.getCollisionRadius()+relationship.nearestBiggerShip.ship.getCollisionRadius())))) {
                 if (!ship.isPhased())
                 {
                     ship.giveCommand(ShipCommand.TOGGLE_SHIELD_OR_PHASE_CLOAK, null, 0);
@@ -345,6 +298,7 @@ public class RC_BaseShipAI implements ShipAIPlugin {
                 }
             }
         }
+
         mayHitProj.clear();
         mayHitBeam.clear();
         //如果周围很多子弹
@@ -402,10 +356,10 @@ public class RC_BaseShipAI implements ShipAIPlugin {
         //护盾如果不能转动那就只能船转动了
         ShieldAPI.ShieldType shieldType = shield.getType();
 
-        if (nearestBiggerShip!=null) {
-            if ((nearestBiggerShip.ship.getHitpoints()/nearestBiggerShip.ship.getHitpoints()<0.1f&&nearestBiggerShip.minDistance<nearestBiggerShip.ship.getCollisionRadius())) {
-                ship.getMouseTarget().set(nearestBiggerShip.ship.getLocation());
-                mouseTarget = nearestBiggerShip.ship.getLocation();
+        if (relationship.nearestBiggerShip!=null) {
+            if ((relationship.nearestBiggerShip.ship.getHitpoints()/relationship.nearestBiggerShip.ship.getHitpoints()<0.1f&&relationship.nearestBiggerShip.minDistance<(ship.getCollisionRadius()+relationship.nearestBiggerShip.ship.getCollisionRadius()))) {
+                ship.getMouseTarget().set(relationship.nearestBiggerShip.ship.getLocation());
+                mouseTarget = relationship.nearestBiggerShip.ship.getLocation();
                 //
                 if (ShieldAPI.ShieldType.OMNI.equals(shieldType)) {
                     //指向弧度中间
@@ -584,7 +538,7 @@ public class RC_BaseShipAI implements ShipAIPlugin {
             if (tracker.intervalElapsed()) {
                 if (shield.isOn()) {
                     //if (shieldArc / 3 <= shieldActiveArc) {
-                    ship.giveCommand(ShipCommand.TOGGLE_SHIELD_OR_PHASE_CLOAK, null, 0);
+                        ship.giveCommand(ShipCommand.TOGGLE_SHIELD_OR_PHASE_CLOAK, null, 0);
                     //}
                 }
             }
@@ -599,8 +553,8 @@ public class RC_BaseShipAI implements ShipAIPlugin {
                 if (Math.abs(MathUtils.getShortestRotation(shield.getFacing(), VectorUtils.getAngle(ship.getLocation(), mouseTarget))) > 120f) {
                     if (shield.isOn()) {
                         //if (shieldArc / 3 <= shieldActiveArc) {
-                        ship.giveCommand(ShipCommand.TOGGLE_SHIELD_OR_PHASE_CLOAK, mouseTarget, 0);
-                        return;
+                            ship.giveCommand(ShipCommand.TOGGLE_SHIELD_OR_PHASE_CLOAK, mouseTarget, 0);
+                            return;
                         //}
                     }
                 }
@@ -727,35 +681,16 @@ public class RC_BaseShipAI implements ShipAIPlugin {
      *
      */
     public void weaponController(){
-        maxWeaponRange=0;
-        minWeaponRange=9999;
         float maxMissileRange = 0;
         boolean isControl = false;
         if (ship.getWeaponGroupsCopy().size()>=4) {
             List<WeaponGroupAPI> list = ship.getWeaponGroupsCopy();
-            if (target != null) {
+            if (relationship.targetShip != null) {
                 float flux = ship.getFluxLevel();
-                float targetFlux = target.getFluxLevel();
+                float targetFlux = relationship.targetShip.ship.getFluxLevel();
                 //幅能充足 敌方幅能爆炸
-                if (flux<0.5f||targetFlux>0.7f||target.getFluxTracker().isOverloadedOrVenting()) {
+                if (flux<0.5f||targetFlux>0.7f||relationship.targetShip.ship.getFluxTracker().isOverloadedOrVenting()) {
                     for (WeaponGroupAPI g : ship.getWeaponGroupsCopy()) {
-                        for (WeaponAPI w:g.getWeaponsCopy()) {
-                            //if (!w.isDisabled()||(w.usesAmmo()&&w.getAmmo()>0)) {
-                            if (WeaponAPI.WeaponType.MISSILE.equals(w.getType())) {
-                                if (maxMissileRange < w.getRange()) {
-                                    maxMissileRange = w.getRange();
-                                }
-                            }
-                            else {
-                                if (maxWeaponRange < w.getRange()) {
-                                    maxWeaponRange = w.getRange();
-                                }
-                            }
-                            if (minWeaponRange > w.getRange()&&(!(w.getSpec().getAIHints().contains(WeaponAPI.AIHints.PD)&&w.getSize().equals(WeaponAPI.WeaponSize.SMALL)))) {
-                                minWeaponRange = w.getRange();
-                            }
-                            //}
-                        }
                         g.toggleOn();
                     }
                     isControl = true;
@@ -834,28 +769,28 @@ public class RC_BaseShipAI implements ShipAIPlugin {
                     }
 
                     //有护盾
-                    if (target.getShield() != null) {
-                        if (target.getShield().isOn()) {
+                    if (relationship.targetShip.ship.getShield() != null) {
+                        if (relationship.targetShip.ship.getShield().isOn()) {
                             isShieldOn = true;
                         }
                     }
                     //有相位
-                    if (target.getPhaseCloak() != null) {
+                    if (relationship.targetShip.ship.getPhaseCloak() != null) {
                         //相位开启
-                        if (target.getPhaseCloak().isActive()) {
+                        if (relationship.targetShip.ship.getPhaseCloak().isActive()) {
                             //相位
-                            if ("phasecloak".equals(target.getPhaseCloak().getId())) {
+                            if ("phasecloak".equals(relationship.targetShip.ship.getPhaseCloak().getId())) {
                                 isPhaseCloak = true;
-                            } else if ("damper".equals(target.getPhaseCloak().getId())) {
+                            } else if ("damper".equals(relationship.targetShip.ship.getPhaseCloak().getId())) {
                                 isDamper = true;
                             }
                         }
                     }
 
-                    if (target.getHitpoints() / target.getMaxHitpoints() > 0.2f) {
+                    if (relationship.targetShip.ship.getHitpoints() / relationship.targetShip.ship.getMaxHitpoints() > 0.2f) {
                         hpIsDanger = true;
                     }
-                    if (target.getHitpoints() / target.getMaxHitpoints() < 0.9f) {
+                    if (relationship.targetShip.ship.getHitpoints() / relationship.targetShip.ship.getMaxHitpoints() < 0.9f) {
                         hpIsFull = false;
                     }
 
@@ -890,31 +825,10 @@ public class RC_BaseShipAI implements ShipAIPlugin {
                 if (w.isDisabled()) {
                     disabledWeaponList.add(w);
                 }
-                if (!w.isDisabled()||(w.usesAmmo()&&w.getAmmo()>0)) {
-                    if (WeaponAPI.WeaponType.MISSILE.equals(w.getType())) {
-                        if (maxMissileRange < w.getRange()) {
-                            maxMissileRange = w.getRange();
-                        }
-                    }
-                    else {
-                        if (maxWeaponRange < w.getRange()) {
-                            maxWeaponRange = w.getRange();
-                        }
-                    }
-                    if (minWeaponRange > w.getRange()) {
-                        minWeaponRange = w.getRange();
-                    }
-                }
             }
             if (!isControl) {
                 g.toggleOn();
             }
-        }
-        if (maxWeaponRange==0){
-            maxWeaponRange = maxMissileRange;
-        }
-        if (minWeaponRange==9999) {
-            Global.getLogger(this.getClass()).info("怎么可能5");
         }
     }
 
@@ -945,15 +859,15 @@ public class RC_BaseShipAI implements ShipAIPlugin {
         }
     }
     public void useStatusSystem(){
-        if (target!=null) {
+        if (relationship.targetShip!=null) {
             if (!ship.getSystem().isActive()) {
                 //转向
-                float distance = MathUtils.getDistance(ship, target);
-                float angle = Math.abs(MathUtils.getShortestRotation(VectorUtils.getAngle(ship.getLocation(), target.getLocation()), ship.getFacing()));
+                float distance = MathUtils.getDistance(ship, relationship.targetShip.ship);
+                float angle = Math.abs(MathUtils.getShortestRotation(VectorUtils.getAngle(ship.getLocation(), relationship.targetShip.ship.getLocation()), ship.getFacing()));
                 if ("highenergyfocus".equals(ship.getSystem().getId())||
                         "ammofeed".equals(ship.getSystem().getId())
                 ) {
-                    if (distance < minWeaponRange && angle < 20) {
+                    if (distance < relationship.minWeaponRange && angle < 20) {
                         //statusSystemId.add("highenergyfocus");//高能聚焦系统
                         //必须转向后使用
                         //statusSystemId.add("ammofeed");//加速填弹器
@@ -962,21 +876,21 @@ public class RC_BaseShipAI implements ShipAIPlugin {
                 }
                 else if ("entropyamplifier".equals(ship.getSystem().getId())
                 ) {
-                    if (distance < ship.getSystem().getSpecAPI().getRange(ship.getMutableStats()) && target.isAlive() && !target.isFighter()) {
+                    if (distance < ship.getSystem().getSpecAPI().getRange(ship.getMutableStats()) && relationship.targetShip.ship.isAlive() && !relationship.targetShip.ship.isFighter()) {
                         //statusSystemId.add("entropyamplifier");//熵放大器
                         if (ship.getMouseTarget()!=null) {
-                            ship.getMouseTarget().set(target.getLocation());
+                            ship.getMouseTarget().set(relationship.targetShip.ship.getLocation());
                         }
                         ship.useSystem();
                     }
                 }
                 else if ("acausaldisruptor".equals(ship.getSystem().getId())
                 ) {
-                    if (distance < ship.getSystem().getSpecAPI().getRange(ship.getMutableStats()) && target.isAlive() && !target.isFighter()) {
-                        if (!target.getFluxTracker().isOverloadedOrVenting()) {
+                    if (distance < ship.getSystem().getSpecAPI().getRange(ship.getMutableStats()) && relationship.targetShip.ship.isAlive() && !relationship.targetShip.ship.isFighter()) {
+                        if (!relationship.targetShip.ship.getFluxTracker().isOverloadedOrVenting()) {
                             //statusSystemId.add("acausaldisruptor");//量子干扰
                             if (ship.getMouseTarget()!=null) {
-                                ship.getMouseTarget().set(target.getLocation());
+                                ship.getMouseTarget().set(relationship.targetShip.ship.getLocation());
                             }
                             ship.useSystem();
                         }
@@ -984,7 +898,7 @@ public class RC_BaseShipAI implements ShipAIPlugin {
                 }
                 else if ("temporalshell".equals(ship.getSystem().getId())
                 ) {
-                    if (ship.getFluxLevel() < 0.4 && distance < minWeaponRange) {
+                    if (ship.getFluxLevel() < 0.4 && distance < relationship.minWeaponRange) {
                         //statusSystemId.add("temporalshell");//时流之壳
                         ship.useSystem();
                     }
@@ -1018,11 +932,11 @@ public class RC_BaseShipAI implements ShipAIPlugin {
     }
     public void useCarrirSystem() {
         if ("targetingfeed".equals(ship.getSystem().getId())
-                || "reservewing".equals(ship.getSystem().getId())
+        || "reservewing".equals(ship.getSystem().getId())
         ) {
-            if (target!=null) {
-                float distance = MathUtils.getDistance(ship, target);
-                if (distance<minWingRange&&!ship.isPullBackFighters()) {
+            if (relationship.targetShip!=null) {
+                float distance = MathUtils.getDistance(ship, relationship.targetShip.ship);
+                if (distance<relationship.minWingRange&&!ship.isPullBackFighters()) {
                     //carrierSystemId.add("targetingfeed");//目标馈送系统
                     //carrierSystemId.add("reservewing");//后备部署
                     ship.useSystem();
@@ -1031,7 +945,7 @@ public class RC_BaseShipAI implements ShipAIPlugin {
         }
         else if("recalldevice".equals(ship.getSystem().getId())) {
             boolean needUse = true;
-            for (ShipAPI f:myFighterList) {
+            for (ShipAPI f:relationship.myFighterList) {
                 for (WeaponAPI w:f.getAllWeapons()) {
                     if (w.getType().equals(WeaponAPI.WeaponType.MISSILE)&&w.getAmmo()>0){
                         needUse = false;
@@ -1058,14 +972,14 @@ public class RC_BaseShipAI implements ShipAIPlugin {
             }
             else {
                 if (ship.getEngineController()!=null)
-                    if (ship.getEngineController().getShipEngines()!=null) {
-                        for (ShipEngineControllerAPI.ShipEngineAPI e:ship.getEngineController().getShipEngines()) {
-                            if (e.isDisabled()) {
-                                ship.useSystem();
-                                break;
-                            }
+                if (ship.getEngineController().getShipEngines()!=null) {
+                    for (ShipEngineControllerAPI.ShipEngineAPI e:ship.getEngineController().getShipEngines()) {
+                        if (e.isDisabled()) {
+                            ship.useSystem();
+                            break;
                         }
                     }
+                }
             }
         }
         else if ("mine_strike".equals(ship.getSystem().getId())) {
@@ -1077,10 +991,10 @@ public class RC_BaseShipAI implements ShipAIPlugin {
         }
         else if ("drone_strike".equals(ship.getSystem().getId())) {
             //specialSystemId.add("drone_strike");//终结指令
-            if (target!=null) {
-                if (target.isAlive()&&(target.getFluxLevel()>0.9f||target.getFluxTracker().isOverloadedOrVenting())){
-                    float distance = MathUtils.getDistance(ship, target);
-                    if (distance<minWingRange) {
+            if (relationship.targetShip!=null) {
+                if (relationship.targetShip.ship.isAlive()&&(relationship.targetShip.ship.getFluxLevel()>0.9f||relationship.targetShip.ship.getFluxTracker().isOverloadedOrVenting())){
+                    float distance = MathUtils.getDistance(ship, relationship.targetShip.ship);
+                    if (distance<relationship.minWingRange) {
                         ship.useSystem();
                     }
                 }
@@ -1088,10 +1002,10 @@ public class RC_BaseShipAI implements ShipAIPlugin {
         }
         else if ("drone_strike".equals(ship.getSystem().getId())) {
             //specialSystemId.add("drone_strike");//终结指令
-            if (target!=null) {
-                if (target.isAlive()&&(target.getFluxLevel()>0.9f||target.getFluxTracker().isOverloadedOrVenting())){
-                    float distance = MathUtils.getDistance(ship, target);
-                    if (distance<minWingRange) {
+            if (relationship.targetShip!=null) {
+                if (relationship.targetShip.ship.isAlive()&&(relationship.targetShip.ship.getFluxLevel()>0.9f||relationship.targetShip.ship.getFluxTracker().isOverloadedOrVenting())){
+                    float distance = MathUtils.getDistance(ship, relationship.targetShip.ship);
+                    if (distance<relationship.minWingRange) {
                         ship.useSystem();
                     }
                 }
@@ -1106,17 +1020,17 @@ public class RC_BaseShipAI implements ShipAIPlugin {
         }
         else if ("phaseteleporter".equals(ship.getSystem().getId())) {
             //specialSystemId.add("phaseteleporter");//相位传送
-            if (target!=null) {
-                float distance = MathUtils.getDistance(ship, target);
-                Vector2f targetBack = MathUtils.getPoint(target.getLocation(),target.getCollisionRadius()+ship.getCollisionRadius()*2, target.getFacing()+180);
+            if (relationship.targetShip!=null) {
+                float distance = MathUtils.getDistance(ship, relationship.targetShip.ship);
+                Vector2f targetBack = MathUtils.getPoint(relationship.targetShip.ship.getLocation(),relationship.targetShip.ship.getCollisionRadius()+ship.getCollisionRadius()*2, relationship.targetShip.ship.getFacing()+180);
                 float backDistance = MathUtils.getDistance(ship, targetBack);
                 if (backDistance<ship.getSystem().getSpecAPI().getRange(ship.getMutableStats())
-                        &&distance>backDistance
-                        &&ship.getFluxLevel()<0.5f
+                &&distance>backDistance
+                &&ship.getFluxLevel()<0.5f
                 ) {
                     if (ship.getMouseTarget()!=null) {
-                        ship.setShipTarget(target);
-                        ship.getMouseTarget().set(target.getLocation());
+                        ship.setShipTarget(relationship.targetShip.ship);
+                        ship.getMouseTarget().set(relationship.targetShip.ship.getLocation());
                         ship.useSystem();
                     }
                 }
@@ -1126,9 +1040,9 @@ public class RC_BaseShipAI implements ShipAIPlugin {
             //直接使用
             //specialSystemId.add("displacer");//闪现
             //使用掉头
-            if (target!=null) {
-                if (Math.abs(MathUtils.getShortestRotation(ship.getFacing(), VectorUtils.getAngle(ship.getLocation(), target.getLocation()))) > 120f) {
-                    ship.getMouseTarget().set(target.getLocation());
+            if (relationship.targetShip!=null) {
+                if (Math.abs(MathUtils.getShortestRotation(ship.getFacing(), VectorUtils.getAngle(ship.getLocation(), relationship.targetShip.ship.getLocation()))) > 120f) {
+                    ship.getMouseTarget().set(relationship.targetShip.ship.getLocation());
                     //shipSystem.getTargetLoc().set(targetLocation);
                     ship.useSystem();
                 }
@@ -1162,64 +1076,34 @@ public class RC_BaseShipAI implements ShipAIPlugin {
 
     // * 判断技能 闪现displacer相位传送phaseteleporter烈焰驱动器burndrive等离子爆裂驱动器microburn等离子爆裂驱动器 - 欧米伽microburn_omega等离子爆裂驱动器 - 欧米伽maneuveringjets
     // * 烈焰喷射inferniuminjector等离子推进器plasmajets
-    // 如果是在屁股后面可以尽可能接近
     public void useDriveSystem(){
-        if (target==null) {
+        if (relationship.targetShip==null) {
             return;
         }
         ShipSystemAPI shipSystem = ship.getSystem();
-        float distance = MathUtils.getDistance(ship.getLocation(),target.getLocation());
-        if (other!=null) {
-            //大于自己才关闭
-            if (other.ship.getOwner()==ship.getOwner()&&other.minDistance<20*ship.getHullSize().ordinal()) {
-                //如果other是自己人已经过载或者引擎宕机
-                boolean stop = true;
-
-                if (other.ship.getEngineController()!=null) {
-                    int ecount = 0;
-                    for (ShipEngineControllerAPI.ShipEngineAPI e : other.ship.getEngineController().getShipEngines()) {
-                        if (e.isDisabled()) {
-                            ecount++;
-                        }
-                    }
-                    if (ecount==other.ship.getEngineController().getShipEngines().size()) {
-                        stop = false;
-                    }
-                }
-                if (stop) {
-                    if (shipSystem.isActive()) {
-                        ship.giveCommand(ShipCommand.USE_SYSTEM, null, 0);
-                    }
-                    return;
-                }
-            }
-            else if (other.ship.getOwner()!=ship.getOwner()&&other.minDistance<minWeaponRange) {
+        float distance = MathUtils.getDistance(ship.getLocation(),relationship.targetShip.ship.getLocation());
+        if (relationship.other!=null) {
+            if (relationship.other.ship.getHullSize().compareTo(ship.getHullSize())<0&&relationship.other.ship.getOwner()==ship.getOwner()) {
                 if (shipSystem.isActive()) {
                     ship.giveCommand(ShipCommand.USE_SYSTEM,null,0);
                 }
                 return;
             }
-        }
-        //这里要注意 distance 是和target的距离 小船 需要更多距离 大船需要更少距离
-        //如果是在屁股后面可以尽可能接近
-        if (Math.abs(MathUtils.getShortestRotation(target.getFacing(),VectorUtils.getAngle(target.getLocation(),ship.getLocation())))<90) {
-            if (ship.getHullSize().compareTo(target.getHullSize()) >= 0) {
-                if (distance < ship.getCollisionRadius() + target.getCollisionRadius() * 2) {
-                    if (shipSystem.isActive()) {
-                        ship.giveCommand(ShipCommand.USE_SYSTEM, null, 0);
-                    }
-                    return;
+            else if(relationship.other.ship.getOwner()==ship.getOwner()&&relationship.other.minDistance<relationship.other.ship.getCollisionRadius()+ship.getCollisionRadius())
+            {
+                if (shipSystem.isActive()) {
+                    ship.giveCommand(ShipCommand.USE_SYSTEM,null,0);
                 }
-            } else {
-                if (distance < maxWeaponRange) {
-                    if (shipSystem.isActive()) {
-                        ship.giveCommand(ShipCommand.USE_SYSTEM, null, 0);
-                    }
-                    return;
-                }
+                return;
             }
+            //engine.addFloatingText(ship.getLocation(), "我觉得没问题", 25f, Color.WHITE, ship, 5f, 10f);
         }
-
+        if (distance<(ship.getCollisionRadius()+relationship.targetShip.ship.getCollisionRadius()*2)) {
+            if (shipSystem.isActive()) {
+                ship.giveCommand(ShipCommand.USE_SYSTEM,null,0);
+            }
+            return;
+        }
         if (ship.getHitpoints()/ship.getMaxHitpoints()<0.2f) {
             if (shipSystem.isActive()) {
                 ship.giveCommand(ShipCommand.USE_SYSTEM,null,0);
@@ -1238,78 +1122,49 @@ public class RC_BaseShipAI implements ShipAIPlugin {
             }
             return;
         }
-        //防止靠近太近比自己大的船
-        if (nearestBiggerShip != null) {
-            if (Math.abs(MathUtils.getShortestRotation(nearestBiggerShip.ship.getFacing(),VectorUtils.getAngle(nearestBiggerShip.ship.getLocation(),ship.getLocation())))<90) {
-                if (nearestBiggerShip.minDistance < minWeaponRange && Math.abs(MathUtils.getShortestRotation(ship.getFacing(), VectorUtils.getAngle(ship.getLocation(), nearestBiggerShip.ship.getLocation()))) < 90) {
-                    if (shipSystem.isActive()) {
-                        ship.giveCommand(ShipCommand.USE_SYSTEM, null, 0);
-                    }
-                    return;
+        if (relationship.nearestBiggerAlly!=null) {
+            if (relationship.nearestBiggerAlly.minDistance < relationship.nearestBiggerAlly.ship.getCollisionRadius() && Math.abs(MathUtils.getShortestRotation(ship.getFacing(), VectorUtils.getAngle(ship.getLocation(), relationship.nearestBiggerAlly.ship.getLocation()))) < 90) {
+                if (shipSystem.isActive()) {
+                    ship.giveCommand(ShipCommand.USE_SYSTEM, null, 0);
                 }
+                return;
             }
         }
         if (shipSystem.isActive()) {
             return;
         }
         if (faceLocation!=null) {
-            if (Math.abs(MathUtils.getShortestRotation(ship.getFacing(), VectorUtils.getAngle(ship.getLocation(), faceLocation))) < 10f) {
+            if (Math.abs(MathUtils.getShortestRotation(ship.getFacing(), VectorUtils.getAngle(ship.getLocation(), faceLocation))) < 15f) {
                 ship.useSystem();
                 return;
             }
         }
-        else if (Math.abs(MathUtils.getShortestRotation(ship.getFacing(),VectorUtils.getAngle(ship.getLocation(),target.getLocation()))) < 10f) {
+        else if (Math.abs(MathUtils.getShortestRotation(ship.getFacing(),VectorUtils.getAngle(ship.getLocation(),relationship.targetShip.ship.getLocation())))<15f) {
             ship.useSystem();
         }
     }
 
     public void vent() {
-        if (target!=null) {
-            if (!target.isAlive()) {
-                if (ship.getCurrFlux()/ship.getMutableStats().getFluxDissipation().getModifiedValue()<3) {
-                    if (!ship.getFluxTracker().isVenting()) {
-                        ship.giveCommand(ShipCommand.VENT_FLUX, null, 0);
-                    }
-                }
-                //待测试
-                if (target.getHullSize().equals(ShipAPI.HullSize.CAPITAL_SHIP)) {
-                    if (!ship.getFluxTracker().isVenting()&&nearestBiggerAlly==null) {
-                        ship.giveCommand(ShipCommand.VENT_FLUX, null, 0);
-                    }
+        int ventCount = 0;
+        for (ShipAPI e:relationship.biggerEnemyList) {
+            Relationship eRelationship = null;
+            if (engine.getCustomData().get("RC_BaseShipAI.Relationship" + e.getId()) != null) {
+                eRelationship = (Relationship) engine.getCustomData().get("RC_BaseShipAI.Relationship" + e.getId());
+            }
+            Set<ShipAPI> others = new HashSet<>();
+            others.addAll(eRelationship.biggerList);
+            Set<ShipAPI> removes = new HashSet<>();
+            for (ShipAPI o : others) {
+                if (!isOtherTrue(ship, o, e)) {
+                    removes.add(o);
                 }
             }
-        }
-        //幅能超过30%
-        if (ship.getFluxLevel()<0.3f) {
-            return;
-        }
-        //比自己等级大的船或同等级的船 两船之间是否 存在 己方 比自己等级大的船或同等级的船
-        //先获取自己范围内敌方大船 连线 线段是否与范围内 己方大船相交 参考获取遮挡物
-        //只要有一个没遮挡
-        int count = 0;
-        List<ShipAPI> moduleCopy = ship.getChildModulesCopy();
-        for (ShipAPI e:enemyList) {
-            float shipToEAngle = VectorUtils.getAngle(ship.getLocation(), e.getLocation());
-            float eDistance = MathUtils.getDistance(ship,e);
-            for (ShipAPI f:coverList) {
-                if (moduleCopy.indexOf(f)<0) {
-                    continue;
-                }
-                float fDistance = MathUtils.getDistance(ship,f);
-                if ((f.getOwner()==ship.getOwner()||f.getOwner()==100)&&(f.getHullSize().compareTo(ship.getHullSize())>=0||f.getHullSize()==ship.getHullSize().smaller(false))&&eDistance>=fDistance) {
-                    float radius = f.getCollisionRadius();
-                    float shipToFAngle = VectorUtils.getAngle(ship.getLocation(),f.getLocation());
-                    Vector2f fRoundPoint = MathUtils.getPoint(f.getLocation(), radius * 2.5f, shipToFAngle + 90);
-                    float shipToFRoundPoint = VectorUtils.getAngle(ship.getLocation(), fRoundPoint);
-                    if (Math.abs(MathUtils.getShortestRotation(shipToEAngle, shipToFAngle))
-                            < Math.abs(MathUtils.getShortestRotation(shipToFRoundPoint, shipToFAngle))
-                    ) {
-                        count++;
-                    }
-                }
+            others.removeAll(removes);
+            if (others.size() == 0) {
+                ventCount++;
             }
         }
-        if (count>enemyList.size()) {
+        if (ventCount == 0&&ship.getFluxLevel()>0.5f) {
             if (!ship.getFluxTracker().isVenting()) {
                 ship.giveCommand(ShipCommand.VENT_FLUX, null, 0);
             }
@@ -1413,7 +1268,7 @@ public class RC_BaseShipAI implements ShipAIPlugin {
     }
 
     public ShipAndDistance findNearestAlly(ShipAndDistance shipAndDistance,ShipAPI s) {
-        float distance = MathUtils.getDistance(s, target);
+        float distance = MathUtils.getDistance(s, relationship.targetShip.ship);
         if (shipAndDistance.minDistance>distance)
         {
             shipAndDistance.ship = s;
@@ -1423,6 +1278,29 @@ public class RC_BaseShipAI implements ShipAIPlugin {
     }
 
     public boolean isOtherTrue(ShipAPI target, ShipAPI other) {
+        float radius = other.getCollisionRadius() + ship.getCollisionRadius();
+        if (other.getShield()!=null) {
+            if (other.getShield().isOn()) {
+                radius = other.getShield().getRadius() + ship.getCollisionRadius();
+            }
+        }
+        float distance = MathUtils.getDistance(other, ship);
+        //如果在碰撞范围内
+        if (distance < radius) {
+            float shipToOtherAngle = VectorUtils.getAngle(ship.getLocation(), other.getLocation());
+            float shipToTargetAngle = VectorUtils.getAngle(ship.getLocation(), target.getLocation());
+            Vector2f otherRoundPoint = MathUtils.getPoint(other.getLocation(), radius, shipToOtherAngle + 90);
+            float shipToOtherRoundPoint = VectorUtils.getAngle(ship.getLocation(), otherRoundPoint);
+            if (Math.abs(MathUtils.getShortestRotation(shipToTargetAngle, shipToOtherAngle))
+                    < Math.abs(MathUtils.getShortestRotation(shipToOtherRoundPoint, shipToOtherAngle))
+            ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean isOtherTrue(ShipAPI target, ShipAPI other, ShipAPI ship) {
         float radius = other.getCollisionRadius() + ship.getCollisionRadius();
         if (other.getShield()!=null) {
             if (other.getShield().isOn()) {
@@ -1468,7 +1346,7 @@ public class RC_BaseShipAI implements ShipAIPlugin {
         Vector2f targetLocation = target.getLocation();
         float distance = MathUtils.getDistance(target,ship);
         float shipToTargetAngle = VectorUtils.getAngle(ship.getLocation(), targetLocation);
-        if (distance>minWeaponRange) {
+        if (distance>relationship.minWeaponRange) {
             if (other != null && !ship.equals(other) && !target.equals(other)) {
                 float shipToOtherAngle = VectorUtils.getAngle(ship.getLocation(), other.getLocation());
                 Vector2f otherRoundPoint = MathUtils.getPoint(other.getLocation(), other.getCollisionRadius() * 2.5f, shipToOtherAngle + 90);
@@ -1527,7 +1405,7 @@ public class RC_BaseShipAI implements ShipAIPlugin {
             }
             //在这过程中会撞到其他船
             if (
-                    Math.abs(MathUtils.getShortestRotation(shipFacing,target.getFacing()))>30
+                Math.abs(MathUtils.getShortestRotation(shipFacing,target.getFacing()))>30
             ) {
                 RC_BaseAIAction.shift(ship, shipFacing,target.getFacing());
                 if (distance < target.getCollisionRadius()) {//*2 + ship.getCollisionRadius()
@@ -1591,249 +1469,181 @@ public class RC_BaseShipAI implements ShipAIPlugin {
         }
     }
 
+    public void flyToTarget(ShipAPI target, float amount) {
+        float shipFacing = MathUtils.clampAngle(ship.getFacing());
+        //如果距离很远直接
+        Vector2f targetLocation = target.getLocation();
+        float distance = MathUtils.getDistance(target,ship);
+        float shipToTargetAngle = VectorUtils.getAngle(ship.getLocation(), targetLocation);
+        if (distance>relationship.minWeaponRange) {
+            //如果距离比较远就加速
+            float toTargetAngle = VectorUtils.getAngle(ship.getLocation(), targetLocation);
+            RC_BaseAIAction.move(ship, shipFacing, toTargetAngle);
+        }
+        //如果距离很近不在屁股
+        else {
+            //在这过程中会撞到其他船
+            if (
+                    Math.abs(MathUtils.getShortestRotation(shipFacing,target.getFacing()))>30
+            ) {
+                RC_BaseAIAction.shift(ship, shipFacing,target.getFacing());
+                if (distance < target.getCollisionRadius()) {//*2 + ship.getCollisionRadius()
+                    ship.giveCommand(ShipCommand.ACCELERATE_BACKWARDS,null,0);
+                }
+                else {
+                    ship.giveCommand(ShipCommand.ACCELERATE,null,0);
+                }
+            }
+            //绕后了
+            else {
+                //如果速度相差太大需要减速
+                Vector2f targetV = target.getVelocity();
+                Vector2f shipV = ship.getVelocity();
+                //看速度夹角 如果夹角
+                float vdl = shipV.length() - targetV.length();
+                Vector2f vd = Vector2f.sub(shipV,targetV,null);
+                float vda = VectorUtils.getAngle(new Vector2f(0,0),vd);
+                //速度 插值 大于 30 开始调整速度
+                float maxVdl = 100;
+                if (ShipAPI.HullSize.FIGHTER.equals(target.getHullSize())) {
+                    maxVdl = maxVdl/30;
+                }
+                else if (ShipAPI.HullSize.FRIGATE.equals(target.getHullSize())) {
+                    maxVdl = maxVdl/20;
+                }
+                else if (ShipAPI.HullSize.DESTROYER.equals(target.getHullSize())){
+                    maxVdl = maxVdl/10;
+                }
+                else if (ShipAPI.HullSize.CRUISER.equals(target.getHullSize())){
+                    maxVdl = maxVdl/5;
+                }
+                if (vdl>maxVdl) {
+                    //获取速度插值
+                    float accelerate = Math.abs(MathUtils.getShortestRotation(shipFacing,vda));
+                    if (accelerate<45) {
+                        ship.giveCommand(ShipCommand.ACCELERATE_BACKWARDS, (Object) null, 0);
+                    }
+                    float backwards = Math.abs(MathUtils.getShortestRotation(shipFacing + 180f,vda));
+                    if (backwards<45) {
+                        ship.giveCommand(ShipCommand.ACCELERATE, (Object) null, 0);
+                    }
+                    float strafeLeft = Math.abs(MathUtils.getShortestRotation(shipFacing - 90f,vda));
+                    if (strafeLeft<45) {
+                        ship.giveCommand(ShipCommand.STRAFE_LEFT, (Object) null, 0);
+                    }
+                    float strafeRight = Math.abs(MathUtils.getShortestRotation(shipFacing + 90f,vda));
+                    if (strafeRight<45) {
+                        ship.giveCommand(ShipCommand.STRAFE_RIGHT, (Object) null, 0);
+                    }
+                }
+                else {
+                    //距离很近那就减速和飞船同步
+                    float toTargetAngle = VectorUtils.getAngle(ship.getLocation(), targetLocation);
+                    distance = MathUtils.getDistance(target.getLocation(), ship.getLocation());
+                    if (distance < target.getCollisionRadius()*2 + ship.getCollisionRadius()*2) {
+                        toTargetAngle = toTargetAngle + 180;
+                    }
+                    RC_BaseAIAction.move(ship, shipFacing, toTargetAngle);
+                }
+            }
+        }
+    }
+
     /**
      * 如果敌人在视野内 则向敌人移动 否则 ？
      * 向最大的队友移动？
      * 向地图出生点移动？
      *
      * 当船是leader时才查询
+     *
+     * 从最小射程内 获取 目标
      */
     public void findBestTarget() {
-        if (minWeaponRange==9999) {
-            Global.getLogger(this.getClass()).info("怎么可能0");
-        }
-        minWingRange = 9999F;
-        enemyFleetPoint = 0;
-        myFleetPoint = 0;
-        //绕开使用
-        nearestEnemy = null;
-        nearestEnemyNotFighter = null;
-        nearestShip = null;
-        //最近的船 开盾使用
-        nearestBiggerShip = null;
-        //名字没改暂时使用
-        nearestBiggerEnemy = null;
-        nearestBiggerAlly = null;
-        backBiggerAlly = null;
-        //最近的超载目标
-        ShipAndDistance minOverLoad = null;
-        enemyList.clear();
-        fighterList.clear();
-        coverList.clear();
-        myFighterList.clear();
-        biggerList.clear();
-        biggerEnemyInRangeList.clear();
-        beTargetCount = 0;
-        for (ShipAPI s :engine.getShips()) {
-            if (s!=ship) {
-                if (!s.isFighter()) {
-                    if (ship.equals(s.getShipTarget())) {
-                        beTargetCount++;
-                    }
-                    if(s.getHullSize().compareTo(ship.getHullSize())>=0||s.getOwner()==ship.getOwner()) {
-                        biggerList.add(s);
-                        if (s.getOwner()!=ship.getOwner()&&s.getOwner()!=100&&MathUtils.getDistance(s,ship)<minWeaponRange&&s.isAlive()) {
-                            biggerEnemyInRangeList.add(s);
-                        }
-                    }
-                    else if(s.getHullSize().compareTo(ship.getHullSize())==0){
-                        if (s.getOwner()!=ship.getOwner()&&s.getOwner()!=100&&MathUtils.getDistance(s,ship)<minWeaponRange&&s.isAlive()) {
-                            biggerEnemyInRangeList.add(s);
-                        }
-                    }
-                    if (nearestShip == null) {
-                        nearestShip = new ShipAndDistance(s, MathUtils.getDistance(s, ship));
-                    } else {
-                        nearestShip = findNearestShip(nearestShip, s);
-                    }
-                    if ((s.getOwner()==ship.getOwner()||s.getOwner()==100)&&(s.getHullSize().compareTo(ship.getHullSize())>=0||s.getHullSize()==ship.getHullSize().smaller(false))) {
-                        coverList.add(s);
-                    }
-                    if (s.getOwner()==ship.getOwner()&&s.isAlive()&&!s.isFighter()) {
-                        myFleetPoint += s.getHullSpec().getFleetPoints();
-                    }
-                }
-                else {
-                    if (!s.isHulk() && s.isAlive() && s.getWing()!=null) {
-                        if (s.getWing().getSourceShip()!=null) {
-                            if (s.getWing().getSourceShip().equals(ship)) {
-                                myFighterList.add(s);
-                                if (s.getWing().getRange()<minWingRange) {
-                                    minWingRange = s.getWing().getRange();
-                                }
-                            }
-                        }
-                    }
-                }
-                if (!s.isHulk() && s.isAlive() && s.getOwner()!=100&&s.getOwner()!=ship.getOwner()) {
-                    if (!s.isFighter()) {
-                        enemyFleetPoint += s.getHullSpec().getFleetPoints();
-
-                        if (nearestBiggerShip == null) {
-                            nearestBiggerShip = new ShipAndDistance(s, MathUtils.getDistance(s, ship));
-                        } else {
-                            nearestBiggerShip = findNearestShip(nearestBiggerShip, s);
-                        }
-
-                        if (nearestBiggerEnemy == null) {
-                            nearestBiggerEnemy = new ShipAndDistance(s, MathUtils.getDistance(s, ship));
-                        } else if (s.getHullSize().compareTo(ship.getHullSize())>=0){
-                            nearestBiggerEnemy = new ShipAndDistance(s, MathUtils.getDistance(s, ship));
-                        }
-                        if (nearestEnemyNotFighter == null) {
-                            nearestEnemyNotFighter = new ShipAndDistance(s, MathUtils.getDistance(s, ship));
-                        } else {
-                            nearestEnemyNotFighter = findNearestShip(nearestEnemyNotFighter, s);
-                        }
-                    }
-                    else {
-                        fighterList.add(s);
-                    }
-                    if (nearestEnemy == null) {
-                        nearestEnemy = new ShipAndDistance(s, MathUtils.getDistance(s, ship));
-                    } else {
-                        nearestEnemy = findNearestShip(nearestEnemy, s);
-                    }
-                }
-                else {
-                    if (!s.isHulk() && s.isAlive() && s.getHullSize().compareTo(ship.getHullSize())>0) {
-                        if (nearestBiggerAlly == null) {
-                            nearestBiggerAlly = new ShipAndDistance(s, MathUtils.getDistance(s, ship));
-                        } else {
-                            nearestBiggerAlly = findNearestShip(nearestBiggerAlly, s);
-                        }
-                    }
-                    if (!s.isHulk() && s.isAlive() && s.getHullSize().compareTo(ship.getHullSize())>=0) {
-                        //屁股后面有船 并且 面对自己屁股
-                        float sToShip = VectorUtils.getAngle(s.getLocation(), ship.getLocation());
-                        if (Math.abs(MathUtils.getShortestRotation(sToShip, s.getFacing())) < 45
-                                &&Math.abs(MathUtils.getShortestRotation(s.getFacing(), ship.getFacing())) < 30
-                            //&&MathUtils.getDistance(ship,s)<s.getCollisionRadius()+ship.getCollisionRadius()+ship.getMaxSpeed()
-                        ) {
-                            if (backBiggerAlly == null) {
-                                backBiggerAlly = new ShipAndDistance(s, MathUtils.getDistance(s, ship));
-                            } else {
-                                backBiggerAlly = findNearestShip(backBiggerAlly, s);
-                            }
-                        }
-                    }
-                }
-
-                float distance = MathUtils.getDistance(s,ship);
-                if (!s.isHulk() && s.isAlive() && distance<minWeaponRange&&!s.isFighter()&&s.getOwner()!=100&&s.getOwner()!=ship.getOwner()&&!s.isFighter()) {
-                    if (minOverLoad == null) {
-                        if (getWeight(s)>0) {
-                            minOverLoad = new ShipAndDistance(s, getWeight(s));
-                        }
-                    }
-                    else if(minOverLoad.minDistance<getWeight(s)){
-                        minOverLoad = new ShipAndDistance(s, getWeight(s));
-                    }
-
-                }
-
-                if (!s.isHulk() && s.isAlive() && distance<maxWeaponRange&&!s.isFighter()&&s.getOwner()!=100&&s.getOwner()!=ship.getOwner()&&!s.isFighter()) {
-                    if (s.getHullSize().compareTo(ship.getHullSize())>=0&&!s.getFluxTracker().isOverloadedOrVenting()&&Math.abs(MathUtils.getShortestRotation(s.getFacing(),VectorUtils.getAngle(s.getLocation(),ship.getLocation())))<90) {
-                        enemyList.add(s);
-                    }
-                }
-            }
-        }
-
+        //清理计数
         if (isLeader) {
-            if (target != null) {
+            if (relationship.targetShip != null) {
                 int count = 0;
-                if (target.getCustomData().get("findBestTarget") != null) {
-                    count = (int) target.getCustomData().get("findBestTarget");
+                if (relationship.targetShip.ship.getCustomData().get("findBestTarget") != null) {
+                    count = (int) relationship.targetShip.ship.getCustomData().get("findBestTarget");
                     count--;
                 }
-                target.setCustomData("findBestTarget", count);
+                relationship.targetShip.ship.setCustomData("findBestTarget", count);
             }
         }
-
-        oldTarget = target;
-
-        target = null;
+        if (relationship.targetShip!=null) {
+            oldTarget = relationship.targetShip.ship;
+        }
+        relationship.targetShip = null;
 
         //跟随队长
         if (!isLeader) {
             if (ship.getCustomData().get("RC_BaseShipAI_lederTarget")!=null) {
-                target = (ShipAPI) ship.getCustomData().get("RC_BaseShipAI_lederTarget");
+                ShipAPI target = (ShipAPI) ship.getCustomData().get("RC_BaseShipAI_lederTarget");
+                relationship.targetShip = new ShipAndDistance(target, MathUtils.getDistance(target, ship));
             }
         }
 
-        if (target!=null) {
-            if (target.isHulk()||!target.isAlive()) {
-                target = null;
-            }else if (getWeight(target)<=0){
-                target = null;
-            }else if (MathUtils.getDistance(target,ship)>minWeaponRange) {
-                target = null;
+        if (relationship.targetShip!=null) {
+            if (relationship.targetShip.ship.isHulk()||!relationship.targetShip.ship.isAlive()) {
+                relationship.targetShip = null;
+            }else if (getWeight(relationship.targetShip.ship)<=0){
+                relationship.targetShip = null;
+            }else if (MathUtils.getDistance(relationship.targetShip.ship,ship)>relationship.minWeaponRange) {
+                relationship.targetShip = null;
             }
         }
 
-        if (target==null) {
-            if (minOverLoad!=null) {
-                target = minOverLoad.ship;
-                if (target.isHulk()||!target.isAlive()) {
-                    target = null;
-                }
-                else if (getWeight(target)<=0){
-                    target = null;
-                }
-            }
-
-            if (nearestBiggerEnemy!=null&&target==null) {
-                target = nearestBiggerEnemy.ship;
-                if (target.isHulk()||!target.isAlive()) {
-                    target = null;
-                }else if (getWeight(target)<=0){
-                    target = null;
-                }
-            }
-
-            if (nearestEnemy!=null&&target==null){
-                target = nearestEnemy.ship;
+        if (relationship.nearestBiggerEnemy!=null&&relationship.targetShip==null) {
+            relationship.targetShip = new ShipAndDistance(relationship.nearestBiggerEnemy.ship,MathUtils.getDistance(ship,relationship.nearestBiggerEnemy.ship));
+            if (relationship.targetShip.ship.isHulk()||!relationship.targetShip.ship.isAlive()) {
+                relationship.targetShip = null;
+            }else if (getWeight(relationship.targetShip.ship)<=0){
+                relationship.targetShip = null;
             }
         }
-        other = null;
+
+        if (relationship.targetShip==null&&relationship.nearestEnemy!=null) {
+            relationship.targetShip = new ShipAndDistance(relationship.nearestEnemy.ship,MathUtils.getDistance(ship,relationship.nearestEnemy.ship));
+        }
+
+        relationship.other = null;
         //找到target开始找other
-        if (target!=null) {
+        if (relationship.targetShip!=null) {
             //
             if (isLeader) {
                 int count = 0;
-                if (target.getCustomData().get("findBestTarget") != null) {
-                    count = (int) target.getCustomData().get("findBestTarget");
+                if (relationship.targetShip.ship.getCustomData().get("findBestTarget") != null) {
+                    count = (int) relationship.targetShip.ship.getCustomData().get("findBestTarget");
                     count++;
                 }
-                target.setCustomData("findBestTarget", count);
+                relationship.targetShip.ship.setCustomData("findBestTarget", count);
             }
+            if (!relationship.targetShip.ship.isFighter()) {
+                Set<ShipAPI> others = new HashSet<>();
+                others.addAll(relationship.biggerList);
+                Set<ShipAPI> removes = new HashSet<>();
+                for (ShipAPI o : others) {
+                    if (!isOtherTrue(relationship.targetShip.ship, o)) {
+                        removes.add(o);
+                    }
+                }
+                others.removeAll(removes);
+                ShipAndDistance nearstOther = null;
+                for (ShipAPI o : others) {
+                    if (nearstOther == null) {
+                        nearstOther = new ShipAndDistance(o, MathUtils.getDistance(o, ship));
+                    } else {
+                        nearstOther = findNearestShip(nearstOther, o);
+                    }
+                }
 
-            Set<ShipAPI> others = new HashSet<>();
-            others.addAll(biggerList);
-            others.remove(target);
-            Set<ShipAPI> removes = new HashSet<>();
-            for (ShipAPI o:others) {
-                if(!isOtherTrue(target,o)) {
-                    removes.add(o);
+                if (nearstOther != null) {
+                    relationship.other = nearstOther;
                 }
-            }
-            others.removeAll(removes);
-            ShipAndDistance nearstOther = null;
-            for (ShipAPI o:others) {
-                if (nearstOther==null) {
-                    nearstOther = new ShipAndDistance(o,MathUtils.getDistance(o,ship));
-                }
-                else {
-                    nearstOther= findNearestShip(nearstOther,o);
-                }
-            }
-
-            if (nearstOther!=null) {
-                other = nearstOther;
             }
         }
-        ship.setShipTarget(target);
+
+        ship.setShipTarget(relationship.targetShip.ship);
     }
 
     /**
@@ -1852,63 +1662,63 @@ public class RC_BaseShipAI implements ShipAIPlugin {
         float weight = 1f;
 
         float distance = MathUtils.getDistance(ship,target);
-        if (distance>maxWeaponRange) {
+        if (distance>relationship.maxWeaponRange) {
             //不要追距离外少血的小船
-            weight /= distance * distance;
+            weight/=distance*distance/target.getHullSpec().getHullSize().ordinal()*target.getMaxHitpoints()/target.getHitpoints();
         }
         else {
-            weight *= maxWeaponRange - distance;
-        }
+            weight *= relationship.maxWeaponRange - distance;
 
-        //是否过载或者散福能 + 福能
-        if (target.getCurrFlux()!=0) {
-            weight+=target.getCurrFlux();
-            if (target.getFluxTracker().isOverloadedOrVenting()) {
-                weight *= target.getHullSize().ordinal();
-            }
-            if (target.getFluxLevel()>0.7f) {
-                //舰船强度 处以
-                weight += target.getHullSpec().getFleetPoints();
-            }
-        }
-
-        //舰船屁股插值 处以
-        float angle = Math.abs(MathUtils.getShortestRotation(VectorUtils.getAngle(ship.getLocation(),target.getLocation()),target.getFacing()));
-        if (angle>=120) {
-            weight /= angle*ship.getHullSize().ordinal();
-        }
-        else if (angle>=30) {
-
-        }
-        else {
-            weight*=30-angle;
-        }
-
-        if (target.getHullSize().compareTo(ship.getHullSize())>0) {
-            if (target.getFluxLevel()>0.7f) {
-                weight *= 1 + target.getFluxLevel();
+            //是否过载或者散福能 + 福能
+            if (target.getCurrFlux()!=0) {
+                weight+=target.getCurrFlux();
+                if (target.getFluxTracker().isOverloadedOrVenting()) {
+                    weight *= target.getHullSize().ordinal();
+                }
+                if (target.getFluxLevel()>0.7f) {
+                    //舰船强度 处以
+                    weight += target.getHullSpec().getFleetPoints();
+                }
             }
 
-            //福能+
-            //血量剩余 比例 处以
-            if (target.getHitpoints()!=0) {
-                //weight = weight * target.getMaxHitpoints() / target.getHitpoints();
+            //舰船屁股插值 处以
+            float angle = Math.abs(MathUtils.getShortestRotation(VectorUtils.getAngle(ship.getLocation(),target.getLocation()),target.getFacing()));
+            if (angle>=120) {
+                weight /= angle*ship.getHullSize().ordinal();
+            }
+            else if (angle>=30) {
+
             }
             else {
-                return 0;
+                weight*=30-angle;
+            }
+
+            if (target.getHullSize().compareTo(ship.getHullSize())>0) {
+                if (target.getFluxLevel()>0.7f) {
+                    weight *= 1 + target.getFluxLevel();
+                }
+
+                //福能+
+                //血量剩余 比例 处以
+                if (target.getHitpoints()!=0) {
+                    //weight = weight * target.getMaxHitpoints() / target.getHitpoints();
+                }
+                else {
+                    return 0;
+                }
             }
         }
 
         if (target.getCustomData().get("findBestTarget") != null) {
             int count = (int) target.getCustomData().get("findBestTarget");
-            if (count>1) {
-                //weight/=(teamList.size()+1) * ship.getHullSpec().getFleetPoints() * myFleetPoint/enemyFleetPoint;//count*2
+            if (count>2) {
                 weight=1;
             }
             else {
                 weight *= target.getHullSize().ordinal();
             }
         }
+
         if (Math.abs(target.getHullSpec().getFleetPoints()-ship.getHullSpec().getFleetPoints())!=0) {
             weight /= Math.abs(target.getHullSpec().getFleetPoints()-ship.getHullSpec().getFleetPoints());
         }
@@ -1930,7 +1740,7 @@ public class RC_BaseShipAI implements ShipAIPlugin {
 
     public void releaseTeam() {
         if (isLeader) {
-            if (oldTarget!=null&&oldTarget!=target) {
+            if (oldTarget!=null&&oldTarget!=relationship.targetShip.ship) {
                 allyList.addAll(teamList);
                 for (ShipAPI t:teamList) {
                     t.getCustomData().remove("RC_BaseShipAI_lederTarget");
@@ -1955,14 +1765,14 @@ public class RC_BaseShipAI implements ShipAIPlugin {
      * 怎样让所有AI公用一个list
      */
     public void findAlly() {
-        if (isLeader&&target!=null) {
+        if (isLeader&&relationship.targetShip!=null) {
             float fleetPoint = ship.getHullSpec().getFleetPoints();
-            float targetPoint = target.getHullSpec().getFleetPoints();
+            float targetPoint = relationship.targetShip.ship.getHullSpec().getFleetPoints();
             for (ShipAPI t : teamList) {
                 fleetPoint += t.getHullSpec().getFleetPoints();
             }
             //Global.getLogger(this.getClass()).info(teamList.size());
-            int mult = target.getHullSize().ordinal() ;
+            int mult = relationship.targetShip.ship.getHullSize().ordinal() ;
             if (mult > 3) {
                 //mult = 3;
             }
@@ -1976,12 +1786,12 @@ public class RC_BaseShipAI implements ShipAIPlugin {
                 for (ShipAPI a : allyList) {
                     if (a.getHullSize() == hullsize) {
                         if (bestAlly == null) {
-                            bestAlly = new ShipAndDistance(a, MathUtils.getDistance(target, a));
-                            if (bestAlly.minDistance > maxWeaponRange) {
+                            bestAlly = new ShipAndDistance(a, MathUtils.getDistance(relationship.targetShip.ship, a));
+                            if (bestAlly.minDistance > relationship.maxWeaponRange) {
                                 bestAlly = null;
                             }
                         } else {
-                            if (findNearestAlly(bestAlly, a).minDistance < maxWeaponRange) {
+                            if (findNearestAlly(bestAlly, a).minDistance < relationship.maxWeaponRange) {
                                 bestAlly = findNearestAlly(bestAlly, a);
                             }
                         }
@@ -1998,7 +1808,7 @@ public class RC_BaseShipAI implements ShipAIPlugin {
                 refreshHullSize();
                 //这里有put
                 engine.getCustomData().put("RC_SmartAIEveryFrameCombatPluginenemyList", allyList);
-                bestAlly.ship.getCustomData().put("RC_BaseShipAI_lederTarget", target);
+                bestAlly.ship.getCustomData().put("RC_BaseShipAI_lederTarget", relationship.targetShip.ship);
                 bestAlly.ship.setCustomData("leader",ship);
             }
         }
@@ -2068,23 +1878,23 @@ public class RC_BaseShipAI implements ShipAIPlugin {
         {
             allDrawShip = new HashMap<>();
         }
-        if (target!=null) {
-            if (target.isAlive()) {
-                RC_NeedDrawLine thisDrawShip = allDrawShip.get(target);
+        if (relationship.targetShip!=null) {
+            if (relationship.targetShip.ship.isAlive()) {
+                RC_NeedDrawLine thisDrawShip = allDrawShip.get(relationship.targetShip.ship);
                 if (thisDrawShip == null) {
-                    thisDrawShip = new RC_NeedDrawLine(target, 0, new ArrayList<Vector2f>(), new ArrayList<Vector2f>(), Color.PINK);
+                    thisDrawShip = new RC_NeedDrawLine(relationship.targetShip.ship, 0, new ArrayList<Vector2f>(), new ArrayList<Vector2f>(), Color.PINK);
                 }
                 thisDrawShip.startList.add(ship.getLocation());
-                thisDrawShip.endList.add(target.getLocation());
+                thisDrawShip.endList.add(relationship.targetShip.ship.getLocation());
                 thisDrawShip.color = Color.PINK;
                 //这里有put
-                allDrawShip.put(target, thisDrawShip);
+                allDrawShip.put(relationship.targetShip.ship, thisDrawShip);
             }
         }
         RC_NeedDrawLine teamDrawShip = allDrawShip.get(ship);
         if(teamDrawShip==null)
         {
-            teamDrawShip = new RC_NeedDrawLine(target,0,new ArrayList<Vector2f>(),new ArrayList<Vector2f>(), Color.cyan);
+            teamDrawShip = new RC_NeedDrawLine(relationship.targetShip.ship,0,new ArrayList<Vector2f>(),new ArrayList<Vector2f>(), Color.cyan);
         }
         for (ShipAPI t:teamList) {
             if (t.isAlive()) {
@@ -2109,131 +1919,114 @@ public class RC_BaseShipAI implements ShipAIPlugin {
      */
 
     public void beforeFlyToTarget () {
-        //让开 如果比目标大 应该是移动到 目标侧边 反之移动到队友侧边
-        if (backBiggerAlly != null) {
-            if (target!=null) {
-                //if (backBiggerAlly.ship.getShipTarget()==target) {
-                if (ship.getHullSize().compareTo(target.getHullSize()) >= 0) {
-                    //移动到目标侧边
-                    float shipToTargetAngle = VectorUtils.getAngle(ship.getLocation(), target.getLocation());
-                    float backBiggerAllyToTargetAngle = VectorUtils.getAngle(backBiggerAlly.ship.getLocation(), target.getLocation());
-
-                    if (MathUtils.getShortestRotation(backBiggerAllyToTargetAngle, shipToTargetAngle) < 0) {
-                        backBiggerAllyToTargetAngle = backBiggerAllyToTargetAngle - 90;
-                        Vector2f targetPoint = MathUtils.getPointOnCircumference(target.getLocation(), (target.getCollisionRadius() * 2f + ship.getCollisionRadius() * 2f), backBiggerAllyToTargetAngle);
-                        backBiggerAllyToTargetAngle = VectorUtils.getAngle(ship.getLocation(), targetPoint);
-                        RC_BaseAIAction.move(ship, ship.getFacing(), backBiggerAllyToTargetAngle);
-                    } else {
-                        backBiggerAllyToTargetAngle = backBiggerAllyToTargetAngle + 90;
-                        Vector2f targetPoint = MathUtils.getPointOnCircumference(target.getLocation(), (target.getCollisionRadius() * 2f + ship.getCollisionRadius() * 2f), backBiggerAllyToTargetAngle);
-                        backBiggerAllyToTargetAngle = VectorUtils.getAngle(ship.getLocation(), targetPoint);
-                        RC_BaseAIAction.move(ship, ship.getFacing(), backBiggerAllyToTargetAngle);
+        if (relationship.nearestShip!=null) {
+            //与最近的船保持碰撞半径
+            if (!isDodge && relationship.nearestShip.minDistance < relationship.nearestShip.ship.getCollisionRadius()) {
+                RC_BaseAIAction.move(ship, ship.getFacing(), VectorUtils.getAngle(relationship.nearestShip.ship.getLocation(), ship.getLocation()));
+                isDodge = true;
+            }
+            //爆炸船保持半径
+            if (!isDodge && relationship.nearestShip.ship.getHitpoints() / relationship.nearestShip.ship.getMaxHitpoints() < 0.2 && relationship.nearestShip.minDistance < relationship.nearestShip.ship.getCollisionRadius() + ship.getCollisionRadius()) {
+                RC_BaseAIAction.move(ship, ship.getFacing(), VectorUtils.getAngle(relationship.nearestShip.ship.getLocation(), ship.getLocation()));
+                isDodge = true;
+            }
+        }
+        //在对面最近比自己大的船的射程内 且 不在它屁股后面 远离
+        /*
+        if (!isDodge && relationship.nearestBiggerEnemy!=null) {
+            Relationship nearestBiggerEnemyRelationship = null;
+            if (engine.getCustomData().get("RC_BaseShipAI.Relationship"+relationship.nearestBiggerEnemy.ship.getId())!=null) {
+                nearestBiggerEnemyRelationship = (Relationship) engine.getCustomData().get("RC_BaseShipAI.Relationship"+relationship.nearestBiggerEnemy.ship.getId());
+            }
+            if (nearestBiggerEnemyRelationship!=null) {
+                if (relationship.nearestBiggerEnemy.minDistance<nearestBiggerEnemyRelationship.maxWeaponRange) {
+                    int fleetPoint = 0;
+                    for (ShipAPI in:nearestBiggerEnemyRelationship.enemyInMaxWeaponRange) {
+                        fleetPoint+=in.getHullSpec().getFleetPoints();
                     }
-                    isDodge = true;
+                    if (fleetPoint*2<relationship.nearestBiggerEnemy.ship.getHullSpec().getFleetPoints()) {
+                        //屁股后面有船 并且 面对自己屁股
+                        float sToShip = VectorUtils.getAngle(ship.getLocation(), relationship.nearestBiggerEnemy.ship.getLocation());
+                        if (Math.abs(MathUtils.getShortestRotation(sToShip, ship.getFacing())) < 45
+                                && Math.abs(MathUtils.getShortestRotation(ship.getFacing(), relationship.nearestBiggerEnemy.ship.getFacing())) < 30
+                        ) {
+                            RC_BaseAIAction.move(ship, ship.getFacing(), VectorUtils.getAngle(relationship.nearestBiggerEnemy.ship.getLocation(), ship.getLocation()));
+                            isDodge = true;
+                        }
+                    }
+                }
+            }
+        }
+         */
+        /*
+        //如果与最近的队友目标相同
+        if (relationship.nearestBiggerAlly!=null&&!isLeader) {
+            if (relationship.nearestBiggerAlly.ship.getShipTarget()==ship.getShipTarget()&&relationship.nearestBiggerAlly.minDistance>relationship.maxWeaponRange) {
+                if (MathUtils.getShortestRotation(ship.getFacing(),VectorUtils.getAngle(ship.getLocation(), relationship.nearestBiggerAlly.ship.getLocation())) > 0) {
+                    relationship.targetLocation = MathUtils.getPoint(relationship.nearestBiggerAlly.ship.getLocation(), relationship.minWeaponRange, relationship.nearestBiggerAlly.ship.getFacing() + 90);
                 } else {
-                    //移动到队友侧边
-                    float shipToTargetAngle = VectorUtils.getAngle(ship.getLocation(), target.getLocation());
-                    float backBiggerAllyToTargetAngle = VectorUtils.getAngle(backBiggerAlly.ship.getLocation(), target.getLocation());
-
-                    if (MathUtils.getShortestRotation(backBiggerAllyToTargetAngle, shipToTargetAngle) < 0) {
-                        backBiggerAllyToTargetAngle = backBiggerAllyToTargetAngle - 90;
-                        Vector2f targetPoint = MathUtils.getPointOnCircumference(backBiggerAlly.ship.getLocation(), (backBiggerAlly.ship.getCollisionRadius() * 2f + ship.getCollisionRadius() * 2f), backBiggerAllyToTargetAngle);
-                        backBiggerAllyToTargetAngle = VectorUtils.getAngle(ship.getLocation(), targetPoint);
-                        RC_BaseAIAction.move(ship, ship.getFacing(), backBiggerAllyToTargetAngle);
-                    } else {
-                        backBiggerAllyToTargetAngle = backBiggerAllyToTargetAngle + 90;
-                        Vector2f targetPoint = MathUtils.getPointOnCircumference(backBiggerAlly.ship.getLocation(), (backBiggerAlly.ship.getCollisionRadius() * 2f + ship.getCollisionRadius() * 2f), backBiggerAllyToTargetAngle);
-                        backBiggerAllyToTargetAngle = VectorUtils.getAngle(ship.getLocation(), targetPoint);
-                        RC_BaseAIAction.move(ship, ship.getFacing(), backBiggerAllyToTargetAngle);
-                    }
-                    isDodge = true;
+                    relationship.targetLocation = MathUtils.getPoint(relationship.nearestBiggerAlly.ship.getLocation(), relationship.minWeaponRange, relationship.nearestBiggerAlly.ship.getFacing() - 90);
                 }
-                //}
+            }
+            if (relationship.targetLocation!=null) {
+                if (MathUtils.getDistance(relationship.targetLocation,ship.getLocation())>relationship.minWeaponRange)
+                    RC_BaseAIAction.move(ship, ship.getFacing(), VectorUtils.getAngle(relationship.targetLocation, ship.getLocation()));
+                isDodge = true;
             }
         }
 
-        //躲开快爆炸的
-        if (nearestBiggerAlly != null&&!isDodge) {
-            if ((nearestBiggerAlly.ship.getHullSize().compareTo(ship.getHullSize()) >= 0 && (nearestBiggerAlly.ship.getHitpoints() / nearestBiggerAlly.ship.getHitpoints() < 0.2F && nearestBiggerAlly.minDistance < (nearestBiggerAlly.ship.getCollisionRadius())))) {
-                RC_BaseAIAction.move(ship, ship.getFacing(), VectorUtils.getAngle(nearestBiggerAlly.ship.getLocation(), ship.getLocation()));
-                isDodge = true;
-            }
-        }
-        if (nearestBiggerShip != null&&!isDodge) {
-            if ((nearestBiggerShip.ship.getHullSize().compareTo(ship.getHullSize()) >= 0 && (nearestBiggerShip.ship.getHitpoints() / nearestBiggerShip.ship.getHitpoints() < 0.2F && nearestBiggerShip.minDistance < (nearestBiggerShip.ship.getCollisionRadius()))) || ship.getFluxTracker().isOverloaded() || disabledWeaponList.size()/ship.getAllWeapons().size()>0.5) {
-                RC_BaseAIAction.move(ship, ship.getFacing(), VectorUtils.getAngle(nearestBiggerShip.ship.getLocation(), ship.getLocation()));
-                isDodge = true;
-            }
-        }
-        //如果 大船看自己
-        if (nearestBiggerShip != null&&!isDodge) {
-            if (nearestBiggerShip.ship.getHullSize().compareTo(ship.getHullSize())>0) {
-                if (Math.abs(MathUtils.getShortestRotation(nearestBiggerShip.ship.getFacing(), VectorUtils.getAngle(nearestBiggerShip.ship.getLocation(), ship.getLocation()))) < 90) {
-                    RC_BaseAIAction.move(ship, ship.getFacing(), VectorUtils.getAngle(nearestBiggerShip.ship.getLocation(), ship.getLocation()));
+        //绕过other
+        if (relationship.other!=null&&relationship.targetShip!=null) {
+            if (relationship.targetShip.minDistance<relationship.maxWeaponRange) {
+                if (MathUtils.getShortestRotation(ship.getFacing(), VectorUtils.getAngle(ship.getLocation(), relationship.other.ship.getLocation())) > 0) {
+                    relationship.targetLocation = MathUtils.getPoint(relationship.other.ship.getLocation(), relationship.minWeaponRange, relationship.other.ship.getFacing() + 90);
+                } else {
+                    relationship.targetLocation = MathUtils.getPoint(relationship.other.ship.getLocation(), relationship.minWeaponRange, relationship.other.ship.getFacing() - 90);
+                }
+                if (relationship.targetLocation != null) {
+                    if (MathUtils.getDistance(relationship.targetLocation, ship.getLocation()) > relationship.minWeaponRange)
+                        RC_BaseAIAction.move(ship, ship.getFacing(), VectorUtils.getAngle(relationship.targetLocation, ship.getLocation()));
                     isDodge = true;
                 }
             }
         }
+         */
     }
 
     public void turn(float amount){
-        //距离目标太远敌人太近
-        if (nearestBiggerShip!=null) {
-            if (MathUtils.getDistance(ship,target)>minWingRange&&nearestBiggerShip.minDistance<minWeaponRange &&
-                    //
-                    Math.abs(MathUtils.getShortestRotation(nearestBiggerShip.ship.getFacing(),VectorUtils.getAngle(nearestBiggerShip.ship.getLocation(), ship.getLocation())))< 5f
-            ) {
-                faceLocation = nearestBiggerShip.ship.getLocation();
-                RC_BaseAIAction.turn(ship, nearestBiggerShip.ship.getLocation(), amount);
-                return;
+        //面向比自己大的船 当目标在射程外
+        if (relationship.nearestBiggerEnemy!=null&&relationship.targetShip.minDistance>relationship.maxWeaponRange) {
+            Relationship nearestBiggerEnemyRelationship = null;
+            if (engine.getCustomData().get("RC_BaseShipAI.Relationship"+relationship.nearestBiggerEnemy.ship.getId())!=null) {
+                nearestBiggerEnemyRelationship = new Relationship();
+            }
+            if (nearestBiggerEnemyRelationship!=null) {
+                if (nearestBiggerEnemyRelationship.enemyInMaxWeaponRange.contains(ship)) {
+                    faceLocation = relationship.nearestBiggerEnemy.ship.getLocation();
+                    RC_BaseAIAction.turn(ship, faceLocation, amount);
+                    return;
+                }
             }
         }
-        //面向OTHER 应该是 以目标自己 other自己的相对位置决定方向 跟 face无关
-        if (other!=null) {
-            if ((other.ship.getOwner()==ship.getOwner()||other.ship.getOwner()==100)&&MathUtils.getDistance(ship,other.ship)>other.ship.getCollisionRadius()+ship.getCollisionRadius()) {
-                float shipToTarget = VectorUtils.getAngle(ship.getLocation(), target.getLocation());
-                float shipToOtherAngle = VectorUtils.getAngle(ship.getLocation(), other.ship.getLocation());
-                if (MathUtils.getShortestRotation(shipToTarget, shipToOtherAngle) > 0) {
+        /*
+        if (relationship.other!=null) {
+            if ((relationship.other.ship.getOwner()==ship.getOwner()||relationship.other.ship.getOwner()==100)&&MathUtils.getDistance(ship,relationship.other.ship)>relationship.other.ship.getCollisionRadius()+ship.getCollisionRadius()) {
+                float shipFacing = ship.getFacing();
+                float shipToOtherAngle = VectorUtils.getAngle(ship.getLocation(), relationship.other.ship.getLocation());
+                if (MathUtils.getShortestRotation(shipFacing, shipToOtherAngle) > 0) {
                     shipToOtherAngle = shipToOtherAngle - 90;
-                    faceLocation = MathUtils.getPointOnCircumference(other.ship.getLocation(), (other.ship.getCollisionRadius() + ship.getCollisionRadius() * 2f) , shipToOtherAngle);
+                    faceLocation = MathUtils.getPointOnCircumference(relationship.other.ship.getLocation(), (relationship.other.ship.getCollisionRadius()* 2f) , shipToOtherAngle);
                 } else {
                     shipToOtherAngle = shipToOtherAngle + 90;
-                    faceLocation = MathUtils.getPointOnCircumference(other.ship.getLocation(), (other.ship.getCollisionRadius() + ship.getCollisionRadius() * 2f) , shipToOtherAngle);
+                    faceLocation = MathUtils.getPointOnCircumference(relationship.other.ship.getLocation(), (relationship.other.ship.getCollisionRadius()* 2f) , shipToOtherAngle);
                 }
                 RC_BaseAIAction.turn(ship, faceLocation, amount);
                 return;
             }
         }
-        //如果背后有船 并且 在射程范围外
-        if (backBiggerAlly != null) {
-            if (target != null) {
-                //如果技能正在冷却
-                //ship.getSystem().getCooldownRemaining()<2&&ship.getSystem().getCooldownRemaining()>0&&
-                if (RC_AIContants.driveSystemId.contains(ship.getSystem().getId())) {
-                    //if (backBiggerAlly.ship.getShipTarget() == target) {
-                    if (ship.getHullSize().compareTo(target.getHullSize()) >= 0) {
-                        //移动到目标侧边
-                        float shipToTargetAngle = VectorUtils.getAngle(ship.getLocation(), target.getLocation());
-                        float backBiggerAllyToTargetAngle = VectorUtils.getAngle(backBiggerAlly.ship.getLocation(), target.getLocation());
-
-                        if (MathUtils.getShortestRotation(backBiggerAllyToTargetAngle, shipToTargetAngle) > 0) {
-                            backBiggerAllyToTargetAngle = backBiggerAllyToTargetAngle - 90;
-                            faceLocation = MathUtils.getPointOnCircumference(target.getLocation(), (target.getCollisionRadius() + ship.getCollisionRadius() * 2f), backBiggerAllyToTargetAngle);
-                        } else {
-                            backBiggerAllyToTargetAngle = backBiggerAllyToTargetAngle + 90;
-                            faceLocation = MathUtils.getPointOnCircumference(target.getLocation(), (target.getCollisionRadius() + ship.getCollisionRadius() * 2f), backBiggerAllyToTargetAngle);
-                        }
-                        //if (MathUtils.getDistance(faceLocation,ship.getLocation())>minWeaponRange) {
-                        RC_BaseAIAction.turn(ship, faceLocation, amount);
-                        return;
-                        //}
-                    }
-                    //}
-                }
-            }
-        }
+        */
         faceLocation = null;
-        RC_BaseAIAction.turn(ship, target.getLocation(), amount);
+        RC_BaseAIAction.turn(ship, relationship.targetShip.ship.getLocation(), amount);
     }
 
     /**

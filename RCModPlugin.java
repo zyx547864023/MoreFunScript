@@ -89,6 +89,7 @@ public class RCModPlugin extends BaseModPlugin {
     public static boolean isQEEnabled = true;
     public static boolean isSmartAIEnabled = true;
     public static boolean isSightRadiusEnabled = true;
+    public static boolean isEasyMode = true;
     public static final String MOD_ID = "MoreFun";
     public static boolean isWarningEnabled() {
         if (Global.getSettings().getModManager().isModEnabled("lunalib")) {
@@ -127,5 +128,12 @@ public class RCModPlugin extends BaseModPlugin {
             return LunaSettings.getBoolean(MOD_ID, "isSightRadiusEnabled");
         }
         return isSightRadiusEnabled;
+    }
+
+    public static boolean isEasyMode() {
+        if (Global.getSettings().getModManager().isModEnabled("lunalib")) {
+            return LunaSettings.getBoolean(MOD_ID, "isEasyMode");
+        }
+        return isEasyMode;
     }
 }

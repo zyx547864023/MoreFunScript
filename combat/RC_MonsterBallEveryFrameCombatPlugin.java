@@ -22,6 +22,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.vector.Vector2f;
+import real_combat.RCModPlugin;
 import real_combat.entity.RC_AnchoredEntity;
 import real_combat.util.RC_Util;
 
@@ -711,6 +712,11 @@ public class RC_MonsterBallEveryFrameCombatPlugin implements EveryFrameCombatPlu
                             }
                         }
                         //不是无人机不是空间站不是模块&&!s.getVariant().hasHullMod(HullMods.AUTOMATED)
+                        if (RCModPlugin.isEasyMode()) {
+                            if (s.getOwner()==0){
+                                allowed = false;
+                            }
+                        }
                         if (s.isAlive() && !s.isStationModule() && !s.isStation() && !Misc.isUnboardable(s.getFleetMember()) && !hullId.contains(ZIGGURAT) && allowed) {
                             FleetSide fleetSide = FleetSide.PLAYER;
                             if (s.getOwner() == 0) {

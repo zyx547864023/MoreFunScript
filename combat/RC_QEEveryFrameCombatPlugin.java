@@ -10,6 +10,7 @@ import org.lazywizard.lazylib.ui.FontException;
 import org.lazywizard.lazylib.ui.LazyFont;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.vector.Vector2f;
+import real_combat.RCModPlugin;
 
 import java.awt.*;
 import java.util.List;
@@ -47,17 +48,19 @@ public class RC_QEEveryFrameCombatPlugin implements EveryFrameCombatPlugin {
 
 	public void renderInWorldCoords(ViewportAPI viewport) {
 		if(hide()) return;
-		ShipAPI playerShip = engine.getPlayerShip();
-		drawFont("Q", COLOR, 90, playerShip.getCollisionRadius()*2, 0, SYSTEM_AMMO_FONT_SIZE*viewport.getViewMult());
-		drawFont("E", COLOR, -90, playerShip.getCollisionRadius()*2, 0, SYSTEM_AMMO_FONT_SIZE*viewport.getViewMult());
+		if (RCModPlugin.isQEEnabled()) {
+			ShipAPI playerShip = engine.getPlayerShip();
+			drawFont("Q", COLOR, 90, playerShip.getCollisionRadius() * 2, 0, SYSTEM_AMMO_FONT_SIZE * viewport.getViewMult());
+			drawFont("E", COLOR, -90, playerShip.getCollisionRadius() * 2, 0, SYSTEM_AMMO_FONT_SIZE * viewport.getViewMult());
 
-		Vector2f point = MathUtils.getPoint(playerShip.getLocation(),playerShip.getCollisionRadius()*2F,playerShip.getFacing()+90);
-		drawArc(COLOR, viewport.getAlphaMult(), 361f, point, SYSTEM_AMMO_FONT_SIZE*viewport.getViewMult(), 0f, 0f, 0f, 0f, THICKNESS);
-		point = MathUtils.getPoint(playerShip.getLocation(),playerShip.getCollisionRadius()*2F,playerShip.getFacing()-90);
-		drawArc(COLOR, viewport.getAlphaMult(), 361f, point, SYSTEM_AMMO_FONT_SIZE*viewport.getViewMult(), 0f, 0f, 0f, 0f, THICKNESS);
-		//测试画线
-		//SpriteAPI sprite = Global.getSettings().getSprite("beamfringec", "beamfringec");
-		//newRenderLine(Color.GREEN, playerShip.getLocation(), sprite, playerShip.getMouseTarget(), 1f, 5f);
+			Vector2f point = MathUtils.getPoint(playerShip.getLocation(), playerShip.getCollisionRadius() * 2F, playerShip.getFacing() + 90);
+			drawArc(COLOR, viewport.getAlphaMult(), 361f, point, SYSTEM_AMMO_FONT_SIZE * viewport.getViewMult(), 0f, 0f, 0f, 0f, THICKNESS);
+			point = MathUtils.getPoint(playerShip.getLocation(), playerShip.getCollisionRadius() * 2F, playerShip.getFacing() - 90);
+			drawArc(COLOR, viewport.getAlphaMult(), 361f, point, SYSTEM_AMMO_FONT_SIZE * viewport.getViewMult(), 0f, 0f, 0f, 0f, THICKNESS);
+			//测试画线
+			//SpriteAPI sprite = Global.getSettings().getSprite("beamfringec", "beamfringec");
+			//newRenderLine(Color.GREEN, playerShip.getLocation(), sprite, playerShip.getMouseTarget(), 1f, 5f);
+		}
 	}
 
 	public void processInputPreCoreControls(float amount, List<InputEventAPI> events) {

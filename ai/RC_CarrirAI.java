@@ -134,7 +134,7 @@ public class RC_CarrirAI extends RC_BaseShipAI {
                     //距离很近那就减速和飞船同步
                     float toTargetAngle = VectorUtils.getAngle(ship.getLocation(), targetLocation);
                     distance = MathUtils.getDistance(target.getLocation(), ship.getLocation());
-                    if (distance < (target.getCollisionRadius()  + ship.getCollisionRadius() * 2)) {
+                    if (distance < minWingRange) {
                         toTargetAngle = toTargetAngle + 180;
                     }
                     RC_BaseAIAction.move(ship, shipFacing, toTargetAngle);
