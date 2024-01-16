@@ -4,6 +4,7 @@ import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.*;
 import com.fs.starfarer.api.loading.WeaponGroupSpec;
 import com.fs.starfarer.api.util.IntervalUtil;
+import com.fs.starfarer.coreui.V;
 import org.lazywizard.lazylib.MathUtils;
 import org.lazywizard.lazylib.VectorUtils;
 import org.lwjgl.util.vector.Vector2f;
@@ -53,6 +54,10 @@ import java.util.*;
  *
  * 优先解决 最边缘的 舰船 不对 判断x差值和y差值 取差值最大的一方
  *
+ * 开局散开 小船往侧边移动
+ * 速度越快 越靠边
+ *
+ * 敌方导弹数量多的时候 舰船在导弹范围外勾引
  */
 public class RC_BaseShipAI implements ShipAIPlugin {
     public CombatEngineAPI engine = Global.getCombatEngine();
@@ -67,6 +72,8 @@ public class RC_BaseShipAI implements ShipAIPlugin {
     public boolean isLeader = false;
     public boolean isDodge = false;
     public int beTargetCount = 0;
+
+    public boolean start = true;
     /**
      * 变为不是leader或者死亡时释放team成员 更换目标也需要
      */
@@ -106,6 +113,7 @@ public class RC_BaseShipAI implements ShipAIPlugin {
     List<ShipAPI> biggerList = new ArrayList<>();
     List<ShipAPI> biggerEnemyInRangeList = new ArrayList<>();
     List<ShipAPI> enemyList = new ArrayList<>();
+    Set<ShipAPI> allEnemyList = new HashSet<>();
     List<ShipAPI> fighterList = new ArrayList<>();
     List<ShipAPI> coverList = new ArrayList<>();
 
@@ -1182,7 +1190,7 @@ public class RC_BaseShipAI implements ShipAIPlugin {
                             ecount++;
                         }
                     }
-                    if (ecount==other.ship.getEngineController().getShipEngines().size()) {
+                    if (ecount>=other.ship.getEngineController().getShipEngines().size()/2) {
                         stop = false;
                     }
                 }
@@ -1731,7 +1739,9 @@ public class RC_BaseShipAI implements ShipAIPlugin {
                     }
 
                 }
-
+                if (!s.isHulk() && s.isAlive() &&!s.isFighter()&&s.getOwner()!=100&&s.getOwner()!=ship.getOwner()&&!s.isFighter()) {
+                    allEnemyList.add(s);
+                }
                 if (!s.isHulk() && s.isAlive() && distance<maxWeaponRange&&!s.isFighter()&&s.getOwner()!=100&&s.getOwner()!=ship.getOwner()&&!s.isFighter()) {
                     if (s.getHullSize().compareTo(ship.getHullSize())>=0&&!s.getFluxTracker().isOverloadedOrVenting()&&Math.abs(MathUtils.getShortestRotation(s.getFacing(),VectorUtils.getAngle(s.getLocation(),ship.getLocation())))<90) {
                         enemyList.add(s);
@@ -2109,6 +2119,22 @@ public class RC_BaseShipAI implements ShipAIPlugin {
      */
 
     public void beforeFlyToTarget () {
+        if (start&&!ship.areSignificantEnemiesInRange()) {
+            if (ship.getLocation().getX()>0) {
+                Vector2f targetPoint = new Vector2f(ship.getLocation().getX() + ship.getMaxSpeed()+ship.getCollisionRadius()*2, 0);
+                float toTargetPoint = VectorUtils.getAngle(ship.getLocation(), targetPoint);
+                RC_BaseAIAction.move(ship, ship.getFacing(), toTargetPoint);
+            }
+            else {
+                Vector2f targetPoint = new Vector2f(ship.getLocation().getX() - ship.getMaxSpeed()-ship.getCollisionRadius()*2, 0);
+                float toTargetPoint = VectorUtils.getAngle(ship.getLocation(), targetPoint);
+                RC_BaseAIAction.move(ship, ship.getFacing(), toTargetPoint);
+            }
+        }
+        else {
+            start = false;
+        }
+
         //让开 如果比目标大 应该是移动到 目标侧边 反之移动到队友侧边
         if (backBiggerAlly != null) {
             if (target!=null) {

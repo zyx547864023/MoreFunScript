@@ -280,6 +280,19 @@ public class RC_MonsterBallEveryFrameCombatPlugin implements EveryFrameCombatPlu
         {
             mult = mult*2;
         }
+        //船插加成
+        if(s.getVariant().hasHullMod("militarized_subsystems"))
+        {
+            mult = mult/2;
+        }
+        if(s.getVariant().hasHullMod("reinforcedhull"))
+        {
+            mult = mult/2;
+        }
+        if(s.getVariant().hasHullMod("reinforcedhull"))
+        {
+            mult = mult/2;
+        }
         return mult;
     }
 
@@ -547,15 +560,42 @@ public class RC_MonsterBallEveryFrameCombatPlugin implements EveryFrameCombatPlu
                     float mult = getMult(s,nowMarines);
                     if(player!=null) {
                         if(s.equals(player.getShipTarget())) {
+                            boolean allowed = true;
+                            //先找出自哪个mod
+                            String hullId = s.getHullSpec().getHullId().replace("_default_D", "");
+                            String modId = shipFromMod.get(hullId);
+                            if (modId != null) {
+                                Set<String> whiteSet = white.get(modId);
+                                Set<String> blackSet = black.get(modId);
+                                if (whiteSet != null) {
+                                    if (!whiteSet.contains(hullId)) {
+                                        allowed = false;
+                                    }
+                                } else if (blackSet != null) {
+                                    if (blackSet.contains(hullId)) {
+                                        allowed = false;
+                                    }
+                                }
+                            }
+                            //不是无人机不是空间站不是模块&&!s.getVariant().hasHullMod(HullMods.AUTOMATED)
+                            if (RCModPlugin.isEasyMode()) {
+                                if (s.getOwner()==0){
+                                    allowed = false;
+                                }
+                            }
+                            String temp = "";
+                            if (s.isAlive() && !s.isStationModule() && !s.isStation() && !Misc.isUnboardable(s.getFleetMember()) && !hullId.contains(ZIGGURAT) && allowed) {
+                                temp = "临时";
+                            }
                             float needMarines = getMarines(s,crew);
                             if (needMarines<1) {
                                 needMarines = 1;
                             }
                             if (!(engine.isSimulation() || engine.isMission())) {
-                                engine.maintainStatusForPlayerShip(ID, SPRITE_NAME, "占领目标 持有陆战队：" + Global.getSector().getPlayerFleet().getCargo().getMarines(), "至少需要:" + (int) needMarines + "名陆战队员 当前:" + nowMarines, true);
+                                engine.maintainStatusForPlayerShip(ID, SPRITE_NAME, temp+"占领目标 持有陆战队：" + Global.getSector().getPlayerFleet().getCargo().getMarines(), "至少需要:" + (int) needMarines + "名陆战队员 当前:" + nowMarines, true);
                             }
                             else {
-                                engine.maintainStatusForPlayerShip(ID, SPRITE_NAME, "占领目标", "至少需要:" + (int) needMarines + "名陆战队员 当前:" + nowMarines, true);
+                                engine.maintainStatusForPlayerShip(ID, SPRITE_NAME, temp+"占领目标", "至少需要:" + (int) needMarines + "名陆战队员 当前:" + nowMarines, true);
                             }
                         }
                     }
@@ -774,7 +814,7 @@ public class RC_MonsterBallEveryFrameCombatPlugin implements EveryFrameCombatPlu
                             else {
                                 int count = disableWeaponAndEngine(s);
                                 if (count != 0) {
-                                    engine.addFloatingText(s.getLocation(), "占领成功", FONT_SIZE, Color.GREEN, s, FLASH_FREQUENCY, FLASH_DURATION);
+                                    engine.addFloatingText(s.getLocation(), "临时占领成功", FONT_SIZE, Color.GREEN, s, FLASH_FREQUENCY, FLASH_DURATION);
                                 }
                             }
                         }

@@ -13,12 +13,14 @@ import org.lazywizard.lazylib.MathUtils;
 import org.lazywizard.lazylib.VectorUtils;
 import org.lazywizard.lazylib.combat.AIUtils;
 import org.lwjgl.util.vector.Vector2f;
+import real_combat.combat.RC_MonsterBallEveryFrameCombatPlugin;
 import real_combat.util.RC_Util;
 
 public class RC_MonsterBallAI extends RC_BaseMissile {
     private static final float TARGET_ACQUISITION_RANGE = 3600f;
     private static final float RADIUS_DIVIDE_2 = 2f;
     private static final float SPEED_DIVIDE_2 = 2f;
+    private static final float MIN_MULT = 2.5f;
     private static final String ID="monster_ball_shooter_sec";
     private CombatEngineAPI engine = Global.getCombatEngine();
     public RC_MonsterBallAI(MissileAPI missile, ShipAPI launchingShip) {
@@ -195,6 +197,19 @@ public class RC_MonsterBallAI extends RC_BaseMissile {
 
     @Override
     protected void assignMissileToShipTarget(ShipAPI launchingShip) {
+        engine = Global.getCombatEngine();
+        if (engine.getPlayerShip()!=null) {
+            ShipAPI player = engine.getPlayerShip();
+            if (player.getOwner() == launchingShip.getOwner()&&player.getShipTarget()!=null) {
+
+                if (isTargetValid(player.getShipTarget())) {
+                    float mult = RC_MonsterBallEveryFrameCombatPlugin.getMultWithOutMarines(player.getShipTarget());
+                    if (mult > MIN_MULT) {
+                        setTarget(player.getShipTarget());
+                    }
+                }
+            }
+        }
         if (isTargetValid(launchingShip.getShipTarget())) {
             setTarget(launchingShip.getShipTarget());
         }

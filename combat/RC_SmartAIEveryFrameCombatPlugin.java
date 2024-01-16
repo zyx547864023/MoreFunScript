@@ -354,6 +354,11 @@ public class RC_SmartAIEveryFrameCombatPlugin implements EveryFrameCombatPlugin 
 										s.setShipAI(new RC_OnslaughtAI(s));
 
 										enemyList.add(s);
+									} else if ("hyperion".equals(aiSet.get(s.getHullSpec().getBaseHullId()))) {
+										s.setCustomData("RC_ShipAI", "hyperion");
+										s.setShipAI(new RC_HyperionAI(s));
+
+										enemyList.add(s);
 									} else {
 										s.setCustomData("RC_ShipAI", "base");
 										s.setShipAI(new RC_BaseShipAI(s));

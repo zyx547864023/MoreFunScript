@@ -14,6 +14,7 @@ import org.lazywizard.lazylib.CollectionUtils;
 import org.lazywizard.lazylib.MathUtils;
 import org.lazywizard.lazylib.combat.AIUtils;
 import org.lwjgl.util.vector.Vector2f;
+import real_combat.combat.RC_MonsterBallEveryFrameCombatPlugin;
 import real_combat.util.RC_Util;
 
 public class RC_BaseMissile implements MissileAIPlugin, GuidedMissileAI {
