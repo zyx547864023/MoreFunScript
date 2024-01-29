@@ -68,5 +68,8 @@ public class RC_WeaponsEveryFrameCombatPlugin implements EveryFrameCombatPlugin 
 		engine.addLayeredRenderingPlugin(new RC_HyperionEngineLayeredRenderingPlugin());
 		engine.addLayeredRenderingPlugin(new RC_StrongAcidCannonLayeredRenderingPlugin());
 		engine.addLayeredRenderingPlugin(new RC_MirrorLayeredRenderingPlugin());
+		engine.addLayeredRenderingPlugin(new RC_CamouflageNetRenderingPlugin());
+		engine.addLayeredRenderingPlugin(new RC_DragonShotRenderingPlugin());
+		engine.addLayeredRenderingPlugin(new RC_OvumRenderingPlugin());
 	}
 }

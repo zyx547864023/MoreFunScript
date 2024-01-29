@@ -2235,26 +2235,28 @@ public class RC_BaseShipAI implements ShipAIPlugin {
             if (target != null) {
                 //如果技能正在冷却
                 //ship.getSystem().getCooldownRemaining()<2&&ship.getSystem().getCooldownRemaining()>0&&
-                if (RC_AIContants.driveSystemId.contains(ship.getSystem().getId())) {
-                    //if (backBiggerAlly.ship.getShipTarget() == target) {
-                    if (ship.getHullSize().compareTo(target.getHullSize()) >= 0) {
-                        //移动到目标侧边
-                        float shipToTargetAngle = VectorUtils.getAngle(ship.getLocation(), target.getLocation());
-                        float backBiggerAllyToTargetAngle = VectorUtils.getAngle(backBiggerAlly.ship.getLocation(), target.getLocation());
+                if (ship.getSystem()!=null) {
+                    if (RC_AIContants.driveSystemId.contains(ship.getSystem().getId())) {
+                        //if (backBiggerAlly.ship.getShipTarget() == target) {
+                        if (ship.getHullSize().compareTo(target.getHullSize()) >= 0) {
+                            //移动到目标侧边
+                            float shipToTargetAngle = VectorUtils.getAngle(ship.getLocation(), target.getLocation());
+                            float backBiggerAllyToTargetAngle = VectorUtils.getAngle(backBiggerAlly.ship.getLocation(), target.getLocation());
 
-                        if (MathUtils.getShortestRotation(backBiggerAllyToTargetAngle, shipToTargetAngle) > 0) {
-                            backBiggerAllyToTargetAngle = backBiggerAllyToTargetAngle - 90;
-                            faceLocation = MathUtils.getPointOnCircumference(target.getLocation(), (target.getCollisionRadius() + ship.getCollisionRadius() * 2f), backBiggerAllyToTargetAngle);
-                        } else {
-                            backBiggerAllyToTargetAngle = backBiggerAllyToTargetAngle + 90;
-                            faceLocation = MathUtils.getPointOnCircumference(target.getLocation(), (target.getCollisionRadius() + ship.getCollisionRadius() * 2f), backBiggerAllyToTargetAngle);
+                            if (MathUtils.getShortestRotation(backBiggerAllyToTargetAngle, shipToTargetAngle) > 0) {
+                                backBiggerAllyToTargetAngle = backBiggerAllyToTargetAngle - 90;
+                                faceLocation = MathUtils.getPointOnCircumference(target.getLocation(), (target.getCollisionRadius() + ship.getCollisionRadius() * 2f), backBiggerAllyToTargetAngle);
+                            } else {
+                                backBiggerAllyToTargetAngle = backBiggerAllyToTargetAngle + 90;
+                                faceLocation = MathUtils.getPointOnCircumference(target.getLocation(), (target.getCollisionRadius() + ship.getCollisionRadius() * 2f), backBiggerAllyToTargetAngle);
+                            }
+                            //if (MathUtils.getDistance(faceLocation,ship.getLocation())>minWeaponRange) {
+                            RC_BaseAIAction.turn(ship, faceLocation, amount);
+                            return;
+                            //}
                         }
-                        //if (MathUtils.getDistance(faceLocation,ship.getLocation())>minWeaponRange) {
-                        RC_BaseAIAction.turn(ship, faceLocation, amount);
-                        return;
                         //}
                     }
-                    //}
                 }
             }
         }

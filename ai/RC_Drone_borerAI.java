@@ -34,6 +34,33 @@ public class RC_Drone_borerAI extends RC_BaseShipAI {
             if (engine == null) return;
             if (engine.isPaused()) {return;}
             if (!ship.isAlive()) {return;}
+            List<ShipAPI> allyList = AIUtils.getAlliesOnMap(ship);
+            int allyCount = 0;
+            for (ShipAPI a:allyList) {
+                if (!a.isFighter()) {
+                    allyCount++;
+                }
+            }
+            if (allyCount==0) {
+                /**
+                 * 	void applyDamage(CombatEntityAPI entity, Vector2f point,
+                 *                      float damageAmount, DamageType damageType, float empAmount,
+                 *                      boolean bypassShields, boolean dealsSoftFlux,
+                 *                      Object source, boolean playSound);
+                 *
+                 * 	void applyDamage(CombatEntityAPI entity, Vector2f point,
+                 *                      float damageAmount, DamageType damageType, float empAmount,
+                 *                      boolean bypassShields, boolean dealsSoftFlux,
+                 *                      Object source);
+                 *
+                 * 	void applyDamage(Object damageModifierParam, CombatEntityAPI entity, Vector2f point,
+                 *                      float damageAmount, DamageType damageType, float empAmount,
+                 *                      boolean bypassShields, boolean dealsSoftFlux,
+                 *                      Object source, boolean playSound);
+                 */
+                engine.applyDamage(ship,ship.getLocation(),10000F,DamageType.ENERGY,0,true,true,ship,true);
+                return;
+            }
             //获取飞机的半径
             FighterWingAPI wing = ship.getWing();
             if (wing != null) {
@@ -171,17 +198,58 @@ public class RC_Drone_borerAI extends RC_BaseShipAI {
 
                     }
                 }
+                else {
+
+                }
                 //飞过去
                 if (hpTarget!=null)
                 {
                     flyToTarget(hpTarget, amount, needCR);
+                    if (MathUtils.getDistance(ship.getLocation(),hpTarget.getLocation())<hpTarget.getCollisionRadius()) {
+                        if (ship.getPhaseCloak()!=null) {
+                            if (ship.isPhased()) {
+                                ship.giveCommand(ShipCommand.TOGGLE_SHIELD_OR_PHASE_CLOAK, null, 0);
+                            }
+                        }
+                    }
                 }
                 else if(armorTarget!=null)
                 {
                     flyToTarget(armorTarget, amount, needCR);
+                    if (MathUtils.getDistance(ship.getLocation(),armorTarget.getLocation())<armorTarget.getCollisionRadius()) {
+                        if (ship.getPhaseCloak()!=null) {
+                            if (ship.isPhased()) {
+                                ship.giveCommand(ShipCommand.TOGGLE_SHIELD_OR_PHASE_CLOAK, null, 0);
+                            }
+                        }
+                    }
+                }
+                else if(motherShip.isAlive()){
+                    flyToTarget(motherShip, amount, needCR);
+                    if (MathUtils.getDistance(ship.getLocation(),motherShip.getLocation())<motherShip.getCollisionRadius()) {
+                        if (ship.getPhaseCloak()!=null) {
+                            if (ship.isPhased()) {
+                                ship.giveCommand(ShipCommand.TOGGLE_SHIELD_OR_PHASE_CLOAK, null, 0);
+                            }
+                        }
+                    }
                 }
                 else {
+                    float mindistance = 999999f;
+                    for (ShipAPI a:AIUtils.getAlliesOnMap(ship)) {
+                        if (MathUtils.getDistance(a,ship)<mindistance&&!a.isFighter()) {
+                            motherShip = a;
+                            mindistance = MathUtils.getDistance(a,ship);
+                        }
+                    }
                     flyToTarget(motherShip, amount, needCR);
+                    if (MathUtils.getDistance(ship.getLocation(),motherShip.getLocation())<motherShip.getCollisionRadius()) {
+                        if (ship.getPhaseCloak()!=null) {
+                            if (ship.isPhased()) {
+                                ship.giveCommand(ShipCommand.TOGGLE_SHIELD_OR_PHASE_CLOAK, null, 0);
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -362,6 +430,49 @@ public class RC_Drone_borerAI extends RC_BaseShipAI {
                     }
                 }
                  */
+            }
+        }
+    }
+    @Override
+    public void usePhase(float amount){
+        mayHitProj.clear();
+        mayHitBeam.clear();
+        //如果周围很多子弹
+        int count = 0;
+        boolean isProjectileMany = false;
+        List<DamagingProjectileAPI> damagingProjectiles = engine.getProjectiles();
+        for (DamagingProjectileAPI damagingProjectile : damagingProjectiles) {
+            if(mayHit(damagingProjectile,ship.getCollisionRadius())){
+                isProjectileMany = true;
+                break;
+            }
+        }
+        if (!isProjectileMany) {
+            for (BeamAPI b : engine.getBeams()) {
+                if(mayHit(b,ship.getCollisionRadius())){
+                    isProjectileMany = true;
+                    break;
+                }
+            }
+        }
+        if(isProjectileMany) {
+            if (!ship.isPhased()) {
+                if (ship.getFluxLevel()<0.9f) {
+                    ship.giveCommand(ShipCommand.TOGGLE_SHIELD_OR_PHASE_CLOAK, null, 0);
+                }
+            }
+            else {
+                if (ship.getFluxLevel()>0.9f) {
+                    ship.giveCommand(ShipCommand.TOGGLE_SHIELD_OR_PHASE_CLOAK,null, 0);
+                }
+            }
+        }
+        else {
+            if (ship.isPhased()&&ship.getFluxLevel()>0.3f) {
+                tracker.advance(amount);
+                if (tracker.intervalElapsed()) {
+                    ship.giveCommand(ShipCommand.TOGGLE_SHIELD_OR_PHASE_CLOAK, null, 0);
+                }
             }
         }
     }

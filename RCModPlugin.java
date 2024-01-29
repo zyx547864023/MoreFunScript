@@ -17,6 +17,8 @@ import real_combat.campaign.RC_CampaignPlugin;
 import real_combat.combat.RC_ComboEveryFrameCombatPlugin;
 import real_combat.combat.RC_MonsterBallEveryFrameCombatPlugin;
 import real_combat.combat.RC_SmartAIEveryFrameCombatPlugin;
+import real_combat.weapons.ai.RC_CamouflageNetAI;
+import real_combat.weapons.ai.RC_CamouflageNetShoterAI;
 import real_combat.weapons.ai.RC_MonsterBallAI;
 import real_combat.weapons.ai.RC_MonsterBallShoterAI;
 
@@ -28,6 +30,8 @@ public class RCModPlugin extends BaseModPlugin {
     public static final String RC_MONSTERBALL_ID = "reaper_torp_ball";
     public static final String RC_MONSTER_BALL_SHOOTER_ID = "monster_ball_shooter";
     public static final String RC_MONSTER_BALL_SHOOTER_BIG_ID = "monster_ball_shooter_big";
+    public static final String RC_CAMOUFLAGE_NET_ID = "camouflage_net";
+    public static final String RC_CAMOUFLAGE_NET_MRM_ID = "camouflage_net_mrm";
 
     @Override
     public PluginPick<AutofireAIPlugin> pickWeaponAutofireAI(WeaponAPI weapon) {
@@ -37,6 +41,11 @@ public class RCModPlugin extends BaseModPlugin {
             return new PluginPick<AutofireAIPlugin>(new RC_MonsterBallShoterAI(weapon),
                     CampaignPlugin.PickPriority.MOD_SET);
         }
+        if (RC_CAMOUFLAGE_NET_ID.contentEquals(weapon.getId())
+        ) {
+            return new PluginPick<AutofireAIPlugin>(new RC_CamouflageNetShoterAI(weapon),
+                    CampaignPlugin.PickPriority.MOD_SET);
+        }
         return null;
     }
 
@@ -44,6 +53,10 @@ public class RCModPlugin extends BaseModPlugin {
     public PluginPick<MissileAIPlugin> pickMissileAI(MissileAPI missile, ShipAPI launchingShip) {
         if (RC_MONSTERBALL_ID.contentEquals(missile.getProjectileSpecId())) {
             return new PluginPick<MissileAIPlugin>(new RC_MonsterBallAI(missile, launchingShip),
+                    PickPriority.MOD_SET);
+        }
+        if (RC_CAMOUFLAGE_NET_MRM_ID.contentEquals(missile.getProjectileSpecId())) {
+            return new PluginPick<MissileAIPlugin>(new RC_CamouflageNetAI(missile, launchingShip),
                     PickPriority.MOD_SET);
         }
         return null;

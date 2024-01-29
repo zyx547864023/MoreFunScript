@@ -98,9 +98,66 @@ public class RC_FighterAI extends RC_BaseShipAI {
                         }
                     }
                 }
+                if (target!=null) {
+                    //飞过去
+                    flyToTargetNew(target, amount);
+                    return;
+                }
+            }
+            else {
+                if (target==null) {
+                    ShipAPI enemy =  AIUtils.getNearestEnemy(ship);
+                    if (enemy!=null) {
+                        if (enemy.isAlive()) {
+                            target = enemy;
+                        }
+                    }
+                }
+                else if (!target.isAlive()) {
+                    target = null;
+                    return;
+                }
 
-                //飞过去
-                flyToTargetNew(target,amount);
+                float minDistance = ship.getMaxSpeed();
+                DamagingProjectileAPI targetProjectile = null;
+                List<DamagingProjectileAPI> damagingProjectiles = engine.getProjectiles();
+                for (DamagingProjectileAPI damagingProjectile : damagingProjectiles) {
+                    float range = MathUtils.getDistance(ship, damagingProjectile);
+                    if (range <= minDistance+damagingProjectile.getVelocity().length() && damagingProjectile.getOwner() != ship.getOwner() && !damagingProjectile.isFading() && !damagingProjectile.isExpired()) {
+                        minDistance = range;
+                        targetProjectile = damagingProjectile;
+                    }
+                }
+                if (targetProjectile != null) {
+                    if(dodge(targetProjectile)){
+                        turn(amount);
+                        return;
+                    }
+                }
+                if (target!=null) {
+                    //飞过去
+                    flyToTargetNew(target, amount);
+                    return;
+                }
+            }
+
+            ShipAPI motherShip = null;
+            float mindistance = 999999f;
+            for (ShipAPI a:AIUtils.getAlliesOnMap(ship)) {
+                if (MathUtils.getDistance(a,ship)<mindistance&&!a.isFighter()) {
+                    motherShip = a;
+                    mindistance = MathUtils.getDistance(a,ship);
+                }
+            }
+            if (motherShip!=null) {
+                flyToTarget(motherShip, amount);
+                if (MathUtils.getDistance(ship.getLocation(), motherShip.getLocation()) < motherShip.getCollisionRadius()) {
+                    if (ship.getPhaseCloak() != null) {
+                        if (ship.isPhased()) {
+                            ship.giveCommand(ShipCommand.TOGGLE_SHIELD_OR_PHASE_CLOAK, null, 0);
+                        }
+                    }
+                }
             }
         }
         catch (Exception e)
@@ -115,8 +172,10 @@ public class RC_FighterAI extends RC_BaseShipAI {
      * 到达目标屁股后面 速度差值 采用平移的方式取消 阶段3
      */
     public void flyToTarget(ShipAPI target, float amount) {
+        /*
         engine.addFloatingTextAlways(ship.getLocation(), "进攻", 25f, Color.RED, ship,
                 1, 1, amount,0, 0, 1f);
+         */
         Vector2f targetLocation = target.getLocation();
         //如果距离比较远就加速
         //距离很近那就减速和飞船同步

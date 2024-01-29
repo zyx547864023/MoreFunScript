@@ -35,27 +35,29 @@ public class RC_RepairCombatLayeredRenderingPlugin extends BaseCombatLayeredRend
         if (allDrawShip!=null){
             for(ShipAPI s : allDrawShip.keySet())
             {
-                RC_NeedDrawLine needDrawLine = allDrawShip.get(s);
-                if(needDrawLine.getStartList().size()>0) {
-                    float timer = needDrawLine.getTimer();
-                    float targetJitterLevel = 0;
-                    if (timer == 0 && needDrawLine.getColor()==Color.GREEN) {
-                        Global.getCombatEngine().addFloatingText(s.getLocation(), "修理中", 50f, Color.GREEN, s, 5f, 10f);
+                if (s.isAlive()) {
+                    RC_NeedDrawLine needDrawLine = allDrawShip.get(s);
+                    if (needDrawLine.getStartList().size() > 0) {
+                        float timer = needDrawLine.getTimer();
+                        float targetJitterLevel = 0;
+                        if (timer == 0 && needDrawLine.getColor() == Color.GREEN) {
+                            Global.getCombatEngine().addFloatingText(s.getLocation(), "修理中", 50f, Color.GREEN, s, 5f, 10f);
+                        }
+                        //开始维修
+                        if (timer < 2.5) {
+                            targetJitterLevel = timer / 2.5f;
+                        } else {
+                            targetJitterLevel = (5 - timer) / 2.5f;
+                        }
+                        if (needDrawLine.getColor() == Color.GREEN) {
+                            s.setJitter(s, Color.GREEN, targetJitterLevel, 0, 0f, 0f);
+                        }
+                        timer += amount;
+                        if (timer > 5) {
+                            timer = 0;
+                        }
+                        needDrawLine.setTimer(timer);
                     }
-                    //开始维修
-                    if (timer < 2.5) {
-                        targetJitterLevel = timer / 2.5f;
-                    } else {
-                        targetJitterLevel = (5 - timer) / 2.5f;
-                    }
-                    if (needDrawLine.getColor()==Color.GREEN) {
-                        s.setJitter(s, Color.GREEN, targetJitterLevel, 0, 0f, 0f);
-                    }
-                    timer += amount;
-                    if (timer > 5) {
-                        timer = 0;
-                    }
-                    needDrawLine.setTimer(timer);
                 }
             }
         }
