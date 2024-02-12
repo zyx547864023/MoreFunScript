@@ -291,6 +291,11 @@ public class RC_BaseShipAI implements ShipAIPlugin {
         if (dodgeTarget.getOwner() == ship.getOwner() || dodgeTarget.isFading() || dodgeTarget.isExpired()){
             return false;
         }
+        if (dodgeTarget.getWeapon()!=null) {
+            if (MathUtils.getDistance(dodgeTarget.getSpawnLocation(), ship.getLocation()) > dodgeTarget.getWeapon().getRange()) {
+                return false;
+            }
+        }
         float dodgeTargetFacing = dodgeTarget.getFacing();
         float dodgeTargetToShip = VectorUtils.getAngle(dodgeTarget.getLocation(),ship.getLocation());
         float newAngle = dodgeTargetToShip - 90;
@@ -355,6 +360,7 @@ public class RC_BaseShipAI implements ShipAIPlugin {
         }
         mayHitProj.clear();
         mayHitBeam.clear();
+        missileList.clear();
         //如果周围很多子弹
         int count = 0;
         boolean isProjectileMany = false;
@@ -402,6 +408,7 @@ public class RC_BaseShipAI implements ShipAIPlugin {
     public void useShield(float amount){
         mayHitProj.clear();
         mayHitBeam.clear();
+        missileList.clear();
         Vector2f mouseTarget = null;
         //护盾角度
         ShieldAPI shield = ship.getShield();

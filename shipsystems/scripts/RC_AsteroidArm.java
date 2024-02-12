@@ -1,6 +1,7 @@
 package real_combat.shipsystems.scripts;
 
 import com.fs.starfarer.api.Global;
+import com.fs.starfarer.api.campaign.AsteroidAPI;
 import com.fs.starfarer.api.combat.*;
 import com.fs.starfarer.api.impl.combat.*;
 import com.fs.starfarer.api.util.IntervalUtil;
@@ -36,6 +37,7 @@ public class RC_AsteroidArm extends BaseShipSystemScript {
     private final static String IS_SET = "IS_SET";
     private final static String WHO_CATCH = "WHO_CATCH";
     private final static String STATUS = "STATUS";
+    private final static String RADIUS = "RADIUS";
     private static float maxSpeed = 10f;
     private static float minSpeed = 1f;
     private boolean init = false;
@@ -118,7 +120,7 @@ public class RC_AsteroidArm extends BaseShipSystemScript {
                         Vector2f shipLocation = ship.getLocation();
                         float shipToHulkAngle = VectorUtils.getAngle(shipLocation, hulkLocation);
                         //h.setMass(h.getMass()*100);
-                        h.getVelocity().set(MathUtils.getPoint(new Vector2f(0, 0), maxSpeed*100, shipToHulkAngle));
+                        h.getVelocity().set(MathUtils.getPoint(new Vector2f(0, 0), maxSpeed*100*MathUtils.getRandomNumberInRange(0.1f,2f), shipToHulkAngle));
                         float distance = MathUtils.getDistance(ship,h);
                         if (CollisionClass.NONE.equals(h.getCollisionClass())&&distance>0){
                             h.setCollisionClass(CollisionClass.ASTEROID);
@@ -190,9 +192,16 @@ public class RC_AsteroidArm extends BaseShipSystemScript {
             float distance = MathUtils.getDistance(ship,s);
             float nowSpeed = maxSpeed*distance/ship.getCollisionRadius()+minSpeed*10;
             //float nowSpeed = distance/ship.getCollisionRadius()+minSpeed*10;
+            float radius = 1f;
+            if (s.getCustomData().get(ID+RADIUS)!=null) {
+                radius = (float) s.getCustomData().get(ID+RADIUS);
+            }
+            else {
+                s.setCustomData(ID+RADIUS, MathUtils.getRandomNumberInRange(0.8f,1.5f));
+            }
             //间距在一个半径内0.5半径外
             if(distance<ship.getCollisionRadius()*10
-                    &&distance>=ship.getCollisionRadius()*0.25
+                    &&distance>=ship.getCollisionRadius()*0.25*radius
             )
             {
                 hulkList.remove(s);
@@ -264,8 +273,8 @@ public class RC_AsteroidArm extends BaseShipSystemScript {
                     }
                 }
             }
-            //只有在内环有相切速度
-            else if (distance<ship.getCollisionRadius()*0.25) {
+            //只有在内环有相切速度 //增加随机半径效果
+            else if (distance<ship.getCollisionRadius()*0.25*radius) {
                 Map<String, Object> customData = s.getCustomData();
                 if (customData!=null) {
                     try {

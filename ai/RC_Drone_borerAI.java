@@ -59,6 +59,7 @@ public class RC_Drone_borerAI extends RC_BaseShipAI {
                  *                      Object source, boolean playSound);
                  */
                 engine.applyDamage(ship,ship.getLocation(),10000F,DamageType.ENERGY,0,true,true,ship,true);
+                ship.splitShip();
                 return;
             }
             //获取飞机的半径
@@ -190,6 +191,7 @@ public class RC_Drone_borerAI extends RC_BaseShipAI {
                     }
                 }
                  */
+                /*
                 if (needCR==0) {
                     if (ship.getPhaseCloak()!=null) {
                         usePhase(amount);
@@ -201,36 +203,46 @@ public class RC_Drone_borerAI extends RC_BaseShipAI {
                 else {
 
                 }
+                */
                 //飞过去
                 if (hpTarget!=null)
                 {
                     flyToTarget(hpTarget, amount, needCR);
-                    if (MathUtils.getDistance(ship.getLocation(),hpTarget.getLocation())<hpTarget.getCollisionRadius()) {
-                        if (ship.getPhaseCloak()!=null) {
+                    if (ship.getPhaseCloak()!=null) {
+                        if (MathUtils.getDistance(ship.getLocation(),hpTarget.getLocation())<=hpTarget.getCollisionRadius()) {
                             if (ship.isPhased()) {
                                 ship.giveCommand(ShipCommand.TOGGLE_SHIELD_OR_PHASE_CLOAK, null, 0);
                             }
+                        }
+                        else {
+                            usePhase(amount);
                         }
                     }
                 }
                 else if(armorTarget!=null)
                 {
                     flyToTarget(armorTarget, amount, needCR);
-                    if (MathUtils.getDistance(ship.getLocation(),armorTarget.getLocation())<armorTarget.getCollisionRadius()) {
-                        if (ship.getPhaseCloak()!=null) {
+                    if (ship.getPhaseCloak()!=null) {
+                        if (MathUtils.getDistance(ship.getLocation(),armorTarget.getLocation())<=armorTarget.getCollisionRadius()) {
                             if (ship.isPhased()) {
                                 ship.giveCommand(ShipCommand.TOGGLE_SHIELD_OR_PHASE_CLOAK, null, 0);
                             }
+                        }
+                        else {
+                            usePhase(amount);
                         }
                     }
                 }
                 else if(motherShip.isAlive()){
                     flyToTarget(motherShip, amount, needCR);
-                    if (MathUtils.getDistance(ship.getLocation(),motherShip.getLocation())<motherShip.getCollisionRadius()) {
-                        if (ship.getPhaseCloak()!=null) {
+                    if (ship.getPhaseCloak()!=null) {
+                        if (MathUtils.getDistance(ship.getLocation(),motherShip.getLocation())<=motherShip.getCollisionRadius()) {
                             if (ship.isPhased()) {
                                 ship.giveCommand(ShipCommand.TOGGLE_SHIELD_OR_PHASE_CLOAK, null, 0);
                             }
+                        }
+                        else {
+                            usePhase(amount);
                         }
                     }
                 }
@@ -243,11 +255,14 @@ public class RC_Drone_borerAI extends RC_BaseShipAI {
                         }
                     }
                     flyToTarget(motherShip, amount, needCR);
-                    if (MathUtils.getDistance(ship.getLocation(),motherShip.getLocation())<motherShip.getCollisionRadius()) {
-                        if (ship.getPhaseCloak()!=null) {
+                    if (ship.getPhaseCloak()!=null) {
+                        if (MathUtils.getDistance(ship.getLocation(),motherShip.getLocation())<motherShip.getCollisionRadius()) {
                             if (ship.isPhased()) {
                                 ship.giveCommand(ShipCommand.TOGGLE_SHIELD_OR_PHASE_CLOAK, null, 0);
                             }
+                        }
+                        else {
+                            usePhase(amount);
                         }
                     }
                 }
