@@ -12,7 +12,10 @@ import data.scripts.plugins.MagicRenderPlugin;
 import javafx.scene.effect.Shadow;
 import org.lazywizard.lazylib.MathUtils;
 import org.lazywizard.lazylib.VectorUtils;
+import org.lazywizard.lazylib.combat.CombatUtils;
 import org.lwjgl.util.vector.Vector2f;
+import org.magiclib.subsystems.MagicSubsystem;
+import org.magiclib.subsystems.MagicSubsystemsManager;
 import real_combat.util.MyMath;
 
 import java.awt.*;
@@ -166,6 +169,7 @@ public class RC_TransAmSystem extends BaseShipSystemScript {
     public static class RC_TransAmSystemCombatPlugin extends BaseCombatLayeredRenderingPlugin {
         private final ShipAPI ship;
         private float timer = 0f;
+        private final static float ADD_SHADOW_TIME = 0.05f;
         private float transAmAlphaMult = 1f;
         private boolean isDraw = false;
         private CombatEngineAPI engine = Global.getCombatEngine();
@@ -204,7 +208,7 @@ public class RC_TransAmSystem extends BaseShipSystemScript {
                 Global.getLogger(this.getClass()).info(e);
             }
             if (((boolean)ship.getCustomData().get(ID+IS_ON))) {
-                if (timer > 0.05f) {
+                if (timer > ADD_SHADOW_TIME) {
                     addShadowMap(1f);
                     timer = 0f;
                 } else {
@@ -215,7 +219,7 @@ public class RC_TransAmSystem extends BaseShipSystemScript {
             //如果关闭了 所有影子向本体移动
             else
             {
-                if (timer > 0.05f&&maxAlphaMult>0) {
+                if (timer > ADD_SHADOW_TIME&&maxAlphaMult>0) {
                     addShadowMap(maxAlphaMult);
                     timer = 0f;
                 } else if(maxAlphaMult>0) {

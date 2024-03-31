@@ -120,6 +120,7 @@ public class RC_CaptureNet extends BaseShipSystemScript {
                     //寻找目标
                     //母船目标
                     ShipAPI motherShip = (ShipAPI) ship.getCustomData().get(RC_SpiderCore.ID);
+                    //ShipAPI motherShip = ship.getParentStation();
                     if (motherShip!=null) {
                         if (motherShip.getShipTarget()!=null) {
                             target = motherShip.getShipTarget();
@@ -211,8 +212,8 @@ public class RC_CaptureNet extends BaseShipSystemScript {
                         if (captureNet.allStage > captureNet.biggestStage) {
                             captureNet.biggestStage++;
                         }
-                        float emp = captureNet.nowStage;
-                        float dam = captureNet.nowStage;
+                        float emp = captureNet.nowStage*10;
+                        float dam = captureNet.nowStage*10;
 
                         Map<String, List<Vector2f>> ringPoint = new HashMap<>();
                         float oneAngle = 360 / captureNet.line;
@@ -281,10 +282,10 @@ public class RC_CaptureNet extends BaseShipSystemScript {
                             }
                         }
                         //船减速 按照网状层级减速
-                        target.getMutableStats().getMaxSpeed().modifyPercent(ID, stage);
-                        target.getMutableStats().getMaxTurnRate().modifyPercent(ID, stage);
-                        target.getMutableStats().getAcceleration().modifyPercent(ID, stage);
-                        target.getMutableStats().getTurnAcceleration().modifyPercent(ID, stage);
+                        target.getMutableStats().getMaxSpeed().modifyPercent(ID, -stage*10);
+                        target.getMutableStats().getMaxTurnRate().modifyPercent(ID, -stage*10);
+                        target.getMutableStats().getAcceleration().modifyPercent(ID, -stage*10);
+                        target.getMutableStats().getTurnAcceleration().modifyPercent(ID, -stage*10);
                         //拉一根电弧到船前面
                         Boolean shieldHit = false;
                         if (target.getShield()!=null)

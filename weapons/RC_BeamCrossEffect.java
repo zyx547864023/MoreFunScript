@@ -99,6 +99,9 @@ public class RC_BeamCrossEffect implements BeamEffectPlugin { //WithReset {
 						boolean result = line2.intersectsLine(line1);
 						if(result) {
 							Point2D point = RC_Util.getIntersectPointBy2Line(line1, line2);
+							if (point==null) {
+								return;
+							}
 							Vector2f loc = new Vector2f(new Double(point.getX()).floatValue(), new Double(point.getY()).floatValue());
 							if (beam.getDamageTarget() != null) {
 								float perSpawn = SPAWN_SPACING;

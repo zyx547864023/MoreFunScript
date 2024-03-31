@@ -1,4 +1,4 @@
-package real_combat.combat;
+package real_combat.shipsystems.scripts;
 
 import java.awt.Color;
 import java.util.List;

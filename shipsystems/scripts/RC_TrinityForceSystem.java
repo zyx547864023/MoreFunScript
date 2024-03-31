@@ -74,7 +74,6 @@ public class RC_TrinityForceSystem extends BaseShipSystemScript {
                 ship.setCustomData(ID + IS_MERGE,true);
                 engine.removePlugin(plugin);
             }
-
             if(!init) {
                 init = true;
                 plugin = new RC_TrinityForceSystemCombatPlugin(ship);

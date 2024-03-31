@@ -45,6 +45,7 @@ public class RC_AcceleratingField extends BaseShipSystemScript {
         }
         else if(motherShip==null){
             motherShip = (ShipAPI) ship.getCustomData().get(RC_SpiderCore.ID);
+            //motherShip = ship.getParentStation();
         }
         try {
             if (!init) {
@@ -97,6 +98,7 @@ public class RC_AcceleratingField extends BaseShipSystemScript {
             }
             else if(motherShip==null){
                 motherShip = (ShipAPI) ship.getCustomData().get(RC_SpiderCore.ID);
+                //motherShip = ship.getParentStation();
             }
             if (customData != null&&motherShip!=null) {
                if (customData.get(WHO_CATCH) != null&&customData.get(WHO_SHOOT) == null&&distance < ship.getCollisionRadius() * 1.5f) {
@@ -195,9 +197,15 @@ public class RC_AcceleratingField extends BaseShipSystemScript {
                             if (e.getFluxTracker().getFluxLevel()>=0.7||e.getHitpoints()/e.getMaxHitpoints()<=0.3f||e.getFluxTracker().isOverloaded()||e.getCurrentCR()<=0.4f||e.getFluxTracker().isVenting()||e.isRetreating()) {
                                 continue;
                             }
-                            if (e.isAlive()&&!e.isFighter()&&!e.equals(motherShip.getShipTarget())) {
-                                target = e;
-                                break;
+                            if (e.isAlive()&&!e.isFighter()) {
+                                if (ship.getFluxLevel()>0.8f||motherShip.getFluxLevel()>0.9f) {
+                                    target = e;
+                                    break;
+                                }
+                                else if(!e.equals(motherShip.getShipTarget())) {
+                                    target = e;
+                                    break;
+                                }
                             }
                             /*
                             float newdistance = MathUtils.getDistance(motherShip,e);

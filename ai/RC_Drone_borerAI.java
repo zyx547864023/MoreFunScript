@@ -389,6 +389,9 @@ public class RC_Drone_borerAI extends RC_BaseShipAI {
                     thisDrawShip = new RC_NeedDrawLine(target,0,new ArrayList<Vector2f>(),new ArrayList<Vector2f>(), Color.GREEN);
                 }
                 thisDrawShip.startList.add(ship.getLocation());
+                if (ship.isPhased()) {
+                    ship.giveCommand(ShipCommand.TOGGLE_SHIELD_OR_PHASE_CLOAK, null, 0);
+                }
                 thisDrawShip.endList.add(targetLocation);
                 //thisDrawShip.angle = toTargetAngle;
                 allDrawShip.put(target,thisDrawShip);

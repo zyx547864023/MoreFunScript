@@ -75,7 +75,7 @@ public class RC_AsteroidArmAI implements ShipSystemAIScript {
             isFlux = true;
         }
         */
-        if(ship.getSystem().isActive()&&ship.getCurrFlux() > ship.getMaxFlux() * 0.8f)
+        if(ship.getSystem().isActive()&&ship.getFluxLevel() > 0.9f)
         {
             if (ship.getShield()!=null) {
                 if (ship.getShield().isOn()) {

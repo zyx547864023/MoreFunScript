@@ -3,33 +3,38 @@ package real_combat.ai;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.*;
 import com.fs.starfarer.api.util.IntervalUtil;
-import com.fs.starfarer.prototype.entities.Ship;
 import org.lazywizard.lazylib.MathUtils;
 import org.lazywizard.lazylib.VectorUtils;
 import org.lazywizard.lazylib.combat.AIUtils;
-import org.lazywizard.lazylib.combat.DefenseUtils;
 import org.lwjgl.util.vector.Vector2f;
+import real_combat.ai.RC_BaseAIAction;
+import real_combat.ai.RC_BaseShipAI;
 
-import java.awt.*;
-import java.util.*;
 import java.util.List;
 
 /**
- * 闪避 扫描附近的子弹 子弹速度和舰船速度夹角 小于 子弹到舰船
- * 护盾控制 相位控制 阻尼控制
- * 进攻
- * 护卫 转向 最近的导弹武器开火 和母舰保持速度
+ * 飞到目标船后面
+ * 找到最高伤害武器且没有瘫痪的武器
+ * 到武器的背后一飞机远
+ *
  */
-public class RC_FighterAI extends RC_BaseShipAI {
-    public final static String ID = "RC_FighterAI";
+public class RC_CounterWeaponFighterAI extends RC_BaseShipAI {
+    public final static String ID = "RC_CounterWeaponFighterAI";
     private ShipAPI target;
     protected IntervalUtil tracker = new IntervalUtil(1.0f, 2.0f);
     private float timer = 0f;
+    private Stage stage = Stage.GO_TO_TARGET;
+    private float maxDistance = 9999F;
+    private float minDistance = 0F;
 
-    public RC_FighterAI(ShipAPI ship) {
+    public RC_CounterWeaponFighterAI(ShipAPI ship) {
         super(ship);
     }
-
+    public static enum Stage {
+        GO_TO_TARGET,
+        GO_TO_TARGET_BACK,
+        GO_TO_WEAPON_BACK
+    }
     /**
      * @param amount
      */
@@ -68,9 +73,6 @@ public class RC_FighterAI extends RC_BaseShipAI {
                     }
                 }
                 if (target==null) {
-                    //ship.setShipAI((ShipAIPlugin) ship.getCustomData().get(ID));
-                    //ship.removeCustomData(ID);
-                    //return;
                     target = wing.getSourceShip();
                 }
 
@@ -94,7 +96,7 @@ public class RC_FighterAI extends RC_BaseShipAI {
                 else if (ship.getShield()!=null) {
                     useShield(amount);
                 }
-                else {
+                else if (stage==Stage.GO_TO_TARGET){
                     float minDistance = ship.getMaxSpeed();
                     DamagingProjectileAPI targetProjectile = null;
                     List<DamagingProjectileAPI> damagingProjectiles = engine.getProjectiles();
@@ -114,6 +116,7 @@ public class RC_FighterAI extends RC_BaseShipAI {
                 }
                 if (target!=null) {
                     //飞过去
+                    setStage(target, amount);
                     flyToTargetNew(target, amount);
                     return;
                 }
@@ -200,10 +203,6 @@ public class RC_FighterAI extends RC_BaseShipAI {
      * 到达目标屁股后面 速度差值 采用平移的方式取消 阶段3
      */
     public void flyToTarget(ShipAPI target, float amount) {
-        /*
-        engine.addFloatingTextAlways(ship.getLocation(), "进攻", 25f, Color.RED, ship,
-                1, 1, amount,0, 0, 1f);
-         */
         Vector2f targetLocation = target.getLocation();
         //如果距离比较远就加速
         //距离很近那就减速和飞船同步
@@ -237,6 +236,18 @@ public class RC_FighterAI extends RC_BaseShipAI {
                 RC_BaseAIAction.turn(ship, needTurnAngle, toTargetAngle, amount);
             }
             ship.giveCommand(ShipCommand.ACCELERATE, (Object) null, 0);
+            if (needTurnAngle<10f) {
+                for (int groupNumber=0;groupNumber<ship.getWeaponGroupsCopy().size();groupNumber++)
+                {
+                    ship.getWeaponGroupsCopy().get(groupNumber).toggleOn();
+                }
+            }
+            else {
+                for (int groupNumber=0;groupNumber<ship.getWeaponGroupsCopy().size();groupNumber++)
+                {
+                    ship.getWeaponGroupsCopy().get(groupNumber).toggleOff();
+                }
+            }
         }
         //如果很近那就围绕飞船转圈
         else{
@@ -273,16 +284,47 @@ public class RC_FighterAI extends RC_BaseShipAI {
     }
 
     /**
+     *
+     * @param target
+     * @param amount
+     */
+    public void setStage(ShipAPI target, float amount) {
+        Vector2f targetLocation = target.getLocation();
+        float range = target.getCollisionRadius();
+        float toTargetAngle = VectorUtils.getAngle(ship.getLocation(),targetLocation);
+        if (minDistance==0f&&maxDistance==9999f) {
+            for (WeaponAPI w : ship.getAllWeapons()) {
+                if (w.getRange() < minDistance) {
+                    minDistance = w.getRange();
+                }
+                if (w.getRange() > maxDistance) {
+                    maxDistance = w.getRange();
+                }
+            }
+        }
+        //如果距离太远的话先到船的侧边
+        float distance = MathUtils.getDistance(target.getLocation(),ship.getLocation());
+        if (distance>maxDistance||distance>range*1.5) {
+            stage = Stage.GO_TO_TARGET;
+        }
+        //如果够近了就去后面
+        else if (Math.abs(MathUtils.getShortestRotation(toTargetAngle,target.getFacing()))>30&&stage != Stage.GO_TO_TARGET_BACK) {
+            stage = Stage.GO_TO_TARGET_BACK;
+        }
+        else if (Math.abs(MathUtils.getShortestRotation(toTargetAngle,target.getFacing()))<=30&&stage == Stage.GO_TO_TARGET_BACK) {
+            stage = Stage.GO_TO_WEAPON_BACK;
+        }
+    }
+
+
+    /**
      * 飞向目标 阶段1
      * 靠近目标后 飞向目标 屁股 阶段2
      * 到达目标屁股后面 速度差值 采用平移的方式取消
      * 假设飞机 垂直 速度180差度
      * 速度插值最大30
      */
-
     public void flyToTargetNew(ShipAPI target, float amount) {
-        //engine.addFloatingTextAlways(ship.getLocation(), "进攻", 25f, Color.RED, ship,
-        //        1, 1, amount,0, 0, 1f);
         Vector2f targetLocation = target.getLocation();
         //如果距离比较远就加速
         //距离很近那就减速和飞船同步
@@ -291,38 +333,65 @@ public class RC_FighterAI extends RC_BaseShipAI {
         float needTurnAngle = Math.abs(MathUtils.getShortestRotation(shipFacing + ship.getAngularVelocity() * amount, toTargetAngle));
         float distance = MathUtils.getDistance(target.getLocation(),ship.getLocation());
         float range = target.getCollisionRadius();
-        float minDistance = 9999;
-        float maxDistance = 0;
-        for (WeaponAPI w:ship.getAllWeapons()) {
-            if (w.getRange()<minDistance) {
-                minDistance = w.getRange();
+        if (stage==Stage.GO_TO_TARGET) {
+            //绕圈飞 直到飞到屁股
+            if (MathUtils.getShortestRotation(shipFacing, toTargetAngle) > 0) {
+                toTargetAngle = toTargetAngle - 90;
+                Vector2f targetPoint = MathUtils.getPointOnCircumference(target.getLocation(), range * 1.5f, toTargetAngle);
+                toTargetAngle = VectorUtils.getAngle(ship.getLocation(), targetPoint);
+                float mi = Math.abs(MathUtils.getShortestRotation(shipFacing + ship.getAngularVelocity() * amount, toTargetAngle));
+                RC_BaseAIAction.turn(ship, mi, toTargetAngle, amount);
+            } else {
+                toTargetAngle = toTargetAngle + 90;
+                Vector2f targetPoint = MathUtils.getPointOnCircumference(target.getLocation(), range * 1.5f, toTargetAngle);
+                toTargetAngle = VectorUtils.getAngle(ship.getLocation(), targetPoint);
+                float mi = Math.abs(MathUtils.getShortestRotation(shipFacing + ship.getAngularVelocity() * amount, toTargetAngle));
+                RC_BaseAIAction.turn(ship, mi, toTargetAngle, amount);
             }
-            if (w.getRange()>maxDistance) {
-                maxDistance = w.getRange();
-            }
+            ship.giveCommand(ShipCommand.ACCELERATE, (Object) null, 0);
         }
-        if (distance>maxDistance||target.getOwner()==ship.getOwner()||target.getOwner()==100) {
-            //每到屁股
-            if (Math.abs(MathUtils.getShortestRotation(toTargetAngle,target.getFacing()))>30) {
-                //绕圈飞 直到飞到屁股
-                if (MathUtils.getShortestRotation(shipFacing, toTargetAngle) > 0) {
-                    toTargetAngle = toTargetAngle - 90;
-                    Vector2f targetPoint = MathUtils.getPointOnCircumference(target.getLocation(), range * 1.5f, toTargetAngle);
-                    toTargetAngle = VectorUtils.getAngle(ship.getLocation(), targetPoint);
-                    float mi = Math.abs(MathUtils.getShortestRotation(shipFacing + ship.getAngularVelocity() * amount, toTargetAngle));
-                    RC_BaseAIAction.turn(ship, mi, toTargetAngle, amount);
-                } else {
-                    toTargetAngle = toTargetAngle + 90;
-                    Vector2f targetPoint = MathUtils.getPointOnCircumference(target.getLocation(), range * 1.5f, toTargetAngle);
-                    toTargetAngle = VectorUtils.getAngle(ship.getLocation(), targetPoint);
-                    float mi = Math.abs(MathUtils.getShortestRotation(shipFacing + ship.getAngularVelocity() * amount, toTargetAngle));
-                    RC_BaseAIAction.turn(ship, mi, toTargetAngle, amount);
-                }
+        else if (stage==Stage.GO_TO_TARGET_BACK) {
+            RC_BaseAIAction.shift(ship, ship.getFacing(),target.getFacing());
+            //直接向着目标加速
+            if (distance>minDistance) {
                 ship.giveCommand(ShipCommand.ACCELERATE, (Object) null, 0);
-                return;
+            }
+            else if (distance<range) {
+                ship.giveCommand(ShipCommand.ACCELERATE_BACKWARDS, (Object) null, 0);
+            }
+            RC_BaseAIAction.turn(ship, needTurnAngle, toTargetAngle, amount);
+        }
+        else {
+            WeaponAPI max = null;
+            WeaponAPI.WeaponSize size = WeaponAPI.WeaponSize.SMALL;
+            float damage = 0f;
+            for (WeaponAPI w:target.getAllWeapons()) {
+                if (w.getType()!= WeaponAPI.WeaponType.MISSILE&&!w.isDisabled()&&w.getSpec().getAIHints().contains(WeaponAPI.AIHints.PD)) {
+                    if (w.getDamage().getDpsDuration()>damage) {
+                        damage = w.getDamage().getDpsDuration();
+                        max = w;
+                    }
+                }
+            }
+            if (max==null) {
+                RC_BaseAIAction.shift(ship, ship.getFacing(),target.getFacing());
+                //直接向着目标加速
+                if (distance>minDistance) {
+                    ship.giveCommand(ShipCommand.ACCELERATE, (Object) null, 0);
+                }
+                else if (distance<range) {
+                    ship.giveCommand(ShipCommand.ACCELERATE_BACKWARDS, (Object) null, 0);
+                }
+                RC_BaseAIAction.turn(ship, needTurnAngle, toTargetAngle, amount);
+            }
+            else {
+                targetLocation = MathUtils.getPoint(max.getLocation(),ship.getCollisionRadius(),max.getCurrAngle()+180);
+                toTargetAngle = VectorUtils.getAngle(ship.getLocation(),targetLocation);
+                float needTurnAngleNew = Math.abs(MathUtils.getShortestRotation(shipFacing + ship.getAngularVelocity() * amount, toTargetAngle));
+                RC_BaseAIAction.move(ship, shipFacing, toTargetAngle);
+                RC_BaseAIAction.turn(ship, needTurnAngleNew, toTargetAngle, amount);
             }
         }
-
         if (needTurnAngle<10f) {
             for (int groupNumber=0;groupNumber<ship.getWeaponGroupsCopy().size();groupNumber++)
             {
@@ -333,74 +402,6 @@ public class RC_FighterAI extends RC_BaseShipAI {
             for (int groupNumber=0;groupNumber<ship.getWeaponGroupsCopy().size();groupNumber++)
             {
                 ship.getWeaponGroupsCopy().get(groupNumber).toggleOff();
-            }
-        }
-        RC_BaseAIAction.turn(ship, needTurnAngle, toTargetAngle, amount);
-        //到达屁股
-        if (Math.abs(MathUtils.getShortestRotation(toTargetAngle,target.getFacing()))<=30) {
-            Vector2f targetV = target.getVelocity();
-            Vector2f shipV = ship.getVelocity();
-            //看速度夹角 如果夹角
-            float vdl = shipV.length() - targetV.length();
-            Vector2f vd = Vector2f.sub(shipV,targetV,null);
-            float vda = VectorUtils.getAngle(new Vector2f(0,0),vd);
-            //速度 插值 大于 30 开始调整速度
-            float maxVdl = 100;
-            if (ShipAPI.HullSize.FIGHTER.equals(target.getHullSize())) {
-                maxVdl = maxVdl/30;
-            }
-            else if (ShipAPI.HullSize.FRIGATE.equals(target.getHullSize())) {
-                maxVdl = maxVdl/20;
-            }
-            else if (ShipAPI.HullSize.DESTROYER.equals(target.getHullSize())){
-                maxVdl = maxVdl/10;
-            }
-            else if (ShipAPI.HullSize.CRUISER.equals(target.getHullSize())){
-                maxVdl = maxVdl/5;
-            }
-            if (vdl>maxVdl) {
-                //获取速度插值
-                float accelerate = Math.abs(MathUtils.getShortestRotation(shipFacing,vda));
-                if (accelerate<45) {
-                    ship.giveCommand(ShipCommand.ACCELERATE_BACKWARDS, (Object) null, 0);
-                }
-                float backwards = Math.abs(MathUtils.getShortestRotation(shipFacing + 180f,vda));
-                if (backwards<45) {
-                    ship.giveCommand(ShipCommand.ACCELERATE, (Object) null, 0);
-                }
-                float strafeLeft = Math.abs(MathUtils.getShortestRotation(shipFacing - 90f,vda));
-                if (strafeLeft<45) {
-                    ship.giveCommand(ShipCommand.STRAFE_LEFT, (Object) null, 0);
-                }
-                float strafeRight = Math.abs(MathUtils.getShortestRotation(shipFacing + 90f,vda));
-                if (strafeRight<45) {
-                    ship.giveCommand(ShipCommand.STRAFE_RIGHT, (Object) null, 0);
-                }
-            }
-            else {
-                //减速完成以后要面向目标 然后漂移
-                if (Math.abs(MathUtils.getShortestRotation(target.getFacing(),ship.getFacing()))>10) {
-                    RC_BaseAIAction.shift(ship, ship.getFacing(),target.getFacing());
-                }
-            }
-            if (needTurnAngle<10) {
-                //直接向着目标加速
-                if (distance>minDistance) {
-                    ship.giveCommand(ShipCommand.ACCELERATE, (Object) null, 0);
-                }
-                else if (distance<range) {
-                    ship.giveCommand(ShipCommand.ACCELERATE_BACKWARDS, (Object) null, 0);
-                }
-            }
-        }
-        else {
-            RC_BaseAIAction.shift(ship, ship.getFacing(),target.getFacing());
-            //直接向着目标加速
-            if (distance>minDistance) {
-                ship.giveCommand(ShipCommand.ACCELERATE, (Object) null, 0);
-            }
-            else if (distance<range) {
-                ship.giveCommand(ShipCommand.ACCELERATE_BACKWARDS, (Object) null, 0);
             }
         }
     }

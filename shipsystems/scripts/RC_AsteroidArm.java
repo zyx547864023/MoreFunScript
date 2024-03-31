@@ -35,7 +35,7 @@ public class RC_AsteroidArm extends BaseShipSystemScript {
     private final static String RC_AnchoredEntity = "RC_AnchoredEntity";
     private final static String IS_ON = "IS_ON";
     private final static String IS_SET = "IS_SET";
-    private final static String WHO_CATCH = "WHO_CATCH";
+    public final static String WHO_CATCH = "WHO_CATCH";
     private final static String STATUS = "STATUS";
     private final static String RADIUS = "RADIUS";
     private static float maxSpeed = 10f;
@@ -248,10 +248,10 @@ public class RC_AsteroidArm extends BaseShipSystemScript {
                                 s.getVelocity().set(newSpeed);
                                 if (s.getCustomData().get(ID+STATUS)==null) {
                                     if (MathUtils.getRandomNumberInRange(0,2)==0) {
-                                        s.setCustomData(ID+STATUS,"OUT");
+                                        s.setCustomData(ID+STATUS,"IN");
                                     }
                                     else {
-                                        s.setCustomData(ID+STATUS,"IN");
+                                        s.setCustomData(ID+STATUS,"OUT");
                                     }
                                 }
                                 if (distance<ship.getCollisionRadius()*2) {

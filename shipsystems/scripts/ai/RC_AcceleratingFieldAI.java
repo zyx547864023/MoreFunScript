@@ -54,6 +54,7 @@ public class RC_AcceleratingFieldAI implements ShipSystemAIScript {
             ShipAPI motherShip = null;
             if (ship.getCustomData().get(RC_SpiderCore.ID) != null) {
                 motherShip = (ShipAPI) ship.getCustomData().get(RC_SpiderCore.ID);
+                //motherShip = ship.getParentStation();
             }
             if (motherShip != null) {
                 if (motherShip.getShipTarget() != null) {
@@ -95,7 +96,7 @@ public class RC_AcceleratingFieldAI implements ShipSystemAIScript {
                     }
                      */
                 }
-                if (enemyCount<=1) {
+                if (enemyCount<=1&&ship.getFluxLevel()<=0.8f&&motherShip.getFluxLevel()<=0.9f) {
                     return;
                 }
                 /*
