@@ -14,8 +14,7 @@ import org.lazywizard.lazylib.MathUtils;
 import org.lazywizard.lazylib.VectorUtils;
 import org.lazywizard.lazylib.combat.CombatUtils;
 import org.lwjgl.util.vector.Vector2f;
-import org.magiclib.subsystems.MagicSubsystem;
-import org.magiclib.subsystems.MagicSubsystemsManager;
+
 import real_combat.util.MyMath;
 
 import java.awt.*;
@@ -36,6 +35,7 @@ public class RC_TransAmSystem extends BaseShipSystemScript {
     private static String IS_ON = "IS_ON";
     private boolean init = false;
     private ShipAPI ship;
+    private static float width = 0;
     @Override
     public void apply(MutableShipStatsAPI stats, String id, State state, float effectLevel) {
         CombatEngineAPI engine = Global.getCombatEngine();
@@ -50,25 +50,14 @@ public class RC_TransAmSystem extends BaseShipSystemScript {
                 init = false;
             }
             ship.setCustomData(ID+IS_ON,true);
-            stats.getFluxDissipation().modifyPercent(id,EXTRA_FLUX_PERCENT * effectLevel);
-            stats.getEnergyWeaponDamageMult().modifyPercent(id, DAMAGE_BONUS_PERCENT * effectLevel);
-            stats.getMaxSpeed().modifyPercent(id, MAX_SPEED_PERCENT * effectLevel);
-            stats.getMaxTurnRate().modifyPercent(id, MAX_SPEED_PERCENT * effectLevel);
-
-            //如果启动
-            //for(int i = 0; i < 2; ++i) {
-                Vector2f partstartloc = MathUtils.getPointOnCircumference(ship.getLocation(), ship.getCollisionRadius() * MathUtils.getRandomNumberInRange(0.1F, 0.8F), MyMath.RANDOM.nextFloat() * 360.0F);
-                Vector2f partvec = Vector2f.sub(partstartloc, ship.getLocation(), (Vector2f)null);
-                partvec.scale(1.5F);
-                float size = MathUtils.getRandomNumberInRange(1.0F, 5.0F);
-                float damage = MathUtils.getRandomNumberInRange(0.6F, 1.0F);
-                float brightness = MathUtils.getRandomNumberInRange(0.1F, 0.5F);
-                engine.addSmoothParticle(partstartloc, partvec, size, brightness, damage, Color.green);
-                engine.addSmoothParticle(partstartloc, partvec, size, 1F, damage, Color.white);
-            //}
-            ship.setJitter(ship, Color.RED, 0.5f, 3, 0f, 5f);
-            //ship.addAfterimage(Color.RED, 0, 0, -ship.getVelocity().x*5,-ship.getVelocity().y*5, 0f, 0f, 0.05f, 0.1f,true, false, true);
-
+            addBuff(ship,id,effectLevel,engine);
+            for (FighterWingAPI w:ship.getAllWings()) {
+                for (ShipAPI f : w.getWingMembers()) {
+                    if (f.isAlive()) {
+                        addBuff(f,id,effectLevel,engine);
+                    }
+                }
+            }
             if (!init) {
                 engine.addLayeredRenderingPlugin(new RC_TransAmSystemCombatPlugin(ship));
             }
@@ -82,7 +71,6 @@ public class RC_TransAmSystem extends BaseShipSystemScript {
                 return;
             }
             float shipTimeMult = 1f + (MAX_TIME_MULT - 1f) * effectLevel;
-            stats.getTimeMult().modifyMult(id, shipTimeMult);
             if (player) {
                 //播放音乐
                 //Global.getSoundPlayer().applyLowPassFilter(0.75f,0f);
@@ -93,15 +81,48 @@ public class RC_TransAmSystem extends BaseShipSystemScript {
             } else {
                 Global.getCombatEngine().getTimeMult().unmodify(id);
             }
-
-            ship.getEngineController().fadeToOtherColor(this, JITTER_COLOR, new Color(0,0,0,0), effectLevel, 0.5f);
-            ship.getEngineController().extendFlame(this, -0.25f, -0.25f, -0.25f);
             init = true;
         }
         catch (Exception e)
         {
             Global.getLogger(this.getClass()).info(e);
         }
+    }
+
+    public void addBuff(ShipAPI ship, String id, float effectLevel,CombatEngineAPI engine) {
+        MutableShipStatsAPI stats = ship.getMutableStats();
+        stats.getFluxDissipation().modifyPercent(id,EXTRA_FLUX_PERCENT * effectLevel);
+        stats.getEnergyWeaponDamageMult().modifyPercent(id, DAMAGE_BONUS_PERCENT * effectLevel);
+        stats.getMaxSpeed().modifyPercent(id, MAX_SPEED_PERCENT * effectLevel);
+        stats.getMaxTurnRate().modifyPercent(id, MAX_SPEED_PERCENT * effectLevel);
+
+        //如果启动
+        //for(int i = 0; i < 2; ++i) {
+        Vector2f partstartloc = MathUtils.getPointOnCircumference(ship.getLocation(), ship.getCollisionRadius() * MathUtils.getRandomNumberInRange(0.1F, 0.8F), MyMath.RANDOM.nextFloat() * 360.0F);
+        Vector2f partvec = Vector2f.sub(partstartloc, ship.getLocation(), (Vector2f)null);
+        partvec.scale(1.5F);
+        float size = MathUtils.getRandomNumberInRange(1.0F, 5.0F);
+        float damage = MathUtils.getRandomNumberInRange(0.6F, 1.0F);
+        float brightness = MathUtils.getRandomNumberInRange(0.1F, 0.5F);
+        engine.addSmoothParticle(partstartloc, partvec, size, brightness, damage, Color.green);
+        engine.addSmoothParticle(partstartloc, partvec, size, 1F, damage, Color.white);
+        //}
+        ship.setJitter(ship, Color.RED, 0.5f, 3, 0f, 5f);
+        //ship.addAfterimage(Color.RED, 0, 0, -ship.getVelocity().x*5,-ship.getVelocity().y*5, 0f, 0f, 0.05f, 0.1f,true, false, true);
+        float shipTimeMult = 1f + (MAX_TIME_MULT - 1f) * effectLevel;
+        stats.getTimeMult().modifyMult(id, shipTimeMult);
+
+        ship.getEngineController().fadeToOtherColor(this, JITTER_COLOR, new Color(0,0,0,0), effectLevel, 0.5f);
+        ship.getEngineController().extendFlame(this, -0.25f, -0.25f, -0.25f);
+    }
+
+    public void removeBuff(ShipAPI ship,String id) {
+        MutableShipStatsAPI stats = ship.getMutableStats();
+        stats.getFluxDissipation().unmodifyPercent(id);
+        stats.getEnergyWeaponDamageMult().unmodifyPercent(id);
+        stats.getMaxSpeed().unmodifyPercent(id);
+        stats.getMaxTurnRate().unmodifyPercent(id);
+        stats.getTimeMult().unmodify(id);
     }
 
     @Override
@@ -113,10 +134,14 @@ public class RC_TransAmSystem extends BaseShipSystemScript {
         }
         try {
             ship.setCustomData(ID+IS_ON,false);
-            stats.getFluxDissipation().unmodifyPercent(id);
-            stats.getEnergyWeaponDamageMult().unmodifyPercent(id);
-            stats.getMaxSpeed().unmodifyPercent(id);
-            stats.getMaxTurnRate().unmodifyPercent(id);
+            removeBuff(ship,id);
+            for (FighterWingAPI w:ship.getAllWings()) {
+                for (ShipAPI f : w.getWingMembers()) {
+                    if (f.isAlive()) {
+                        removeBuff(f,id);
+                    }
+                }
+            }
 
             init = false;
 
@@ -132,7 +157,6 @@ public class RC_TransAmSystem extends BaseShipSystemScript {
             }
 
             Global.getCombatEngine().getTimeMult().unmodify(id);
-            stats.getTimeMult().unmodify(id);
         }
         catch (Exception e)
         {
@@ -214,7 +238,9 @@ public class RC_TransAmSystem extends BaseShipSystemScript {
                 } else {
                     timer += amount;
                 }
-                transAmAlphaMult -= amount * 3f;
+                if (!ship.isFighter()) {
+                    transAmAlphaMult -= amount * 3f;
+                }
             }
             //如果关闭了 所有影子向本体移动
             else
@@ -229,6 +255,15 @@ public class RC_TransAmSystem extends BaseShipSystemScript {
         }
 
         public void addShadowMap(float maxAlphaMult) {
+            addShadowMap(maxAlphaMult, ship);
+            for (FighterWingAPI w:ship.getAllWings()) {
+                for (ShipAPI f:w.getWingMembers()) {
+                    addShadowMap(maxAlphaMult, f);
+                }
+            }
+        }
+
+        public void addShadowMap(float maxAlphaMult, ShipAPI ship) {
             ShadowMap shadowMap = new ShadowMap(maxAlphaMult, new ArrayList<Shadow>(), new ArrayList<Shadow>(), new ArrayList<Shadow>(), null);
             shadowMap.ship = new Shadow(ship.getFacing() - 90, new Vector2f(ship.getLocation()), ship.getHullSpec().getSpriteName(),null);
             for (WeaponAPI w : ship.getAllWeapons()) {
@@ -242,6 +277,10 @@ public class RC_TransAmSystem extends BaseShipSystemScript {
                 if (w.getBarrelSpriteAPI() != null) {
                     shadowMap.barrels.add(0, new Shadow(w.getCurrAngle() - 90, new Vector2f(w.getLocation()), w));
                 }
+            }
+            if (!ship.isFighter()) {
+                SpriteAPI sprite = Global.getSettings().getSprite(shadowMap.ship.spriteName);
+                width = sprite.getWidth();
             }
             shadowList.add(shadowMap);
         }
@@ -267,7 +306,6 @@ public class RC_TransAmSystem extends BaseShipSystemScript {
         @Override
         public void render(CombatEngineLayers layer, ViewportAPI viewport) {
             if (!ship.isAlive()) {return;}
-            float width = 0;
             for (ShadowMap m: shadowList)
             {
                 if (m.ship.spriteName!=null) {
@@ -277,8 +315,6 @@ public class RC_TransAmSystem extends BaseShipSystemScript {
                     sprite.setAlphaMult(m.alphaMult);
                     sprite.setColor(COLOR);
                     sprite.renderAtCenter(m.ship.location.getX(), m.ship.location.getY());
-
-                    width = sprite.getWidth();
                 }
                 for (Shadow s : m.unders)
                 {
@@ -324,21 +360,21 @@ public class RC_TransAmSystem extends BaseShipSystemScript {
                 }
             }
             //if (engine.isPaused()) {return;}
-            if (transAmAlphaMult>0) {
-                transAmsprite.setSize(width * 2, width * 2);
-                transAmsprite.setAlphaMult(transAmAlphaMult);
-                if (engine.isPaused()) {
-                    if (!isDraw)
-                    {
-                        MagicRenderPlugin.addSingleframe(transAmsprite, ship.getLocation(), CombatEngineLayers.ABOVE_SHIPS_LAYER);
-                        isDraw = true;
+            if (!ship.isFighter()) {
+                if (transAmAlphaMult > 0) {
+                    transAmsprite.setSize(width * 2, width * 2);
+                    transAmsprite.setAlphaMult(transAmAlphaMult);
+                    if (engine.isPaused()) {
+                        if (!isDraw) {
+                            org.magiclib.plugins.MagicRenderPlugin.addSingleframe(transAmsprite, ship.getLocation(), CombatEngineLayers.ABOVE_SHIPS_LAYER);
+                            isDraw = true;
+                        }
+                    } else {
+                        org.magiclib.plugins.MagicRenderPlugin.addSingleframe(transAmsprite, ship.getLocation(), CombatEngineLayers.ABOVE_SHIPS_LAYER);
+                        isDraw = false;
                     }
+                    //transAmsprite.renderAtCenter(ship.getLocation().getX(), ship.getLocation().getY());
                 }
-                else {
-                    MagicRenderPlugin.addSingleframe(transAmsprite, ship.getLocation(), CombatEngineLayers.ABOVE_SHIPS_LAYER);
-                    isDraw = false;
-                }
-                //transAmsprite.renderAtCenter(ship.getLocation().getX(), ship.getLocation().getY());
             }
         }
 
