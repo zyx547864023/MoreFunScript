@@ -2,26 +2,22 @@ package real_combat.ai;
 
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.*;
-import com.fs.starfarer.api.util.IntervalUtil;
-import com.fs.starfarer.combat.entities.Ship;
 import org.lazywizard.lazylib.MathUtils;
 import org.lazywizard.lazylib.VectorUtils;
 import org.lazywizard.lazylib.combat.AIUtils;
-import org.lazywizard.lazylib.combat.DefenseUtils;
 import org.lwjgl.util.vector.Vector2f;
 import real_combat.entity.RC_NeedDrawLine;
 
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
-public class RC_Drone_borerAI extends RC_BaseShipAI {
+public class RC_Drone_borerAIBack extends RC_BaseShipAI {
     private final static String ID = "RC_RepairCombatLayeredRenderingPlugin";
     private static final float REPAIR_POINT = 10f;
     private static final float ARMOR_REPAIR_POINT = 1f;
 
-    protected IntervalUtil tracker = new IntervalUtil(1f, 1f);
-    public RC_Drone_borerAI(ShipAPI ship) {
+    public RC_Drone_borerAIBack(ShipAPI ship) {
         super(ship);
     }
 
@@ -37,10 +33,13 @@ public class RC_Drone_borerAI extends RC_BaseShipAI {
             if (engine == null) return;
             if (engine.isPaused()) {return;}
             if (!ship.isAlive()) {return;}
-            //List<ShipAPI> allyList = AIUtils.getAlliesOnMap(ship);
-            Set<ShipAPI> alliesNotFighter = new HashSet<>();
-            alliesNotFighter = RC_BaseShipAI.getAlliesOnMapNotFighter(ship,alliesNotFighter);
-            int allyCount = alliesNotFighter.size();
+            List<ShipAPI> allyList = AIUtils.getAlliesOnMap(ship);
+            int allyCount = 0;
+            for (ShipAPI a:allyList) {
+                if (!a.isFighter()) {
+                    allyCount++;
+                }
+            }
             if (allyCount==0) {
                 /**
                  * 	void applyDamage(CombatEntityAPI entity, Vector2f point,
@@ -65,6 +64,7 @@ public class RC_Drone_borerAI extends RC_BaseShipAI {
             //获取飞机的半径
             FighterWingAPI wing = ship.getWing();
             if (wing != null) {
+                //ship.giveCommand(ShipCommand.FIRE,wing.getSourceShip().getLocation(),0);
                 float shipRange = wing.getRange();
                 //获取母船的坐标
                 ShipAPI motherShip = ship.getWing().getSourceShip();
@@ -78,13 +78,24 @@ public class RC_Drone_borerAI extends RC_BaseShipAI {
                 //如果母船炸了重新找母船
                 if (!motherShip.isAlive()||motherShip.isRetreating())
                 {
-                    Iterator i$ = alliesNotFighter.iterator();
+                    //Iterator i$ = Global.getCombatEngine().getShips().iterator();
+                    Iterator i$ = allyList.iterator();
                     while (i$.hasNext()) {
                         ShipAPI s = (ShipAPI) i$.next();
                         float distance = MathUtils.getDistance(s, ship);
                         if (distance < minDistance && s.getOwner() == ship.getOwner()) {
                             minDistance = distance;
                             motherShip = s;
+                            /*
+                            List<FighterLaunchBayAPI> fighterLaunchBays = motherShip.getLaunchBaysCopy();
+                            for (FighterLaunchBayAPI f:fighterLaunchBays)
+                            {
+                                FighterWingAPI.ReturningFighter returningFighter = wing.getReturnData(ship);
+                                returningFighter = new FighterWingAPI.ReturningFighter(ship,f);
+                                f.land(ship);
+                                break;
+                            }
+                             */
                         }
                     }
                 }
@@ -103,23 +114,51 @@ public class RC_Drone_borerAI extends RC_BaseShipAI {
                         }
                     }
                 }
-                alliesNotFighter.remove(RC_BaseShipAI.getAlliesOnMapCR(ship,new HashSet<ShipAPI>()));
-                Iterator i$ = alliesNotFighter.iterator();
-                while (i$.hasNext()) {
-                    ShipAPI s = (ShipAPI) i$.next();
-                    if (s.getOwner() != motherShip.getOwner() || s.equals(ship)) {
-                        continue;
-                    }
-                    float distance = MathUtils.getDistance(s, motherShip);
-                    float maxArmor = 0;
-                    if (distance < shipRange) {
-                        //存活、不是飞机、是跟母船同一个阵营
-                        if (s.isAlive() && !s.isFighter() && s.getOwner() == motherShip.getOwner() && !s.equals(ship)) {
-                            if (s.getCurrentCR() > 0.45) {
-                                if(s.getLocation().equals(targetLocation))
-                                {
+                //if (motherShip.getShipTarget()==null) {
+                    Iterator i$ = allyList.iterator();
+                    while (i$.hasNext()) {
+                        ShipAPI s = (ShipAPI) i$.next();
+                        /*
+                        if (s.getOwner() == motherShip.getOwner() && !s.equals(ship)) {
+                            continue;
+                        }
+                        */
+                        if (s.getOwner() != motherShip.getOwner() || s.equals(ship)) {
+                            continue;
+                        }
+                        float distance = MathUtils.getDistance(s, motherShip);
+                        float maxArmor = 0;
+                        if (distance < shipRange) {
+                            //存活、不是飞机、是跟母船同一个阵营
+                            if (s.isAlive() && !s.isFighter() && s.getOwner() == motherShip.getOwner() && !s.equals(ship)) {
+                                if (s.getCurrentCR() > 0.45) {
+                                    if(s.getLocation().equals(targetLocation))
+                                    {
+                                        //获取Hp
+                                        if (s.getHitpoints() < s.getMaxHitpoints()-1) {
+                                            needCR = REPAIR_POINT/s.getMaxHitpoints()/4;
+                                        }
+                                        float nowArmor = 0;
+                                        int count = 0;
+                                        float[][] grid = s.getArmorGrid().getGrid();
+                                        for (int x = 0; x < grid.length; x++) {
+                                            for (int y = 0; y < grid[x].length; y++) {
+                                                nowArmor += s.getArmorGrid().getArmorValue(x, y);
+                                                count++;
+                                            }
+                                        }
+                                        maxArmor = count * s.getArmorGrid().getArmorRating() / 15f;
+                                        //获取装甲最少
+                                        if (nowArmor < maxArmor-1) {
+                                            needCR = ARMOR_REPAIR_POINT/maxArmor/30;
+                                        }
+                                        flyToTarget(s, amount, needCR);
+                                        return;
+                                    }
                                     //获取Hp
-                                    if (s.getHitpoints() < s.getMaxHitpoints()-1) {
+                                    if (s.getHitpoints() < minHp && s.getHitpoints() < s.getMaxHitpoints()-1) {
+                                        minHp = s.getHitpoints();
+                                        hpTarget = s;
                                         needCR = REPAIR_POINT/s.getMaxHitpoints()/4;
                                     }
                                     float nowArmor = 0;
@@ -133,38 +172,38 @@ public class RC_Drone_borerAI extends RC_BaseShipAI {
                                     }
                                     maxArmor = count * s.getArmorGrid().getArmorRating() / 15f;
                                     //获取装甲最少
-                                    if (nowArmor < maxArmor-1) {
+                                    if (nowArmor < minArmor && nowArmor < maxArmor-1) {
+                                        minArmor = nowArmor;
+                                        armorTarget = s;
                                         needCR = ARMOR_REPAIR_POINT/maxArmor/30;
                                     }
-                                    flyToTarget(s, amount, needCR);
-                                    return;
-                                }
-                                //获取Hp
-                                if (s.getHitpoints() < minHp && s.getHitpoints() < s.getMaxHitpoints()-1) {
-                                    minHp = s.getHitpoints();
-                                    hpTarget = s;
-                                    needCR = REPAIR_POINT/s.getMaxHitpoints()/4;
-                                }
-                                float nowArmor = 0;
-                                int count = 0;
-                                float[][] grid = s.getArmorGrid().getGrid();
-                                for (int x = 0; x < grid.length; x++) {
-                                    for (int y = 0; y < grid[x].length; y++) {
-                                        nowArmor += s.getArmorGrid().getArmorValue(x, y);
-                                        count++;
-                                    }
-                                }
-                                maxArmor = count * s.getArmorGrid().getArmorRating() / 15f;
-                                //获取装甲最少
-                                if (nowArmor < minArmor && nowArmor < maxArmor-1) {
-                                    minArmor = nowArmor;
-                                    armorTarget = s;
-                                    needCR = ARMOR_REPAIR_POINT/maxArmor/30;
                                 }
                             }
                         }
                     }
+                //}
+                /*
+                else {
+                    if(motherShip.getShipTarget()!=null) {
+                        if (motherShip.getShipTarget().getOwner() == ship.getOwner()) {
+                            hpTarget = motherShip.getShipTarget();
+                        }
+                    }
                 }
+                 */
+                /*
+                if (needCR==0) {
+                    if (ship.getPhaseCloak()!=null) {
+                        usePhase(amount);
+                    }
+                    else if (ship.getShield()!=null) {
+
+                    }
+                }
+                else {
+
+                }
+                */
                 //飞过去
                 if (hpTarget!=null)
                 {
@@ -202,6 +241,9 @@ public class RC_Drone_borerAI extends RC_BaseShipAI {
                                 ship.giveCommand(ShipCommand.TOGGLE_SHIELD_OR_PHASE_CLOAK, null, 0);
                             }
                         }
+                        else {
+                            usePhase(amount);
+                        }
                     }
                 }
                 else {
@@ -218,6 +260,9 @@ public class RC_Drone_borerAI extends RC_BaseShipAI {
                             if (ship.isPhased()) {
                                 ship.giveCommand(ShipCommand.TOGGLE_SHIELD_OR_PHASE_CLOAK, null, 0);
                             }
+                        }
+                        else {
+                            usePhase(amount);
                         }
                     }
                 }
@@ -238,7 +283,7 @@ public class RC_Drone_borerAI extends RC_BaseShipAI {
         boolean isGet = false;
         Object repairTarget = target;
         float mult = 1f;
-        java.util.List<ShipEngineControllerAPI.ShipEngineAPI> shipEngines = target.getEngineController().getShipEngines();
+        List<ShipEngineControllerAPI.ShipEngineAPI> shipEngines = target.getEngineController().getShipEngines();
         for (int e = 0; e < shipEngines.size(); e++) {
             ShipEngineControllerAPI.ShipEngineAPI oe = shipEngines.get(e);
             if (oe.isDisabled()) {
@@ -252,7 +297,7 @@ public class RC_Drone_borerAI extends RC_BaseShipAI {
         }
 
         if (!isGet) {
-            java.util.List<WeaponAPI> shipWeapons = target.getAllWeapons();
+            List<WeaponAPI> shipWeapons = target.getAllWeapons();
             for (int w = 0; w < shipWeapons.size(); w++) {
                 WeaponAPI ow = shipWeapons.get(w);
                 if (ow.isDisabled()) {
@@ -285,6 +330,12 @@ public class RC_Drone_borerAI extends RC_BaseShipAI {
                 for (int y = 0; y < grid[x].length; y++) {
                     if (target.getArmorGrid().getArmorRating() / 15f > target.getArmorGrid().getArmorValue(x, y)) {
                         targetLocation = target.getLocation();
+                        //这里的装甲位置有偏移
+                        //targetLocation = target.getArmorGrid().getLocation(x,y);
+                        //获取装甲和中心之间的距离
+                        //float armorDistance = MathUtils.getDistance(targetLocation,ship.getLocation()));
+                        //float shipCenterToArmor = VectorUtils.getAngle(ship.getLocation(),targetLocation);
+                        //targetLocation = MathUtils.getPoint(ship.getLocation(),armorDistance/2,shipCenterToArmor);
                         mult = 0.5f;
                         isGet = true;
                         repairTarget = new Vector2f(x,y);
@@ -308,8 +359,8 @@ public class RC_Drone_borerAI extends RC_BaseShipAI {
         float toTargetAngle = VectorUtils.getAngle(ship.getLocation(),targetLocation);
         float shipFacing = MathUtils.clampAngle(ship.getFacing());
         float needTurnAngle = Math.abs(MathUtils.getShortestRotation(shipFacing + ship.getAngularVelocity() * amount, toTargetAngle));
-        float distance = MathUtils.getDistance(targetLocation,ship.getLocation());
-        if(distance>ship.getCollisionRadius()*10)
+        float distance = MathUtils.getDistance(target,ship);
+        if(distance>0)
         {
             RC_BaseAIAction.turn(ship, needTurnAngle, toTargetAngle, amount);
             ship.giveCommand(ShipCommand.ACCELERATE, (Object)null ,0);
@@ -368,7 +419,35 @@ public class RC_Drone_borerAI extends RC_BaseShipAI {
                 target.syncWeaponDecalsWithArmorDamage();
             }
             else {
-
+                /*
+                //如果周围有导弹
+                MissileAPI missile = AIUtils.getNearestMissile(ship);
+                float range = ship.getAllWeapons().get(0).getRange();
+                if(missile!=null){
+                    distance = MathUtils.getDistance(missile,ship);
+                    //毕竟武器只有一个
+                    if(distance<range)
+                    {
+                        toTargetAngle = VectorUtils.getAngle(ship.getLocation(),missile.getLocation());
+                        needTurnAngle = Math.abs(MathUtils.getShortestRotation(shipFacing + ship.getAngularVelocity() * amount, toTargetAngle));
+                        turn(needTurnAngle, toTargetAngle, amount);
+                        ship.giveCommand(ShipCommand.HOLD_FIRE, (Object)null ,0);
+                        return;
+                    }
+                }
+                //如果周围有敌人
+                ShipAPI enemy = AIUtils.getNearestEnemy(ship);
+                if(enemy!=null){
+                    distance = MathUtils.getDistance(enemy,ship);
+                    if(distance<range)
+                    {
+                        toTargetAngle = VectorUtils.getAngle(ship.getLocation(),enemy.getLocation());
+                        needTurnAngle = Math.abs(MathUtils.getShortestRotation(shipFacing + ship.getAngularVelocity() * amount, toTargetAngle));
+                        turn(needTurnAngle, toTargetAngle, amount);
+                        ship.giveCommand(ShipCommand.HOLD_FIRE, (Object)null ,0);
+                    }
+                }
+                 */
             }
         }
     }

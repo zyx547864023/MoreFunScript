@@ -99,7 +99,7 @@ public class RC_SpiderCore extends BaseHullMod {
         }
         for (ShipAPI m : ship.getChildModulesCopy()) {
             if (m.getCustomData().get(ID)==null) {
-                m.setCustomData(ID,m);
+                m.setCustomData(ID,ship);
             }
             m.setPullBackFighters(ship.isPullBackFighters());
             if (!m.isPullBackFighters()) {

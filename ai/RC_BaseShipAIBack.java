@@ -239,7 +239,7 @@ public class RC_BaseShipAIBack implements ShipAIPlugin {
         if (MathUtils.getShortestRotation(dodgeTargetFacing, dodgeTargetToShip)>0) {
             newAngle = dodgeTargetToShip + 90;
         }
-        if (mayHit(dodgeTarget,ship.getCollisionRadius()*3f)
+        if (mayHit(dodgeTarget,ship.getCollisionRadius()*1.5f)
         ) {
             //engine.addFloatingText(ship.getLocation(), "闪避", 25f, Color.BLUE, ship, 5f, 10f);
             //engine.addFloatingTextAlways(ship.getLocation(), "闪避", 25f, Color.BLUE, ship,

@@ -3,9 +3,13 @@ package real_combat.shipsystems.scripts.ai;
 import com.fs.starfarer.api.combat.*;
 import org.lazywizard.lazylib.MathUtils;
 import org.lwjgl.util.vector.Vector2f;
+import real_combat.ai.RC_BaseShipAI;
 import real_combat.constant.RC_ComboConstant;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class RC_ComboSystemAI implements ShipSystemAIScript {
 
@@ -69,7 +73,7 @@ public class RC_ComboSystemAI implements ShipSystemAIScript {
         //如果周围没有敌人
         boolean isNoEnemy = true;
         ShipAPI skillTarget = null;
-        List<ShipAPI> ships = engine.getShips();
+        Set<ShipAPI> ships = RC_BaseShipAI.getEnemiesOnMapNotFighter(ship, new HashSet<ShipAPI>());
         for (ShipAPI s : ships) {
             float range = MathUtils.getDistance(ship, s);
             if (range<=maxWeaponRange&&s.getOwner()!=ship.getOwner()&&s.isAlive()&&!s.isFighter()) {

@@ -1,10 +1,7 @@
 package real_combat.combat;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.CampaignFleetAPI;
@@ -91,10 +88,168 @@ public class RealCombatEveryFrameCombatPlugin implements EveryFrameCombatPlugin 
 		//engine.maintainStatusForPlayerShip(ID, Global.getSettings().getSpriteName("ui","icon_tactical_cr_bonus"), "士气 100%", "增益", false);
 		List<ShipAPI> shipList = engine.getShips();
 		List<RC_Escort> escortList = new ArrayList<>();
+		Set<ShipAPI> notFighterSet = new HashSet<>();
+		Set<ShipAPI> hulkSet = new HashSet<>();
+		Set<ShipAPI> fleet0Set = new HashSet<>();
+		Set<ShipAPI> cr0Set = new HashSet<>();
+
+		Set<ShipAPI> notFighter0Set = new HashSet<>();
+		Set<ShipAPI> fighter0Set = new HashSet<>();
+		Set<ShipAPI> frigate0Set = new HashSet<>();
+		Set<ShipAPI> destroyer0Set = new HashSet<>();
+		Set<ShipAPI> cruiser0Set = new HashSet<>();
+		Set<ShipAPI> capitalship0Set = new HashSet<>();
+
+		Set<ShipAPI> hpNotFull0Set = new HashSet<>();
+		Set<ShipAPI> fluxAlmostFull0Set = new HashSet<>();
+		Set<ShipAPI> overload0Set = new HashSet<>();
+		Set<ShipAPI> carrir0Set = new HashSet<>();
+
+		Set<ShipAPI> fleet1Set = new HashSet<>();
+		Set<ShipAPI> cr1Set = new HashSet<>();
+
+		Set<ShipAPI> notFighter1Set = new HashSet<>();
+		Set<ShipAPI> fighter1Set = new HashSet<>();
+		Set<ShipAPI> frigate1Set = new HashSet<>();
+		Set<ShipAPI> destroyer1Set = new HashSet<>();
+		Set<ShipAPI> cruiser1Set = new HashSet<>();
+		Set<ShipAPI> capitalship1Set = new HashSet<>();
+
+		Set<ShipAPI> hpNotFull1Set = new HashSet<>();
+		Set<ShipAPI> fluxAlmostFull1Set = new HashSet<>();
+		Set<ShipAPI> overload1Set = new HashSet<>();
+		Set<ShipAPI> carrir1Set = new HashSet<>();
+
+		//是否相位
+		//是否开盾
+
 		for(ShipAPI ship:shipList) {
+			if (ship.isHulk()) {
+				hulkSet.add(ship);
+				continue;
+			}
 			if (!ship.isAlive()) {
 				continue;
 			}
+			if (!ship.isFighter()) {
+				notFighterSet.add(ship);
+			}
+			//0队船
+			if (ship.getOwner()==0) {
+				//船
+				fleet0Set.add(ship);
+				if (!ship.isFighter()) {
+					notFighter0Set.add(ship);
+				}
+				if (ship.getCurrentCR() < 0.45) {
+					cr0Set.add(ship);
+				}
+				//飞机 //每个级别的船
+				if (ship.getHullSize().equals(ShipAPI.HullSize.FIGHTER)) {
+					fighter0Set.add(ship);
+				}
+				else if (ship.getHullSize().equals(ShipAPI.HullSize.FRIGATE)) {
+					frigate0Set.add(ship);
+				}
+				else if (ship.getHullSize().equals(ShipAPI.HullSize.DESTROYER)) {
+					destroyer0Set.add(ship);
+				}
+				else if (ship.getHullSize().equals(ShipAPI.HullSize.CRUISER)) {
+					cruiser0Set.add(ship);
+				}
+				else if (ship.getHullSize().equals(ShipAPI.HullSize.CAPITAL_SHIP)) {
+					capitalship0Set.add(ship);
+				}
+				//残血
+				if (ship.getHitpoints()<ship.getMaxHitpoints()) {
+					hpNotFull0Set.add(ship);
+				}
+				//幅能级别
+				if (ship.getFluxLevel()>0.8f) {
+					fluxAlmostFull0Set.add(ship);
+				}
+				//过载
+				if (ship.getFluxTracker().isOverloadedOrVenting()) {
+					overload0Set.add(ship);
+				}
+				//航母
+				if (!ship.getLaunchBaysCopy().isEmpty()) {
+					capitalship0Set.add(ship);
+				}
+			}
+			//1队船
+			else if (ship.getOwner()==1) {
+				//船
+				fleet1Set.add(ship);
+				if (!ship.isFighter()) {
+					notFighter1Set.add(ship);
+				}
+				if (ship.getCurrentCR() < 0.45) {
+					cr1Set.add(ship);
+				}
+				//飞机 //每个级别的船
+				if (ship.getHullSize().equals(ShipAPI.HullSize.FIGHTER)) {
+					fighter1Set.add(ship);
+				}
+				else if (ship.getHullSize().equals(ShipAPI.HullSize.FRIGATE)) {
+					frigate1Set.add(ship);
+				}
+				else if (ship.getHullSize().equals(ShipAPI.HullSize.DESTROYER)) {
+					destroyer1Set.add(ship);
+				}
+				else if (ship.getHullSize().equals(ShipAPI.HullSize.CRUISER)) {
+					cruiser1Set.add(ship);
+				}
+				else if (ship.getHullSize().equals(ShipAPI.HullSize.CAPITAL_SHIP)) {
+					capitalship1Set.add(ship);
+				}
+				//残血
+				if (ship.getHitpoints()<ship.getMaxHitpoints()) {
+					hpNotFull1Set.add(ship);
+				}
+				//幅能级别
+				if (ship.getFluxLevel()>0.8f) {
+					fluxAlmostFull1Set.add(ship);
+				}
+				//过载
+				if (ship.getFluxTracker().isOverloadedOrVenting()) {
+					overload1Set.add(ship);
+				}
+				//航母
+				if (!ship.getLaunchBaysCopy().isEmpty()) {
+					capitalship1Set.add(ship);
+				}
+			}
+			engine.getCustomData().put("hulkSet", hulkSet);
+			engine.getCustomData().put("notFighterSet", notFighterSet);
+			engine.getCustomData().put("fleet0Set", fleet0Set);
+
+			engine.getCustomData().put("notFighter0Set", notFighter0Set);
+			engine.getCustomData().put("fighter0Set", fighter0Set);
+			engine.getCustomData().put("frigate0Set", frigate0Set);
+			engine.getCustomData().put("destroyer0Set", destroyer0Set);
+			engine.getCustomData().put("cruiser0Set", cruiser0Set);
+			engine.getCustomData().put("capitalship0Set", capitalship0Set);
+
+			engine.getCustomData().put("hpNotFull0Set", hpNotFull0Set);
+			engine.getCustomData().put("fluxAlmostFull0Set", fluxAlmostFull0Set);
+			engine.getCustomData().put("overload0Set", overload0Set);
+			engine.getCustomData().put("carrir0Set", carrir0Set);
+
+			engine.getCustomData().put("fleet1Set", fleet1Set);
+
+			engine.getCustomData().put("notFighter1Set", notFighter1Set);
+			engine.getCustomData().put("fighter1Set", fighter1Set);
+			engine.getCustomData().put("frigate1Set", frigate1Set);
+			engine.getCustomData().put("destroyer1Set", destroyer1Set);
+			engine.getCustomData().put("cruiser1Set", cruiser1Set);
+			engine.getCustomData().put("capitalship1Set", capitalship1Set);
+
+			engine.getCustomData().put("hpNotFull1Set", hpNotFull1Set);
+			engine.getCustomData().put("fluxAlmostFull1Set", fluxAlmostFull1Set);
+			engine.getCustomData().put("overload1Set", overload1Set);
+			engine.getCustomData().put("carrir1Set", carrir1Set);
+
 			if (RCModPlugin.isSightRadiusEnabled()) {
 				if (engine.isSimulation() || engine.isInCampaignSim()) {
 					ship.getMutableStats().getSightRadiusMod().modifyPercent(ID, 1000f);

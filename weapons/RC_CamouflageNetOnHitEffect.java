@@ -42,10 +42,10 @@ public class RC_CamouflageNetOnHitEffect implements OnHitEffectPlugin {
             radius+=index * RC_CamouflageNetRenderingPlugin.DISTANCE;
         }
         for (MissileAPI m:AIUtils.getNearbyEnemyMissiles(projectile,radius)) {
-            engine.applyDamage(m,m.getLocation(),0,DamageType.ENERGY,projectile.getEmpAmount(),true,true,projectile.getSource(),true);
+            engine.applyDamage(m,m.getLocation(),0,DamageType.ENERGY,projectile.getEmpAmount(),false,true,projectile.getSource(),true);
         }
         for (ShipAPI s:AIUtils.getNearbyEnemies(projectile,radius)) {
-            engine.applyDamage(s,s.getLocation(),0,DamageType.ENERGY,projectile.getEmpAmount(),true,true,projectile.getSource(),true);
+            engine.applyDamage(s,s.getLocation(),0,DamageType.ENERGY,projectile.getEmpAmount(),false,true,projectile.getSource(),true);
         }
     }
 

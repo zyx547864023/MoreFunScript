@@ -3,15 +3,14 @@ package real_combat.shipsystems.scripts;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.*;
 import com.fs.starfarer.api.impl.combat.BaseShipSystemScript;
+import com.fs.starfarer.coreui.H;
 import org.lazywizard.lazylib.MathUtils;
 import org.lazywizard.lazylib.VectorUtils;
 import org.lwjgl.util.vector.Vector2f;
+import real_combat.ai.RC_BaseShipAI;
 import real_combat.hullmods.RC_SpiderCore;
 
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  *  使用一次
@@ -43,7 +42,7 @@ public class RC_HulkEater extends BaseShipSystemScript {
             if (hulk == null) {
                 //搜寻船周围的残骸和陨石
                 float minDistance = ship.getCollisionRadius() * 1.5f;
-                for (ShipAPI s : engine.getShips()) {
+                for (ShipAPI s : RC_BaseShipAI.getHulksOnMap(new HashSet<ShipAPI>())) {
                     if (s.isHulk()) {
                         float distance = MathUtils.getDistance(ship, s);
                         if (distance < minDistance) {

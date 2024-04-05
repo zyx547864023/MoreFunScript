@@ -12,6 +12,7 @@ import org.lazywizard.lazylib.ui.FontException;
 import org.lazywizard.lazylib.ui.LazyFont;
 import org.lwjgl.util.vector.Vector2f;
 import real_combat.ai.RC_BaseShipAI;
+import real_combat.ai.RC_CounterWeaponFighterAI;
 import real_combat.ai.RC_FighterAI;
 import real_combat.ai.RC_FrigateAI;
 import real_combat.weapons.RC_CamouflageNetOnHitEffect;
@@ -62,11 +63,16 @@ public class RC_OvumRenderingPlugin extends BaseCombatLayeredRenderingPlugin {
                             }
                             if (!o.ship.isAlive()) {
                                 //召唤
-                                for (int num=0;num<o.ship.getMass()*o.time/10000;num++) {
+                                float count = o.ship.getMass()*o.time/10000;
+                                if (count>24) {
+                                    count = 24;
+                                }
+                                for (int num=0;num<count;num++) {
                                     ShipAPI spy = engine.createFXDrone(Global.getSettings().getVariant("RC_copy_variant"));
                                     spy.getLocation().set(MathUtils.getRandomPointInCircle(o.ship.getLocation(),o.ship.getCollisionRadius()));
                                     spy.setFacing(MathUtils.getRandomNumberInRange(0,360f));
-                                    spy.setShipAI(new RC_FighterAI(spy));
+                                    spy.getVelocity().set(MathUtils.getPoint(new Vector2f(0,0),spy.getMaxSpeed(),spy.getFacing()));
+                                    spy.setShipAI(new RC_CounterWeaponFighterAI(spy));
                                     if (o.ship.getOwner()==0) {
                                         spy.setOwner(1);
                                     }

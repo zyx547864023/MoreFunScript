@@ -10,6 +10,7 @@ import org.lwjgl.util.vector.Vector2f;
 import real_combat.ai.RC_BaseAIAction;
 import real_combat.ai.RC_BaseShipAI;
 
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -108,7 +109,7 @@ public class RC_CounterWeaponFighterAI extends RC_BaseShipAI {
                         }
                     }
                     if (targetProjectile != null) {
-                        if(dodge(targetProjectile)){
+                        if (dodge(targetProjectile)) {
                             turn(amount);
                             return;
                         }
@@ -174,7 +175,7 @@ public class RC_CounterWeaponFighterAI extends RC_BaseShipAI {
 
             ShipAPI motherShip = null;
             float mindistance = 999999f;
-            for (ShipAPI a:AIUtils.getAlliesOnMap(ship)) {
+            for (ShipAPI a:RC_BaseShipAI.getAlliesOnMapNotFighter(ship,new HashSet<ShipAPI>())) {
                 if (MathUtils.getDistance(a,ship)<mindistance&&!a.isFighter()) {
                     motherShip = a;
                     mindistance = MathUtils.getDistance(a,ship);

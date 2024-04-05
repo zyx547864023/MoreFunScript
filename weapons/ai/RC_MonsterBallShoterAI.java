@@ -5,9 +5,13 @@ import com.fs.starfarer.api.combat.*;
 import org.lazywizard.lazylib.MathUtils;
 import org.lazywizard.lazylib.combat.AIUtils;
 import org.lwjgl.util.vector.Vector2f;
+import real_combat.ai.RC_BaseShipAI;
 import real_combat.combat.RC_MonsterBallEveryFrameCombatPlugin;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class RC_MonsterBallShoterAI implements AutofireAIPlugin {
     private static final float AIMING_RANGE = 3000f;
@@ -37,7 +41,9 @@ public class RC_MonsterBallShoterAI implements AutofireAIPlugin {
                 }
             }
         }
-        List<ShipAPI> enemies= AIUtils.getEnemiesOnMap(ship);
+        //List<ShipAPI> enemies= AIUtils.getEnemiesOnMap(ship);
+        Set<ShipAPI> enemies= new HashSet<>();
+        enemies = RC_BaseShipAI.getEnemiesOnMap(ship,enemies);
         float minMult = MIN_MULT;
         for (ShipAPI e: enemies)
         {

@@ -4,9 +4,11 @@ import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.*;
 import com.fs.starfarer.api.loading.WeaponGroupSpec;
 import com.fs.starfarer.api.util.IntervalUtil;
+import com.fs.starfarer.coreui.H;
 import com.fs.starfarer.coreui.V;
 import org.lazywizard.lazylib.MathUtils;
 import org.lazywizard.lazylib.VectorUtils;
+import org.lazywizard.lazylib.combat.AIUtils;
 import org.lwjgl.util.vector.Vector2f;
 import real_combat.ai.RC_AIContants;
 import real_combat.ai.RC_BaseAIAction;
@@ -138,6 +140,7 @@ public class RC_BaseShipAI implements ShipAIPlugin {
     public RC_BaseShipAI(ShipAPI ship) {
         this.ship = ship;
     }
+
     //
     /**
      * 面向最近且大于自己且在攻击范围内的敌人
@@ -295,6 +298,12 @@ public class RC_BaseShipAI implements ShipAIPlugin {
             if (MathUtils.getDistance(dodgeTarget.getSpawnLocation(), ship.getLocation()) > dodgeTarget.getWeapon().getRange()) {
                 return false;
             }
+            if (ship.isFighter()&&!dodgeTarget.getWeapon().getSpec().getTags().contains(WeaponAPI.AIHints.PD)
+            &&!dodgeTarget.getWeapon().getSpec().getTags().contains(WeaponAPI.AIHints.PD_ALSO)
+                    &&!dodgeTarget.getWeapon().getSpec().getTags().contains(WeaponAPI.AIHints.PD_ONLY)
+            ) {
+                return false;
+            }
         }
         float dodgeTargetFacing = dodgeTarget.getFacing();
         float dodgeTargetToShip = VectorUtils.getAngle(dodgeTarget.getLocation(),ship.getLocation());
@@ -324,7 +333,17 @@ public class RC_BaseShipAI implements ShipAIPlugin {
      * @return
      */
     public boolean mayHit(BeamAPI beam,float radius) {
-
+        if (beam.getWeapon()!=null) {
+            if (MathUtils.getDistance(beam.getFrom(), ship.getLocation()) > beam.getWeapon().getRange()) {
+                return false;
+            }
+            if (ship.isFighter() && !beam.getWeapon().getSpec().getTags().contains(WeaponAPI.AIHints.PD)
+                    && !beam.getWeapon().getSpec().getTags().contains(WeaponAPI.AIHints.PD_ALSO)
+                    && !beam.getWeapon().getSpec().getTags().contains(WeaponAPI.AIHints.PD_ONLY)
+            ) {
+                return false;
+            }
+        }
         float dodgeTargetFacing = VectorUtils.getAngle(beam.getFrom(),beam.getTo());
         float dodgeTargetToShip = VectorUtils.getAngle(beam.getFrom(),ship.getLocation());
         float newAngle = dodgeTargetToShip - 90;
@@ -583,7 +602,7 @@ public class RC_BaseShipAI implements ShipAIPlugin {
         if (mouseTarget==null) {
             ShipAPI near = null;
             mindistance = 50f;
-            for (ShipAPI s:engine.getShips()) {
+            for (ShipAPI s:RC_BaseShipAI.getShipsOnMapNotFighter(new HashSet<ShipAPI>())) {
                 float distance = MathUtils.getDistance(s,ship);
                 if (distance<mindistance&&!s.isFighter()) {
                     mindistance = distance;
@@ -2344,5 +2363,194 @@ public class RC_BaseShipAI implements ShipAIPlugin {
         //被作为目标的次数
         public int beTargetCount;
         public Set<ShipAPI> myFighterList = new HashSet<ShipAPI>();
+    }
+
+    public static Set<ShipAPI> getEnemiesOnMap(CombatEntityAPI entity,Set<ShipAPI> enemies){
+        if (entity.getOwner()==0) {
+            if (Global.getCombatEngine().getCustomData().get("fleet1Set") != null) {
+                enemies.addAll((Set<ShipAPI>) Global.getCombatEngine().getCustomData().get("fleet1Set"));
+            }
+        }
+        else if (entity.getOwner()==1) {
+            if (Global.getCombatEngine().getCustomData().get("fleet0Set") != null) {
+                enemies.addAll((Set<ShipAPI>) Global.getCombatEngine().getCustomData().get("fleet0Set"));
+            }
+        }
+        if (enemies.size()==0) {
+            enemies.addAll(AIUtils.getEnemiesOnMap(entity));
+        }
+        return enemies;
+    }
+
+    public static List<ShipAPI> getEnemiesOnMap(CombatEntityAPI entity,List<ShipAPI> enemies){
+        if (entity.getOwner()==0) {
+            if (Global.getCombatEngine().getCustomData().get("fleet1Set") != null) {
+                enemies.addAll((Set<ShipAPI>) Global.getCombatEngine().getCustomData().get("fleet1Set"));
+            }
+        }
+        else if (entity.getOwner()==1) {
+            if (Global.getCombatEngine().getCustomData().get("fleet0Set") != null) {
+                enemies.addAll((Set<ShipAPI>) Global.getCombatEngine().getCustomData().get("fleet0Set"));
+            }
+        }
+        if (enemies.size()==0) {
+            enemies.addAll(AIUtils.getEnemiesOnMap(entity));
+        }
+        return enemies;
+    }
+
+    public static Set<ShipAPI> getAlliesOnMap(CombatEntityAPI entity,Set<ShipAPI> allies){
+        if (entity.getOwner()==0) {
+            if (Global.getCombatEngine().getCustomData().get("fleet0Set") != null) {
+                allies.addAll((Set<ShipAPI>) Global.getCombatEngine().getCustomData().get("fleet0Set"));
+            }
+        }
+        else if (entity.getOwner()==1) {
+            if (Global.getCombatEngine().getCustomData().get("fleet1Set") != null) {
+                allies.addAll((Set<ShipAPI>) Global.getCombatEngine().getCustomData().get("fleet1Set"));
+            }
+        }
+        if (allies.size()==0) {
+            allies.addAll(AIUtils.getAlliesOnMap(entity));
+        }
+        return allies;
+    }
+
+    public static List<ShipAPI> getAlliesOnMap(CombatEntityAPI entity,List<ShipAPI> allies){
+        if (entity.getOwner()==0) {
+            if (Global.getCombatEngine().getCustomData().get("fleet0Set") != null) {
+                allies.addAll((Set<ShipAPI>) Global.getCombatEngine().getCustomData().get("fleet0Set"));
+            }
+        }
+        else if (entity.getOwner()==1) {
+            if (Global.getCombatEngine().getCustomData().get("fleet1Set") != null) {
+                allies.addAll((Set<ShipAPI>) Global.getCombatEngine().getCustomData().get("fleet1Set"));
+            }
+        }
+        if (allies.size()==0) {
+            allies.addAll(AIUtils.getAlliesOnMap(entity));
+        }
+        return allies;
+    }
+
+    public static Set<ShipAPI> getAlliesOnMapNotFighter(CombatEntityAPI entity,Set<ShipAPI> allies){
+        if (entity.getOwner()==0) {
+            if (Global.getCombatEngine().getCustomData().get("notFighter0Set") != null) {
+                allies.addAll((Set<ShipAPI>) Global.getCombatEngine().getCustomData().get("notFighter0Set"));
+            }
+        }
+        else if (entity.getOwner()==1) {
+            if (Global.getCombatEngine().getCustomData().get("notFighter1Set") != null) {
+                allies.addAll((Set<ShipAPI>) Global.getCombatEngine().getCustomData().get("notFighter1Set"));
+            }
+        }
+        if (allies.size()==0) {
+            allies.addAll(AIUtils.getAlliesOnMap(entity));
+        }
+        return allies;
+    }
+
+    public static List<ShipAPI> getAlliesOnMapNotFighter(CombatEntityAPI entity,List<ShipAPI> allies){
+        if (entity.getOwner()==0) {
+            if (Global.getCombatEngine().getCustomData().get("notFighter0Set") != null) {
+                allies.addAll((Set<ShipAPI>) Global.getCombatEngine().getCustomData().get("notFighter0Set"));
+            }
+        }
+        else if (entity.getOwner()==1) {
+            if (Global.getCombatEngine().getCustomData().get("notFighter1Set") != null) {
+                allies.addAll((Set<ShipAPI>) Global.getCombatEngine().getCustomData().get("notFighter1Set"));
+            }
+        }
+        if (allies.size()==0) {
+            allies.addAll(AIUtils.getAlliesOnMap(entity));
+        }
+        return allies;
+    }
+
+    public static Set<ShipAPI> getEnemiesOnMapNotFighter(CombatEntityAPI entity, Set<ShipAPI> enemies) {
+        if (entity.getOwner()==0) {
+            if (Global.getCombatEngine().getCustomData().get("notFighter1Set") != null) {
+                enemies.addAll((Set<ShipAPI>) Global.getCombatEngine().getCustomData().get("notFighter1Set"));
+            }
+        }
+        else if (entity.getOwner()==1) {
+            if (Global.getCombatEngine().getCustomData().get("notFighter0Set") != null) {
+                enemies.addAll((Set<ShipAPI>) Global.getCombatEngine().getCustomData().get("notFighter0Set"));
+            }
+        }
+        if (enemies.size()==0) {
+            enemies.addAll(AIUtils.getEnemiesOnMap(entity));
+        }
+        return enemies;
+    }
+
+    public static Set<ShipAPI> getEnemiesOnMapFlux(CombatEntityAPI entity, Set<ShipAPI> enemies) {
+        if (entity.getOwner()==0) {
+            if (Global.getCombatEngine().getCustomData().get("fluxAlmostFull1Set") != null) {
+                enemies.addAll((Set<ShipAPI>) Global.getCombatEngine().getCustomData().get("fluxAlmostFull1Set"));
+            }
+        }
+        else if (entity.getOwner()==1) {
+            if (Global.getCombatEngine().getCustomData().get("fluxAlmostFull0Set") != null) {
+                enemies.addAll((Set<ShipAPI>) Global.getCombatEngine().getCustomData().get("fluxAlmostFull0Set"));
+            }
+        }
+        if (enemies.size()==0) {
+            enemies.addAll(AIUtils.getEnemiesOnMap(entity));
+        }
+        return enemies;
+    }
+
+    public static Set<ShipAPI> getEnemiesOnMapOverLoad(CombatEntityAPI entity, Set<ShipAPI> enemies) {
+        if (entity.getOwner()==0) {
+            if (Global.getCombatEngine().getCustomData().get("overload1Set") != null) {
+                enemies.addAll((Set<ShipAPI>) Global.getCombatEngine().getCustomData().get("overload1Set"));
+            }
+        }
+        else if (entity.getOwner()==1) {
+            if (Global.getCombatEngine().getCustomData().get("overload0Set") != null) {
+                enemies.addAll((Set<ShipAPI>) Global.getCombatEngine().getCustomData().get("overload0Set"));
+            }
+        }
+        if (enemies.size()==0) {
+            enemies.addAll(AIUtils.getEnemiesOnMap(entity));
+        }
+        return enemies;
+    }
+    public static Set<ShipAPI> getShipsOnMapNotFighter(Set<ShipAPI> enemies) {
+        if (Global.getCombatEngine().getCustomData().get("notFighterSet") != null) {
+            enemies.addAll((Set<ShipAPI>) Global.getCombatEngine().getCustomData().get("notFighterSet"));
+        }
+        if (enemies.size()==0) {
+            enemies.addAll(Global.getCombatEngine().getShips());
+        }
+        return enemies;
+    }
+
+    public static Set<ShipAPI> getHulksOnMap(Set<ShipAPI> enemies) {
+        if (Global.getCombatEngine().getCustomData().get("hulkSet") != null) {
+            enemies.addAll((Set<ShipAPI>) Global.getCombatEngine().getCustomData().get("hulkSet"));
+        }
+        if (enemies.size()==0) {
+            enemies.addAll(Global.getCombatEngine().getShips());
+        }
+        return enemies;
+    }
+
+    public static Set<ShipAPI> getAlliesOnMapCR(CombatEntityAPI entity,Set<ShipAPI> allies){
+        if (entity.getOwner()==0) {
+            if (Global.getCombatEngine().getCustomData().get("cr0Set") != null) {
+                allies.addAll((Set<ShipAPI>) Global.getCombatEngine().getCustomData().get("cr0Set"));
+            }
+        }
+        else if (entity.getOwner()==1) {
+            if (Global.getCombatEngine().getCustomData().get("cr1Set") != null) {
+                allies.addAll((Set<ShipAPI>) Global.getCombatEngine().getCustomData().get("cr1Set"));
+            }
+        }
+        if (allies.size()==0) {
+            allies.addAll(AIUtils.getAlliesOnMap(entity));
+        }
+        return allies;
     }
 }

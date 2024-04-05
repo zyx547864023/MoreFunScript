@@ -7,14 +7,15 @@ import com.fs.starfarer.api.combat.GuidedMissileAI;
 import com.fs.starfarer.api.combat.MissileAIPlugin;
 import com.fs.starfarer.api.combat.MissileAPI;
 import com.fs.starfarer.api.combat.ShipAPI;
-import java.util.Collections;
-import java.util.List;
-import java.util.ListIterator;
+
+import java.util.*;
+
+import com.fs.starfarer.combat.entities.Ship;
 import org.lazywizard.lazylib.CollectionUtils;
 import org.lazywizard.lazylib.MathUtils;
 import org.lazywizard.lazylib.combat.AIUtils;
 import org.lwjgl.util.vector.Vector2f;
-import real_combat.combat.RC_MonsterBallEveryFrameCombatPlugin;
+import real_combat.ai.RC_BaseShipAI;
 import real_combat.util.RC_Util;
 
 public class RC_BaseMissile implements MissileAIPlugin, GuidedMissileAI {
@@ -174,10 +175,11 @@ public class RC_BaseMissile implements MissileAIPlugin, GuidedMissileAI {
         ShipAPI closest = null;
         float range = getRemainingRange() + missile.getMaxSpeed() * 2f;
         float closestDistance = getRemainingRange() + missile.getMaxSpeed() * 2f;
-        List<ShipAPI> ships = AIUtils.getEnemiesOnMap(missile);
-        int size = ships.size();
-        for (int i = 0; i < size; i++) {
-            ShipAPI tmp = ships.get(i);
+        //List<ShipAPI> ships = AIUtils.getEnemiesOnMap(missile);
+        Set<ShipAPI> ships = new HashSet<>();
+        ships = RC_BaseShipAI.getEnemiesOnMap(missile,ships);
+
+        for (ShipAPI tmp: ships){
             float mod = 0f;
             if (tmp.isFighter() || tmp.isDrone()) {
                 mod = range / 2f;

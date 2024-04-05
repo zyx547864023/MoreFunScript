@@ -73,7 +73,7 @@ public class RC_BomberAI extends RC_BaseShipAI {
                 }
                 if (target==null) {
                     float minDistance = wing.getRange();
-                    for (ShipAPI s : engine.getShips()) {
+                    for (ShipAPI s : RC_BaseShipAI.getHulksOnMap(new HashSet<ShipAPI>())) {
                         if (s.isHulk()&&s.getCustomData().get(RC_AsteroidArm.WHO_CATCH)==null&&s.getCollisionRadius()>ship.getCollisionRadius()) {
                             float distance = MathUtils.getDistance(s,ship);
                             if (distance<minDistance) {

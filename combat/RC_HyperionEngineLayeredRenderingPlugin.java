@@ -9,12 +9,14 @@ import org.lazywizard.lazylib.MathUtils;
 import org.lazywizard.lazylib.VectorUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.vector.Vector2f;
+import real_combat.ai.RC_BaseShipAI;
 import real_combat.ai.RC_Drone_borerAI;
 import real_combat.util.MyMath;
 
 import java.awt.*;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 public class RC_HyperionEngineLayeredRenderingPlugin extends BaseCombatLayeredRenderingPlugin {
@@ -30,7 +32,7 @@ public class RC_HyperionEngineLayeredRenderingPlugin extends BaseCombatLayeredRe
         if (engine==null) {return;}
         if (engine.isPaused()) {return;}
         if (hyperionUltimate==null) {
-            for (ShipAPI s : engine.getShips()) {
+            for (ShipAPI s : RC_BaseShipAI.getShipsOnMapNotFighter(new HashSet<ShipAPI>())) {
                 if (HYPERION_ULTIMATE.equals(s.getHullSpec().getBaseHullId())) {
                     hyperionUltimate = s;
                 }

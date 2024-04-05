@@ -9,7 +9,9 @@ import org.lazywizard.lazylib.combat.AIUtils;
 import org.lwjgl.util.vector.Vector2f;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 移动
@@ -269,7 +271,7 @@ public class RC_SmartAI {
             return;
         }
         List<ShipAPI> enemyList = new ArrayList<>();
-        for (ShipAPI s:engine.getShips()) {
+        for (ShipAPI s:RC_BaseShipAI.getEnemiesOnMap(ship,new HashSet<ShipAPI>())) {
             if (s.getOwner()!=ship.getOwner()&&s.getOwner()!=100 && s.getHullSize().compareTo(ship.getHullSize())>=0) {
                 enemyList.add(s);
             }

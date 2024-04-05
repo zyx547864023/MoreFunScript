@@ -2,9 +2,6 @@ package real_combat.weapons.ai;
 
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.*;
-
-import java.util.*;
-
 import org.lazywizard.lazylib.CollectionUtils;
 import org.lazywizard.lazylib.MathUtils;
 import org.lazywizard.lazylib.VectorUtils;
@@ -14,14 +11,31 @@ import real_combat.ai.RC_BaseShipAI;
 import real_combat.combat.RC_MonsterBallEveryFrameCombatPlugin;
 import real_combat.util.RC_Util;
 
-public class RC_MonsterBallAI extends RC_BaseMissile {
+import java.util.*;
+
+/**
+ * 绕几圈然后打中
+ */
+public class RC_ExplosiveChainAI extends RC_BaseMissile {
     private static final float TARGET_ACQUISITION_RANGE = 3600f;
     private static final float RADIUS_DIVIDE_2 = 2f;
     private static final float SPEED_DIVIDE_2 = 2f;
     private static final float MIN_MULT = 2.5f;
-    private static final String ID="monster_ball_shooter_sec";
+
+    private static final float CIRCLE = 2f;
+    private float now_circle = 0;
+    private CombatEntityAPI oldTarget = null;
+    private static final String ID="kunai";
     private CombatEngineAPI engine = Global.getCombatEngine();
-    public RC_MonsterBallAI(MissileAPI missile, ShipAPI launchingShip) {
+    private float stageAngle = 9999f;
+    public static enum Stage {
+        //直接冲向
+        TO_IN,
+        //冲出之后返回
+        RETURN,
+        OUT
+    }
+    public RC_ExplosiveChainAI(MissileAPI missile, ShipAPI launchingShip) {
         super(missile, launchingShip);
     }
 
@@ -36,37 +50,46 @@ public class RC_MonsterBallAI extends RC_BaseMissile {
 
     @Override
     public void advance(float amount) {
-        float maxSpeed = missile.getMaxSpeed();
-        if (missile.isFizzling() || missile.isFading()) {
-            //登陆舱
-            CombatEntityAPI landing = Global.getCombatEngine().spawnProjectile(
-                    missile.getSource(),
-                    null,
-                    ID,
-                    missile.getLocation(),
-                    missile.getFacing(),
-                    missile.getVelocity()
-            );
-            engine.removeObject(missile);
+        if (missile.isFading()) {
             return;
         }
+        float maxSpeed = missile.getMaxSpeed();
 
         assignMissileToShipTarget(launchingShip);
 
         //如果没有找到目标
-        if (!acquireTarget(amount)) {
-            if (missile.getVelocity().length() >= (maxSpeed / SPEED_DIVIDE_2)) {
-                missile.giveCommand(ShipCommand.DECELERATE);
-            } else {
-                missile.giveCommand(ShipCommand.ACCELERATE);
+        if (launchingShip.getWeaponGroupFor(missile.getWeapon())==null) {
+            if (!acquireTarget(amount)) {
+                if (missile.getVelocity().length() >= (maxSpeed / SPEED_DIVIDE_2)) {
+                    missile.giveCommand(ShipCommand.DECELERATE);
+                } else {
+                    missile.giveCommand(ShipCommand.ACCELERATE);
+                }
+                return;
             }
+        }
+        else if (launchingShip.getWeaponGroupFor(missile.getWeapon()).isAutofiring()) {
+            if (!acquireTarget(amount)) {
+                if (missile.getVelocity().length() >= (maxSpeed / SPEED_DIVIDE_2)) {
+                    missile.giveCommand(ShipCommand.DECELERATE);
+                } else {
+                    missile.giveCommand(ShipCommand.ACCELERATE);
+                }
+                return;
+            }
+        }
+        else {
+            float missileToShipAngle = VectorUtils.getAngle(missile.getLocation(),launchingShip.getMouseTarget());
+            float missileFacing = MathUtils.clampAngle(missile.getFacing());
+            float mi = Math.abs(MathUtils.getShortestRotation(missileFacing + missile.getAngularVelocity() * amount,missileToShipAngle));
+            missileCommandNoSheild(mi, missileToShipAngle, amount);
+            missile.giveCommand(ShipCommand.ACCELERATE);
             return;
         }
 
         //如果目标间有东西阻挡 导弹 到 other 的坐标角度和 导弹到other圆上的夹角 差值 大于 导弹到目标的夹角
-        //AIUtils.getNearestEnemy(missile);
         CombatEntityAPI other = null;
-        Set<ShipAPI> ships = RC_BaseShipAI.getEnemiesOnMap(missile,RC_BaseShipAI.getHulksOnMap(new HashSet<ShipAPI>()));
+        Set<ShipAPI> ships = RC_BaseShipAI.getEnemiesOnMapNotFighter(missile,RC_BaseShipAI.getHulksOnMap(new HashSet<ShipAPI>()));
         List<CombatEntityAPI> asteroids = engine.getAsteroids();
         float minDistance = TARGET_ACQUISITION_RANGE;
         for (ShipAPI s:ships)
@@ -106,13 +129,13 @@ public class RC_MonsterBallAI extends RC_BaseMissile {
                         float missileFacing = MathUtils.clampAngle(missile.getFacing());
                         if (MathUtils.getShortestRotation(missileFacing, missileToOtherAngle) > 0) {
                             missileToOtherAngle = missileToOtherAngle - 90;
-                            Vector2f targetPoint = MathUtils.getPointOnCircumference(other.getLocation(), radius * 2.5f, missileToOtherAngle);
+                            Vector2f targetPoint = MathUtils.getPointOnCircumference(other.getLocation(), radius * 2f, missileToOtherAngle);
                             missileToOtherAngle = VectorUtils.getAngle(missile.getLocation(), targetPoint);
                             float mi = Math.abs(MathUtils.getShortestRotation(missileFacing + missile.getAngularVelocity() * amount, missileToOtherAngle));
                             missileCommandNoSheild(mi, missileToOtherAngle, amount);
                         } else {
                             missileToOtherAngle = missileToOtherAngle + 90;
-                            Vector2f targetPoint = MathUtils.getPointOnCircumference(other.getLocation(), radius * 2.5f, missileToOtherAngle);
+                            Vector2f targetPoint = MathUtils.getPointOnCircumference(other.getLocation(), radius * 2f, missileToOtherAngle);
                             missileToOtherAngle = VectorUtils.getAngle(missile.getLocation(), targetPoint);
                             float mi = Math.abs(MathUtils.getShortestRotation(missileFacing + missile.getAngularVelocity() * amount, missileToOtherAngle));
                             missileCommandNoSheild(mi, missileToOtherAngle, amount);
@@ -124,7 +147,6 @@ public class RC_MonsterBallAI extends RC_BaseMissile {
             }
         }
 
-        //如果导弹和目标之间有护盾就转向
         if (target instanceof ShipAPI) {
             ShipAPI ship = (ShipAPI) target;
             if(ship.getOwner()==missile.getOwner()) {return;}
@@ -138,56 +160,39 @@ public class RC_MonsterBallAI extends RC_BaseMissile {
                 radius = ship.getShield().getRadius();
             }
             float mi = Math.abs(MathUtils.getShortestRotation(missileFacing + missile.getAngularVelocity() * amount,missileToShipAngle));
-            //Global.getLogger(this.getClass()).info(mi);
-            if(ship.getShield()!=null)
-            {
-                if(ship.getShield().isOn()) {
-                    float distance = MathUtils.getDistance(ship,missile);
-                    if(distance>radius * 4)
-                    {
-                        //Global.getLogger(this.getClass()).info("ZJJJ");
-                        missileCommandNoSheild(mi, missileToShipAngle, amount);
-                        missile.giveCommand(ShipCommand.ACCELERATE);
-                        return;
-                    }
 
-                    float shieldAngle = ship.getShield().getFacing();
-                    float shieldAcc = ship.getShield().getActiveArc();
-                    //如果面前有盾没有盾
-                    if(Math.abs(MathUtils.getShortestRotation(shipToMissileAngle,shieldAngle))>(shieldAcc/RADIUS_DIVIDE_2)+1)
-                    {
-                        missileCommandNoSheild(mi, missileToShipAngle, amount);
-                        //此处需要矢量制动
-                        //Vector2f speedSub = Vector2f.sub(missile.getVelocity(), ship.getVelocity(), (Vector2f)null);
-                        //Vector2f wantSpeed = MathUtils.getPoint(new Vector2f(0,0),missile.getMaxSpeed(),missileToShipAngle);
-                        //float wantAngle = VectorUtils.getAngle(speedSub,wantSpeed);
-                        //mi =  Math.abs(MathUtils.getShortestRotation(missileFacing + missile.getAngularVelocity() * amount ,wantAngle));
-                        //missileCommandNoSheild(mi, wantAngle,  amount);
-                    }
-                    else {
-                        //Global.getLogger(this.getClass()).info("QMYD");
-                        //顺势转开
-                        if (MathUtils.getShortestRotation(missileFacing, missileToShipAngle) > 0) {
-                            missileToShipAngle = missileToShipAngle-90;
-                            Vector2f targetPoint = MathUtils.getPointOnCircumference(ship.getLocation(),radius*2.5f,missileToShipAngle);
-                            missileToShipAngle = VectorUtils.getAngle(missile.getLocation(),targetPoint);
-                            mi = Math.abs(MathUtils.getShortestRotation(missileFacing + missile.getAngularVelocity() * amount,missileToShipAngle));
-                            missileCommandNoSheild(mi, missileToShipAngle, amount);
-                        } else {
-                            missileToShipAngle = missileToShipAngle+90;
-                            Vector2f targetPoint = MathUtils.getPointOnCircumference(ship.getLocation(),radius*2.5f,missileToShipAngle);
-                            missileToShipAngle = VectorUtils.getAngle(missile.getLocation(),targetPoint);
-                            mi = Math.abs(MathUtils.getShortestRotation(missileFacing + missile.getAngularVelocity() * amount,missileToShipAngle));
-                            missileCommandNoSheild(mi, missileToShipAngle, amount);
-                        }
-                    }
-                }
-                else {
-                    missileCommandNoSheild(mi, missileToShipAngle, amount);
-                }
+            float distance = MathUtils.getDistance(ship,missile);
+            if(distance>radius * 4)
+            {
+                missileCommandNoSheild(mi, missileToShipAngle, amount);
+                missile.giveCommand(ShipCommand.ACCELERATE);
+                return;
+            }
+            float mult = 1f;
+            if (target instanceof ShipAPI) {
+                mult = ((ShipAPI) target).getHullSize().ordinal();
+            }
+            //如果绕圈不足
+            if(missile.getFlightTime()>=missile.getMaxFlightTime()*0.8f)
+            {
+                missileCommandNoSheild(mi, missileToShipAngle, amount);
             }
             else {
-                missileCommandNoSheild(mi, missileToShipAngle, amount);
+                now_circle+=amount;
+                //顺势转开
+                if (MathUtils.getShortestRotation(missileFacing, missileToShipAngle) > 0) {
+                    missileToShipAngle = missileToShipAngle-90;
+                    Vector2f targetPoint = MathUtils.getPointOnCircumference(ship.getLocation(),radius*2f,missileToShipAngle);
+                    missileToShipAngle = VectorUtils.getAngle(missile.getLocation(),targetPoint);
+                    mi = Math.abs(MathUtils.getShortestRotation(missileFacing + missile.getAngularVelocity() * amount,missileToShipAngle));
+                    missileCommandNoSheild(mi, missileToShipAngle, amount);
+                } else {
+                    missileToShipAngle = missileToShipAngle+90;
+                    Vector2f targetPoint = MathUtils.getPointOnCircumference(ship.getLocation(),radius*2f,missileToShipAngle);
+                    missileToShipAngle = VectorUtils.getAngle(missile.getLocation(),targetPoint);
+                    mi = Math.abs(MathUtils.getShortestRotation(missileFacing + missile.getAngularVelocity() * amount,missileToShipAngle));
+                    missileCommandNoSheild(mi, missileToShipAngle, amount);
+                }
             }
             missile.giveCommand(ShipCommand.ACCELERATE);
         }
@@ -199,7 +204,6 @@ public class RC_MonsterBallAI extends RC_BaseMissile {
         if (engine.getPlayerShip()!=null) {
             ShipAPI player = engine.getPlayerShip();
             if (player.getOwner() == launchingShip.getOwner()&&player.getShipTarget()!=null) {
-
                 if (isTargetValid(player.getShipTarget())) {
                     float mult = RC_MonsterBallEveryFrameCombatPlugin.getMultWithOutMarines(player.getShipTarget());
                     if (mult > MIN_MULT) {
@@ -230,6 +234,12 @@ public class RC_MonsterBallAI extends RC_BaseMissile {
                 closestDistance = distance;
             }
         }
+        if (closest!=null) {
+            if (!closest.equals(oldTarget)) {
+                oldTarget = closest;
+                now_circle = 0f;
+            }
+        }
         return closest;
     }
 
@@ -239,6 +249,10 @@ public class RC_MonsterBallAI extends RC_BaseMissile {
         while (iter.hasNext()) {
             ShipAPI tmp = iter.next();
             if (isTargetValid(tmp)) {
+                if (!tmp.equals(oldTarget)) {
+                    oldTarget = tmp;
+                    now_circle = 0f;
+                }
                 return tmp;
             }
         }

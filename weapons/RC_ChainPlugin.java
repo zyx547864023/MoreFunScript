@@ -109,6 +109,11 @@ public class RC_ChainPlugin implements EveryFrameWeaponEffectPlugin, OnFireEffec
         //当前偏移量
         public float deflection = 0;
         public SpriteAPI sprite;
+        //层级 用于判断渲染还是不渲染 进出都加1
+        public int rank = 0;
+        //在里面
+        public boolean inOrOut = false;
+        public boolean isDraw = false;
         //牵拉力
         //前连接点
         //后推力
@@ -137,7 +142,7 @@ public class RC_ChainPlugin implements EveryFrameWeaponEffectPlugin, OnFireEffec
         }
     }
 
-    public class RC_Chain{
+    public static class RC_Chain{
         //船
         //武器
         public WeaponAPI weapon;

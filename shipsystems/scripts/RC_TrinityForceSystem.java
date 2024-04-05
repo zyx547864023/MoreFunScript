@@ -16,12 +16,15 @@ import org.lazywizard.lazylib.MathUtils;
 import org.lazywizard.lazylib.VectorUtils;
 import org.lazywizard.lazylib.combat.entities.SimpleEntity;
 import org.lwjgl.util.vector.Vector2f;
+import real_combat.ai.RC_BaseShipAI;
 import real_combat.ai.RC_ModulesFighterAI;
 import real_combat.entity.RC_AnchoredEntity;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 分体之后飞机移动过去 ，播放起飞动画
@@ -176,7 +179,7 @@ public class RC_TrinityForceSystem extends BaseShipSystemScript {
                         return;
                     }
                     //这里代码可能有点问题 缺少合体后newShip的target清理
-                    List<ShipAPI> shipList = engine.getShips();
+                    Set<ShipAPI> shipList = RC_BaseShipAI.getEnemiesOnMap(ship,RC_BaseShipAI.getAlliesOnMap(ship,new HashSet<ShipAPI>()));
                     for (ShipAPI s:shipList) {
                         if (s.getShipTarget() != null) {
                             for (ShipAPI m:ship.getChildModulesCopy())

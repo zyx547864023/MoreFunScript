@@ -11,6 +11,7 @@ import org.lazywizard.lazylib.VectorUtils;
 import org.lazywizard.lazylib.combat.AIUtils;
 import org.lazywizard.lazylib.combat.CombatUtils;
 import org.lwjgl.util.vector.Vector2f;
+import real_combat.ai.RC_BaseShipAI;
 import real_combat.entity.RC_AnchoredEntity;
 
 import java.util.*;
@@ -146,7 +147,7 @@ public class RC_AsteroidArm extends BaseShipSystemScript {
                 asteroid.setCollisionClass(CollisionClass.NONE);
             }
             //搜寻船周围的残骸和陨石
-            for (ShipAPI s : engine.getShips()) {
+            for (ShipAPI s : RC_BaseShipAI.getHulksOnMap(new HashSet<ShipAPI>())) {
                 if (s.isHulk()) {
                     giveSpeed(s, amount);
                 }

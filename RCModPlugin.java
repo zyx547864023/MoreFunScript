@@ -17,10 +17,7 @@ import real_combat.campaign.RC_CampaignPlugin;
 import real_combat.combat.RC_ComboEveryFrameCombatPlugin;
 import real_combat.combat.RC_MonsterBallEveryFrameCombatPlugin;
 import real_combat.combat.RC_SmartAIEveryFrameCombatPlugin;
-import real_combat.weapons.ai.RC_CamouflageNetAI;
-import real_combat.weapons.ai.RC_CamouflageNetShoterAI;
-import real_combat.weapons.ai.RC_MonsterBallAI;
-import real_combat.weapons.ai.RC_MonsterBallShoterAI;
+import real_combat.weapons.ai.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,7 +29,8 @@ public class RCModPlugin extends BaseModPlugin {
     public static final String RC_MONSTER_BALL_SHOOTER_BIG_ID = "monster_ball_shooter_big";
     public static final String RC_CAMOUFLAGE_NET_ID = "camouflage_net";
     public static final String RC_CAMOUFLAGE_NET_MRM_ID = "camouflage_net_mrm";
-
+    public static final String RC_KUNAI_ID = "kunai_mrm";
+    public static final String RC_EXPLOSIVE_CHAIN_ID = "explosive_chain_mrm";
     @Override
     public PluginPick<AutofireAIPlugin> pickWeaponAutofireAI(WeaponAPI weapon) {
         if (RC_MONSTER_BALL_SHOOTER_ID.contentEquals(weapon.getId())
@@ -57,6 +55,14 @@ public class RCModPlugin extends BaseModPlugin {
         }
         if (RC_CAMOUFLAGE_NET_MRM_ID.contentEquals(missile.getProjectileSpecId())) {
             return new PluginPick<MissileAIPlugin>(new RC_CamouflageNetAI(missile, launchingShip),
+                    PickPriority.MOD_SET);
+        }
+        if (RC_KUNAI_ID.contentEquals(missile.getProjectileSpecId())) {
+            return new PluginPick<MissileAIPlugin>(new RC_KunaiAI(missile, launchingShip),
+                    PickPriority.MOD_SET);
+        }
+        if (RC_EXPLOSIVE_CHAIN_ID.contentEquals(missile.getProjectileSpecId())) {
+            return new PluginPick<MissileAIPlugin>(new RC_ExplosiveChainAI(missile, launchingShip),
                     PickPriority.MOD_SET);
         }
         return null;

@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 public class RC_KunaiPlugin implements EveryFrameWeaponEffectPlugin, OnFireEffectPlugin , OnHitEffectPlugin {
-    public static String ID = "RC_ChainPlugin";
+    public static String ID = "RC_KunaiPlugin";
     /**
      * 用于计算所有锁链扣的位置
      * 命中后双向折叠

@@ -23,6 +23,7 @@ import org.json.JSONObject;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.vector.Vector2f;
 import real_combat.RCModPlugin;
+import real_combat.ai.RC_BaseShipAI;
 import real_combat.entity.RC_AnchoredEntity;
 import real_combat.util.RC_Util;
 
@@ -525,7 +526,7 @@ public class RC_MonsterBallEveryFrameCombatPlugin implements EveryFrameCombatPlu
             }
 
             //设置武器弹药
-            List<ShipAPI> shipList = engine.getShips();
+            Set<ShipAPI> shipList = RC_BaseShipAI.getShipsOnMapNotFighter(new HashSet<ShipAPI>());
             Set<ShipAPI> removeShip = new HashSet<>();
             ShipAPI player = engine.getPlayerShip();
             /* 由于某些情况无法结束游戏

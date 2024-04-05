@@ -7,10 +7,13 @@ import org.lazywizard.lazylib.MathUtils;
 import org.lazywizard.lazylib.VectorUtils;
 import org.lazywizard.lazylib.combat.AIUtils;
 import org.lwjgl.util.vector.Vector2f;
+import real_combat.ai.RC_BaseShipAI;
 import real_combat.hullmods.RC_SpiderCore;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class RC_AcceleratingFieldAI implements ShipSystemAIScript {
 
@@ -76,7 +79,9 @@ public class RC_AcceleratingFieldAI implements ShipSystemAIScript {
             if (enemy != null) {
                 float distanceShipToEnemy = MathUtils.getDistance(ship, enemy);
                 List<CombatEntityAPI> other = new ArrayList<>();
-                List<ShipAPI> ships = engine.getShips();
+                Set<ShipAPI> ships = new HashSet<>();
+                ships = RC_BaseShipAI.getEnemiesOnMapNotFighter(ship, ships);
+                ships.removeAll(RC_BaseShipAI.getEnemiesOnMapFlux(ship, RC_BaseShipAI.getEnemiesOnMapOverLoad(ship, new HashSet<ShipAPI>())));
                 //List<CombatEntityAPI> asteroids = engine.getAsteroids();
                 float minDistance = distanceShipToEnemy;
                 float enemyCount = 0;
@@ -96,7 +101,7 @@ public class RC_AcceleratingFieldAI implements ShipSystemAIScript {
                     }
                      */
                 }
-                if (enemyCount<=1&&ship.getFluxLevel()<=0.8f&&motherShip.getFluxLevel()<=0.9f) {
+                if (enemyCount<=1&&ship.getFluxLevel()<=0.7f&&motherShip.getFluxLevel()<=0.7f) {
                     return;
                 }
                 /*

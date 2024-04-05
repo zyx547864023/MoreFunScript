@@ -11,12 +11,14 @@ import org.lazywizard.lazylib.MathUtils;
 import org.lazywizard.lazylib.VectorUtils;
 import org.lwjgl.util.vector.Vector2f;
 import real_combat.RCModPlugin;
+import real_combat.ai.RC_BaseShipAI;
 import real_combat.combat.RealCombatEveryFrameCombatPlugin;
 import real_combat.entity.RC_AnchoredEntity;
 import real_combat.util.MyMath;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -43,7 +45,7 @@ public class RC_ReflectiveBeamPlugin implements EveryFrameWeaponEffectPlugin, On
     public void advance(float amount, CombatEngineAPI engine, WeaponAPI weapon) {
         //engine.getNebula().setHasNebula();
         if (!engine.isPaused()) {
-            for (ShipAPI s:engine.getShips()) {
+            for (ShipAPI s: RC_BaseShipAI.getEnemiesOnMap(weapon.getShip(),RC_BaseShipAI.getAlliesOnMap(weapon.getShip(), new HashSet<ShipAPI>()))) {
                 if (s.isAlive()) {
                     if (s.getListeners(WeaponRangeMod.class).size() == 0) {
                         s.addListener(new WeaponRangeMod());

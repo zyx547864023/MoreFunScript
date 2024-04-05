@@ -310,7 +310,7 @@ public class RC_TransAmSystem extends BaseShipSystemScript {
             {
                 if (m.ship.spriteName!=null) {
                     SpriteAPI sprite = Global.getSettings().getSprite(m.ship.spriteName);
-                    //MagicRenderPlugin.addSingleframe(sprite, m.ship.location, CombatEngineLayers.UNDER_SHIPS_LAYER);
+                    //MagicRenderPlugin.addlocation(sprite, m.ship.location, CombatEngineLayers.UNDER_SHIPS_LAYER);
                     sprite.setAngle(m.ship.facing);
                     sprite.setAlphaMult(m.alphaMult);
                     sprite.setColor(COLOR);
@@ -320,7 +320,7 @@ public class RC_TransAmSystem extends BaseShipSystemScript {
                 {
                     if (s.spriteName!=null) {
                         SpriteAPI sprite = Global.getSettings().getSprite(s.spriteName);
-                        //MagicRenderPlugin.addSingleframe(sprite, s.location, CombatEngineLayers.UNDER_SHIPS_LAYER);
+                        //MagicRenderPlugin.addlocation(sprite, s.location, CombatEngineLayers.UNDER_SHIPS_LAYER);
                         sprite.setAngle(s.facing);
                         sprite.setAlphaMult(m.alphaMult);
                         sprite.setColor(COLOR);
@@ -347,7 +347,7 @@ public class RC_TransAmSystem extends BaseShipSystemScript {
                 {
                     if (s.spriteName!=null) {
                         SpriteAPI sprite = Global.getSettings().getSprite(s.spriteName);
-                        //MagicRenderPlugin.addSingleframe(sprite, s.location, CombatEngineLayers.UNDER_SHIPS_LAYER);
+                        //MagicRenderPlugin.addlocation(sprite, s.location, CombatEngineLayers.UNDER_SHIPS_LAYER);
                         sprite.setAngle(s.facing);
                         sprite.setAlphaMult(m.alphaMult);
                         sprite.setColor(COLOR);

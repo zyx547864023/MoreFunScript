@@ -7,6 +7,7 @@ import org.lazywizard.lazylib.MathUtils;
 import org.lazywizard.lazylib.VectorUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.vector.Vector2f;
+import real_combat.ai.RC_BaseShipAI;
 
 import java.awt.*;
 import java.util.List;
@@ -23,7 +24,7 @@ public class RC_Navigation extends BaseHullMod {
         if (!ship.isAlive()) {
             return;
         }
-        for (ShipAPI s:engine.getShips()) {
+        for (ShipAPI s: RC_BaseShipAI.getAlliesOnMapNotFighter(ship,new HashSet<ShipAPI>())) {
             s.getMutableStats().getMaxSpeed().unmodifyPercent(ID);
             if (!s.isAlive()||s.equals(ship)) {
                 continue;

@@ -171,7 +171,7 @@ public class RC_FighterAI extends RC_BaseShipAI {
 
             ShipAPI motherShip = null;
             float mindistance = 999999f;
-            for (ShipAPI a:AIUtils.getAlliesOnMap(ship)) {
+            for (ShipAPI a:RC_BaseShipAI.getAlliesOnMapNotFighter(ship,new HashSet<ShipAPI>())) {
                 if (MathUtils.getDistance(a,ship)<mindistance&&!a.isFighter()) {
                     motherShip = a;
                     mindistance = MathUtils.getDistance(a,ship);
