@@ -8,6 +8,7 @@ import com.fs.starfarer.api.campaign.CampaignPlugin.PickPriority;
 import com.fs.starfarer.api.combat.*;
 import com.fs.starfarer.api.fleet.FleetMemberAPI;
 import com.fs.starfarer.api.impl.campaign.intel.bar.events.BarEventManager;
+import exerelin.campaign.SectorManager;
 import lunalib.lunaSettings.LunaSettings;
 import org.apache.log4j.Level;
 import org.json.JSONException;
@@ -18,6 +19,7 @@ import real_combat.combat.RC_ComboEveryFrameCombatPlugin;
 import real_combat.combat.RC_MonsterBallEveryFrameCombatPlugin;
 import real_combat.combat.RC_SmartAIEveryFrameCombatPlugin;
 import real_combat.weapons.ai.*;
+import real_combat.world.RCWorldGen;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -154,5 +156,14 @@ public class RCModPlugin extends BaseModPlugin {
             return LunaSettings.getBoolean(MOD_ID, "isEasyMode");
         }
         return isEasyMode;
+    }
+
+    @Override
+    public void onNewGame() {
+        //Nex compatibility setting, if there is no nex or corvus mode(Nex), just generate the system
+        boolean haveNexerelin = Global.getSettings().getModManager().isModEnabled("nexerelin");
+        if (!haveNexerelin || SectorManager.getCorvusMode()) {
+            new RCWorldGen().generate(Global.getSector());
+        }
     }
 }
