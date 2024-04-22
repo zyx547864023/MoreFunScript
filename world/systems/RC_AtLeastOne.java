@@ -74,7 +74,7 @@ public class RC_AtLeastOne {
                 cleanup(system);
             }
         }
-
+        /*
         //create a star system
         StarSystemAPI system = sector.createStarSystem("Peach Garden");
         //set its location
@@ -206,6 +206,7 @@ public class RC_AtLeastOne {
         //Finally cleans up hyperspace
 
         cleanup(system);
+        */
     }
 
     //Learning from Tart scripts
