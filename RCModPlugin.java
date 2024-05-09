@@ -12,12 +12,17 @@ import exerelin.campaign.SectorManager;
 import lunalib.lunaSettings.LunaSettings;
 import org.apache.log4j.Level;
 import org.json.JSONException;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL13;
+import org.lwjgl.opengl.GL20;
 import real_combat.ai.RC_Drone_borerAI;
 import real_combat.campaign.RC_CampaignPlugin;
 //import real_combat.campaign.missions.intel.bar.events.FamousShipBarEventCreator;
 import real_combat.combat.RC_ComboEveryFrameCombatPlugin;
 import real_combat.combat.RC_MonsterBallEveryFrameCombatPlugin;
 import real_combat.combat.RC_SmartAIEveryFrameCombatPlugin;
+import real_combat.util.RC_Shader_Contants;
+import real_combat.util.RC_Util;
 import real_combat.weapons.ai.*;
 import real_combat.world.RCWorldGen;
 
@@ -74,23 +79,42 @@ public class RCModPlugin extends BaseModPlugin {
     public PluginPick<ShipAIPlugin> pickShipAI(FleetMemberAPI member, ShipAPI ship) {
         return ship.getHullSpec().getHullId().startsWith("RC_drone_borer") ? new PluginPick(new RC_Drone_borerAI(ship), PickPriority.MOD_SPECIFIC) : null;
     }
-
+    public static int programID = 0;
+    public static int iTimeUniform = 0;
+    public static int iResolutionUniform = 0;
+    public static int iLocationUniform = 0;
+    public static int iViewMultUniform = 0;
+    public static int iRadiusUniform = 0;
+    public static int iEffectLevelUniform = 0;
     @Override
     public void onApplicationLoad() {
         try {
             RC_ComboEveryFrameCombatPlugin.reloadSettings();
         } catch (IOException | JSONException e) {
-            Global.getLogger(RCModPlugin.class).log(Level.ERROR, "ComboKey load failed: " + e.getMessage());
+            Global.getLogger(RCModPlugin.class).log(Level.ERROR, "RC_ComboEveryFrameCombatPlugin load failed: " + e.getMessage());
         }
         try {
             RC_MonsterBallEveryFrameCombatPlugin.reloadSettings();
         } catch (Exception e) {
-            Global.getLogger(RCModPlugin.class).log(Level.ERROR, "ComboKey load failed: " + e.getMessage());
+            Global.getLogger(RCModPlugin.class).log(Level.ERROR, "RC_MonsterBallEveryFrameCombatPlugin load failed: " + e.getMessage());
         }
         try {
             RC_SmartAIEveryFrameCombatPlugin.reloadSettings();
         } catch (Exception e) {
-            Global.getLogger(RCModPlugin.class).log(Level.ERROR, "ComboKey load failed: " + e.getMessage());
+            Global.getLogger(RCModPlugin.class).log(Level.ERROR, "RC_SmartAIEveryFrameCombatPlugin load failed: " + e.getMessage());
+        }
+
+        //shader！
+        try {
+            programID = RC_Util.createShaderProgram(RC_Shader_Contants.VERT,RC_Shader_Contants.FRAG);
+            iTimeUniform = GL20.glGetUniformLocation(programID,"iTime");
+            iResolutionUniform = GL20.glGetUniformLocation(programID,"iResolution");
+            iLocationUniform = GL20.glGetUniformLocation(programID,"iLocation");
+            iViewMultUniform = GL20.glGetUniformLocation(programID,"iViewMult");
+            iRadiusUniform = GL20.glGetUniformLocation(programID,"iRadius");
+            iEffectLevelUniform = GL20.glGetUniformLocation(programID,"iEffectLevel");
+        } catch (Exception e) {
+            Global.getLogger(RCModPlugin.class).log(Level.ERROR, "Sharder load failed: " + e.getMessage());
         }
     }
 

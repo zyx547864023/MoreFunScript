@@ -5,10 +5,14 @@ import com.fs.starfarer.api.combat.*;
 import com.fs.starfarer.api.combat.ShipAPI.HullSize;
 import com.fs.starfarer.api.fleet.FleetMemberAPI;
 import com.fs.starfarer.api.loading.WingRole;
+import com.fs.starfarer.api.ui.Alignment;
+import com.fs.starfarer.api.ui.TooltipMakerAPI;
+import com.fs.starfarer.api.util.Misc;
 import real_combat.ai.RC_FighterAI;
 import real_combat.ai.RC_BomberAI;
 import real_combat.shipsystems.scripts.RC_AsteroidArm;
 
+import java.awt.*;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -138,10 +142,52 @@ public class RC_SpiderCore extends BaseHullMod {
     }
     @Override
     public boolean isApplicableToShip(ShipAPI ship) {
+        //ship.getCaptain();
         return true;
     }
     @Override
     public String getUnapplicableReason(ShipAPI ship) {
         return null;
+    }
+    @Override
+    public void addPostDescriptionSection(TooltipMakerAPI tooltip, ShipAPI.HullSize hullSize, ShipAPI ship, float width, boolean isForModSpec) {
+        float pad = 5f;
+        Color h = Misc.getHighlightColor();
+//        Color g = Misc.getGrayColor();
+//        Color bad = Misc.getNegativeHighlightColor();
+        Color good = Misc.getPositiveHighlightColor();
+
+        TooltipMakerAPI text = tooltip.beginImageWithText("graphics/ships/RC/RC_drone_borer.png", 64f);
+        tooltip.addSectionHeading("额外描述", Alignment.TMID, pad * 2f);
+            text = tooltip.beginImageWithText("graphics/ships/RC/RC_bloody.png", 32f);
+            text.addPara("%s", pad, new Color(155, 155, 255, 255), "1");
+            text.addPara("%s", pad, h, "4");
+            tooltip.addImageWithText(0);
+            /*
+            text = tooltip.beginImageWithText("graphics/ships/RC/RC_copy.png", 32f);
+            text.addPara("%s", 0, new Color(155, 155, 255, 255), "2");
+            text.addPara("%s--", 0, h, "5");
+            tooltip.addImageWithText(0);
+            text = tooltip.beginImageWithText("graphics/ships/RC/RC_drone_borer.png", 32f);
+            text.addPara("%s", 0, new Color(155, 155, 255, 255), "3");
+            text.addPara("%s--", 0, h, "6");
+            tooltip.addImageWithText(0);
+             */
+            float tableWidth = width - 5f;//表格宽度
+            tooltip.beginTable(
+                    Misc.getBasePlayerColor(),
+                    Misc.getDarkPlayerColor(),
+                    Misc.getBrightPlayerColor(),
+                    20f,
+                    //从这往下可以按照格式添加列
+                    "第一列", tableWidth * 0.35f,
+                    "第二列", tableWidth * 0.25f,
+                    "第三列", tableWidth * 0.4f);
+            //添加一行数据，颜色后面的参数数量需要与表格列数一至
+            tooltip.addRow(new Color(255, 211, 154), DamageType.KINETIC.getDisplayName(),
+                     "%",
+                     "%");
+            //添加表格到额外说明
+            tooltip.addTable("N/A", 0, pad);
     }
 }

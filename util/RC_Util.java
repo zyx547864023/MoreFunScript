@@ -4,7 +4,11 @@ import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.CombatEngineAPI;
 import com.fs.starfarer.api.combat.MissileAPI;
 import com.fs.starfarer.api.combat.ShipAPI;
+import org.apache.log4j.Level;
 import org.lazywizard.lazylib.MathUtils;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL20;
+import org.lwjgl.opengl.GLContext;
 import org.lwjgl.util.vector.Vector2f;
 
 import java.awt.geom.Line2D;
@@ -138,4 +142,58 @@ public class RC_Util {
 
         return  new Point2D.Double(x,y);
     }
+
+    public static int createShader(String soruce, int shaderType) {
+        // 你不可能在硬件不支持 OpenGL2.0 的情况下调用相关方法，原因是游戏本体的需求只做到了固定管线，所以返回；此处填0意味着输出了一个空的着色器
+        if (!GLContext.getCapabilities().OpenGL20) {
+            Global.getLogger(Global.class).log(Level.ERROR, "'Your hardware is not supported OpenGL2.0.");
+            return 0;
+        }
+        int shaderID = GL20.glCreateShader(shaderType);
+        GL20.glShaderSource(shaderID, soruce);
+        GL20.glCompileShader(shaderID);
+        // 该分支用于检测着色器是否通过编译而可用
+        if (GL20.glGetShaderi(shaderID, GL20.GL_COMPILE_STATUS) == GL11.GL_FALSE) {
+            // 输出相关错误信息至log供修改
+            Global.getLogger(Global.class).log(Level.ERROR, "Shader ID: '" + shaderID + "' compilation failed:\n" + GL20.glGetShaderInfoLog(shaderID, GL20.glGetShaderi(shaderID, GL20.GL_INFO_LOG_LENGTH)));
+            // 既然不可用，那么将其删除释放相关资源
+            GL20.glDeleteShader(shaderID);
+            // 在出错的情况下，可以检测这个返回值
+            return 0;
+        } else {
+            // 编译成功，输出一行成功的信息
+            Global.getLogger(Global.class).info("Shader compiled with ID: '" + shaderID + "'");
+            return shaderID;
+        }
+    }
+
+    public static int createShaderProgram(String vertSource, String fragSource) {
+        // 同创建着色器
+        if (!GLContext.getCapabilities().OpenGL20) {
+            Global.getLogger(Global.class).log(Level.ERROR, "'Your hardware is not supported OpenGL2.0.");
+            return 0;
+        }
+        int programID = GL20.glCreateProgram();
+        int[] shaders = new int[]{createShader(vertSource, GL20.GL_VERTEX_SHADER), createShader(fragSource, GL20.GL_FRAGMENT_SHADER)};
+        if (shaders[0] == 0 || shaders[1] == 0) return 0; // 只要有任意一个着色器出问题，必然不可能让这个无效程序就这么运行；此处返回0是因为OpenGL在启用ID为0的着色器程序时意味着关闭
+        // 将有效的着色器附着于着色器程序，并链接程序
+        GL20.glAttachShader(programID, shaders[0]);
+        GL20.glAttachShader(programID, shaders[1]);
+        GL20.glLinkProgram(programID);
+
+        // 同着色器创建的操作
+        if (GL20.glGetProgrami(programID, GL20.GL_LINK_STATUS) == GL11.GL_FALSE) {
+            Global.getLogger(Global.class).log(Level.ERROR, "'Shader program ID: '" + programID + "' linking failed:\n" + GL20.glGetProgramInfoLog(programID, GL20.glGetProgrami(programID, GL20.GL_INFO_LOG_LENGTH)));
+            GL20.glDeleteProgram(programID);
+            GL20.glDetachShader(programID, shaders[0]);
+            GL20.glDeleteShader(shaders[0]);
+            GL20.glDetachShader(programID, shaders[1]);
+            GL20.glDeleteShader(shaders[1]);
+            return 0;
+        } else {
+            Global.getLogger(Global.class).info("Shader program created with ID: '" + programID + "'");
+            return programID;
+        }
+    }
+
 }

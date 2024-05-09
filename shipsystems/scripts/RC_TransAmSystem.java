@@ -13,8 +13,13 @@ import javafx.scene.effect.Shadow;
 import org.lazywizard.lazylib.MathUtils;
 import org.lazywizard.lazylib.VectorUtils;
 import org.lazywizard.lazylib.combat.CombatUtils;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL13;
+import org.lwjgl.opengl.GL20;
 import org.lwjgl.util.vector.Vector2f;
 
+import real_combat.RCModPlugin;
+import real_combat.ai.RC_ModulesFighterAI;
 import real_combat.util.MyMath;
 
 import java.awt.*;
@@ -35,9 +40,11 @@ public class RC_TransAmSystem extends BaseShipSystemScript {
     private static String IS_ON = "IS_ON";
     private boolean init = false;
     private ShipAPI ship;
+    private static float effectLevel;
     private static float width = 0;
     @Override
     public void apply(MutableShipStatsAPI stats, String id, State state, float effectLevel) {
+        this.effectLevel = effectLevel;
         CombatEngineAPI engine = Global.getCombatEngine();
         if(engine.isPaused()) {return;}
         ship = (ShipAPI) stats.getEntity();
@@ -193,12 +200,14 @@ public class RC_TransAmSystem extends BaseShipSystemScript {
     public static class RC_TransAmSystemCombatPlugin extends BaseCombatLayeredRenderingPlugin {
         private final ShipAPI ship;
         private float timer = 0f;
+        private float iTime = 0f;
         private final static float ADD_SHADOW_TIME = 0.05f;
         private float transAmAlphaMult = 1f;
         private boolean isDraw = false;
         private CombatEngineAPI engine = Global.getCombatEngine();
         private SpriteAPI transAmsprite = Global.getSettings().getSprite("graphics/ships/hyperion/trans_am.png");
         List<ShadowMap> shadowList = new ArrayList<>();
+
         public RC_TransAmSystemCombatPlugin(ShipAPI ship) {
             this.ship = ship;
         }
@@ -206,20 +215,25 @@ public class RC_TransAmSystem extends BaseShipSystemScript {
         @Override
         public void advance(float amount) {
             if (engine == null) return;
-            if (engine.isPaused()) {return;}
-            if (!ship.isAlive()) {return;}
-            if (ship.getCustomData().get(ID+IS_ON)==null) {return;}
+            if (engine.isPaused()) {
+                return;
+            }
+            if (!ship.isAlive()) {
+                return;
+            }
+            if (ship.getCustomData().get(ID + IS_ON) == null) {
+                return;
+            }
             float maxAlphaMult = 0f;
             float alphaMultCut = amount * 1.5f;
-            if ((!(boolean)ship.getCustomData().get(ID+IS_ON))) {
+            if ((!(boolean) ship.getCustomData().get(ID + IS_ON))) {
                 alphaMultCut = amount * 2f;
             }
             try {
                 List<ShadowMap> newShadowList = new ArrayList<>();
-                for (ShadowMap m:shadowList) {
+                for (ShadowMap m : shadowList) {
                     m.alphaMult -= alphaMultCut;
-                    if (m.alphaMult>maxAlphaMult)
-                    {
+                    if (m.alphaMult > maxAlphaMult) {
                         maxAlphaMult = m.alphaMult;
                     }
                     if (m.alphaMult > 0) {
@@ -231,7 +245,9 @@ public class RC_TransAmSystem extends BaseShipSystemScript {
             } catch (Exception e) {
                 Global.getLogger(this.getClass()).info(e);
             }
-            if (((boolean)ship.getCustomData().get(ID+IS_ON))) {
+            if (((boolean) ship.getCustomData().get(ID + IS_ON))) {
+                //shader
+                iTime += amount*3;
                 if (timer > ADD_SHADOW_TIME) {
                     addShadowMap(1f);
                     timer = 0f;
@@ -243,12 +259,11 @@ public class RC_TransAmSystem extends BaseShipSystemScript {
                 }
             }
             //如果关闭了 所有影子向本体移动
-            else
-            {
-                if (timer > ADD_SHADOW_TIME&&maxAlphaMult>0) {
+            else {
+                if (timer > ADD_SHADOW_TIME && maxAlphaMult > 0) {
                     addShadowMap(maxAlphaMult);
                     timer = 0f;
-                } else if(maxAlphaMult>0) {
+                } else if (maxAlphaMult > 0) {
                     timer += amount;
                 }
             }
@@ -256,8 +271,8 @@ public class RC_TransAmSystem extends BaseShipSystemScript {
 
         public void addShadowMap(float maxAlphaMult) {
             addShadowMap(maxAlphaMult, ship);
-            for (FighterWingAPI w:ship.getAllWings()) {
-                for (ShipAPI f:w.getWingMembers()) {
+            for (FighterWingAPI w : ship.getAllWings()) {
+                for (ShipAPI f : w.getWingMembers()) {
                     addShadowMap(maxAlphaMult, f);
                 }
             }
@@ -265,14 +280,14 @@ public class RC_TransAmSystem extends BaseShipSystemScript {
 
         public void addShadowMap(float maxAlphaMult, ShipAPI ship) {
             ShadowMap shadowMap = new ShadowMap(maxAlphaMult, new ArrayList<Shadow>(), new ArrayList<Shadow>(), new ArrayList<Shadow>(), null);
-            shadowMap.ship = new Shadow(ship.getFacing() - 90, new Vector2f(ship.getLocation()), ship.getHullSpec().getSpriteName(),null);
+            shadowMap.ship = new Shadow(ship.getFacing() - 90, new Vector2f(ship.getLocation()), ship.getHullSpec().getSpriteName(), null);
             for (WeaponAPI w : ship.getAllWeapons()) {
                 if (w.getSlot().isHardpoint()) {
-                    shadowMap.weapons.add(0, new Shadow(w.getCurrAngle() - 90, new Vector2f(w.getLocation()), w.getSpec().getHardpointSpriteName(),true));
-                    shadowMap.unders.add(0, new Shadow(w.getCurrAngle() - 90, new Vector2f(w.getLocation()), w.getSpec().getHardpointUnderSpriteName(),true));
+                    shadowMap.weapons.add(0, new Shadow(w.getCurrAngle() - 90, new Vector2f(w.getLocation()), w.getSpec().getHardpointSpriteName(), true));
+                    shadowMap.unders.add(0, new Shadow(w.getCurrAngle() - 90, new Vector2f(w.getLocation()), w.getSpec().getHardpointUnderSpriteName(), true));
                 } else if (w.getSlot().isTurret()) {
-                    shadowMap.weapons.add(0, new Shadow(w.getCurrAngle() - 90, new Vector2f(w.getLocation()), w.getSpec().getTurretSpriteName(),false));
-                    shadowMap.unders.add(0, new Shadow(w.getCurrAngle() - 90, new Vector2f(w.getLocation()), w.getSpec().getTurretUnderSpriteName(),false));
+                    shadowMap.weapons.add(0, new Shadow(w.getCurrAngle() - 90, new Vector2f(w.getLocation()), w.getSpec().getTurretSpriteName(), false));
+                    shadowMap.unders.add(0, new Shadow(w.getCurrAngle() - 90, new Vector2f(w.getLocation()), w.getSpec().getTurretUnderSpriteName(), false));
                 }
                 if (w.getBarrelSpriteAPI() != null) {
                     shadowMap.barrels.add(0, new Shadow(w.getCurrAngle() - 90, new Vector2f(w.getLocation()), w));
@@ -285,7 +300,7 @@ public class RC_TransAmSystem extends BaseShipSystemScript {
             shadowList.add(shadowMap);
         }
 
-        public void getOut(CombatEntityAPI s){
+        public void getOut(CombatEntityAPI s) {
 
         }
 
@@ -305,10 +320,11 @@ public class RC_TransAmSystem extends BaseShipSystemScript {
 
         @Override
         public void render(CombatEngineLayers layer, ViewportAPI viewport) {
-            if (!ship.isAlive()) {return;}
-            for (ShadowMap m: shadowList)
-            {
-                if (m.ship.spriteName!=null) {
+            if (!ship.isAlive()) {
+                return;
+            }
+            for (ShadowMap m : shadowList) {
+                if (m.ship.spriteName != null) {
                     SpriteAPI sprite = Global.getSettings().getSprite(m.ship.spriteName);
                     //MagicRenderPlugin.addlocation(sprite, m.ship.location, CombatEngineLayers.UNDER_SHIPS_LAYER);
                     sprite.setAngle(m.ship.facing);
@@ -316,9 +332,8 @@ public class RC_TransAmSystem extends BaseShipSystemScript {
                     sprite.setColor(COLOR);
                     sprite.renderAtCenter(m.ship.location.getX(), m.ship.location.getY());
                 }
-                for (Shadow s : m.unders)
-                {
-                    if (s.spriteName!=null) {
+                for (Shadow s : m.unders) {
+                    if (s.spriteName != null) {
                         SpriteAPI sprite = Global.getSettings().getSprite(s.spriteName);
                         //MagicRenderPlugin.addlocation(sprite, s.location, CombatEngineLayers.UNDER_SHIPS_LAYER);
                         sprite.setAngle(s.facing);
@@ -335,25 +350,24 @@ public class RC_TransAmSystem extends BaseShipSystemScript {
                         Color oldColor = sprite.getColor();
                         sprite.setAngle(s.facing);
                         sprite.setColor(COLOR);
-                        sprite.setCenter(sprite.getWidth()/2,sprite.getHeight()/2);
+                        sprite.setCenter(sprite.getWidth() / 2, sprite.getHeight() / 2);
                         if (weapon.getSlot().isHardpoint()) {
-                            sprite.setCenter(sprite.getWidth()/2,sprite.getHeight()/4);
+                            sprite.setCenter(sprite.getWidth() / 2, sprite.getHeight() / 4);
                         }
                         sprite.renderAtCenter(s.location.x, s.location.y);
                         sprite.setColor(oldColor);
                     }
                 }
-                for (Shadow s : m.weapons)
-                {
-                    if (s.spriteName!=null) {
+                for (Shadow s : m.weapons) {
+                    if (s.spriteName != null) {
                         SpriteAPI sprite = Global.getSettings().getSprite(s.spriteName);
                         //MagicRenderPlugin.addlocation(sprite, s.location, CombatEngineLayers.UNDER_SHIPS_LAYER);
                         sprite.setAngle(s.facing);
                         sprite.setAlphaMult(m.alphaMult);
                         sprite.setColor(COLOR);
-                        sprite.setCenter(sprite.getWidth()/2,sprite.getHeight()/2);
+                        sprite.setCenter(sprite.getWidth() / 2, sprite.getHeight() / 2);
                         if (s.isHardpoint) {
-                            sprite.setCenter(sprite.getWidth()/2,sprite.getHeight()/4);
+                            sprite.setCenter(sprite.getWidth() / 2, sprite.getHeight() / 4);
                         }
                         sprite.renderAtCenter(s.location.x, s.location.y);
                     }
@@ -376,49 +390,110 @@ public class RC_TransAmSystem extends BaseShipSystemScript {
                     //transAmsprite.renderAtCenter(ship.getLocation().getX(), ship.getLocation().getY());
                 }
             }
+            renderShader(layer,viewport);
+        }
+
+        public void renderShader(CombatEngineLayers layer, ViewportAPI viewport) {
+            //if (layer == CombatEngineLayers.ABOVE_SHIPS_LAYER && Global.getCombatEngine().getPlayerShip() != null && RCModPlugin.programID != 0) {
+                ShipAPI ship = Global.getCombatEngine().getPlayerShip();
+                // 选用了游戏本体的一个特效贴图
+                SpriteAPI sprite = Global.getSettings().getSprite("graphics/fx/radial_fx.png");
+                Vector2f location = ship.getLocation();
+                Vector2f size = new Vector2f(sprite.getHeight() * 0.5f, sprite.getWidth() * 0.5f);
+                Vector2f uv = new Vector2f(sprite.getHeight() * 0.5f, sprite.getWidth() * 0.5f);
+                float facing = ship.getFacing();
+                // 计算结构值百分比
+                float level = ship.getHitpoints() / ship.getMaxHitpoints();
+                // 乘以sqrt(2.0)，为了在满结构值时显示完整的纹理
+                float levelQ = level * 1.4142135623730951f;
+
+                // 启用程序
+                GL20.glUseProgram(RCModPlugin.programID);
+
+                // 对于着色器绘制来说 GL11.glEnable(GL11.GL_TEXTURE_2D) 是不需要的
+                // 同样，纹理单元0同样是默认打开的，这一行也可以不添加
+                GL13.glActiveTexture(GL13.GL_TEXTURE0);
+                // 该行代码同样可以使用 sprite.bindTexture() 替代
+                GL11.glBindTexture(GL11.GL_TEXTURE_2D, sprite.getTextureId());
+                // 假设uniform的第一个值储存了纹理uniform位置，第二个参数填0即传入绑定到纹理单元0上的纹理
+                // 使用 glUniform1i 来分配纹理单元，但此处甚至可以不添加该行代码，因为默认值就是0
+                GL20.glUniform3f(RCModPlugin.iResolutionUniform, viewport.getVisibleWidth()/2,viewport.getVisibleHeight()/2,0);
+                GL20.glUniform2f(RCModPlugin.iLocationUniform, location.x-viewport.getCenter().x,location.y-viewport.getCenter().y);
+                // 假设uniform的第二个值为state的uniform位置
+                GL20.glUniform1f(RCModPlugin.iTimeUniform, iTime);
+                //1是半个屏幕大小 2是四分之一屏幕 要用屏幕宽度代表船的宽度
+                float shipRadius = ship.getCollisionRadius();
+                float radius = viewport.getVisibleHeight()/viewport.getViewMult()/shipRadius/2/2;
+                GL20.glUniform1f(RCModPlugin.iRadiusUniform, radius);
+                GL20.glUniform1f(RCModPlugin.iEffectLevelUniform, effectLevel);
+                GL20.glUniform1f(RCModPlugin.iViewMultUniform, viewport.getViewMult());
+                // 以下是绘制部分，应当在绘制前为该次绘制配置好uniform
+                GL11.glPushMatrix();
+                GL11.glTranslatef(viewport.getCenter().x, viewport.getCenter().y, 0.0f);
+                GL11.glRotatef(90f, 0.0f, 0.0f, 1.0f);
+                // 混合函数仍会影响Shader绘制结果的显示
+                GL11.glEnable(GL11.GL_BLEND);
+                GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+                GL11.glBegin(GL11.GL_QUADS);
+                //GL11.glTexCoord2f(0.0f, 0.0f);
+                GL11.glVertex2f(-viewport.getVisibleWidth(), -viewport.getVisibleHeight());
+                //GL11.glTexCoord2f(0.0f, uv.y);
+                GL11.glVertex2f(-viewport.getVisibleWidth(), viewport.getVisibleHeight());
+                //GL11.glTexCoord2f(uv.x, uv.y);
+                GL11.glVertex2f(viewport.getVisibleWidth(), viewport.getVisibleHeight());
+                //GL11.glTexCoord2f(uv.x, 0.0f);
+                GL11.glVertex2f(viewport.getVisibleWidth(), -viewport.getVisibleHeight());
+                GL11.glEnd();
+                GL11.glPopMatrix();
+                // 绘制完毕，解除纹理绑定
+                //GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
+
+                // 关闭程序，此时一轮绘制结束
+                GL20.glUseProgram(0);
+            //}
         }
 
         @Override
         public boolean isExpired() {
-            if (ship.getCustomData().get(ID+IS_ON)!=null){
-                if (shadowList.size()==0&&!(boolean)ship.getCustomData().get(ID+IS_ON))
-                {
+            if (ship.getCustomData().get(ID + IS_ON) != null) {
+                if (shadowList.size() == 0 && !(boolean) ship.getCustomData().get(ID + IS_ON)) {
                     return true;
                 }
-            }
-            else {
+            } else {
                 return true;
             }
             return false;
         }
 
-        public class Shadow{
+        public class Shadow {
             float facing;
             Vector2f location;
             String spriteName;
             WeaponAPI weapon;
             Boolean isHardpoint;
-            public Shadow(float facing,Vector2f location,String spriteName,Boolean isHardpoint){
+
+            public Shadow(float facing, Vector2f location, String spriteName, Boolean isHardpoint) {
                 this.facing = facing;
                 this.location = location;
                 this.spriteName = spriteName;
                 this.isHardpoint = isHardpoint;
             }
-            public Shadow(float facing,Vector2f location,WeaponAPI weapon){
+
+            public Shadow(float facing, Vector2f location, WeaponAPI weapon) {
                 this.facing = facing;
                 this.location = location;
                 this.weapon = weapon;
             }
         }
 
-        public class ShadowMap{
+        public class ShadowMap {
             float alphaMult;
             List<Shadow> weapons;
             List<Shadow> barrels;
             List<Shadow> unders;
             Shadow ship;
-            public ShadowMap(float alphaMult,List<Shadow> weapons,List<Shadow> barrels,List<Shadow> unders,Shadow ship)
-            {
+
+            public ShadowMap(float alphaMult, List<Shadow> weapons, List<Shadow> barrels, List<Shadow> unders, Shadow ship) {
                 this.alphaMult = alphaMult;
                 this.weapons = weapons;
                 this.barrels = barrels;
