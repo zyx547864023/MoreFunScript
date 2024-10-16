@@ -6,8 +6,6 @@ import com.fs.starfarer.api.util.IntervalUtil;
 import org.lazywizard.lazylib.MathUtils;
 import org.lazywizard.lazylib.VectorUtils;
 import org.lwjgl.util.vector.Vector2f;
-import real_combat.ai.RC_AIContants;
-import real_combat.ai.RC_BaseAIAction;
 import real_combat.entity.RC_NeedDrawLine;
 
 import java.awt.*;

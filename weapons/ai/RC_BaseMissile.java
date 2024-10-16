@@ -1,22 +1,14 @@
 package real_combat.weapons.ai;
 
 import com.fs.starfarer.api.Global;
-import com.fs.starfarer.api.combat.CollisionClass;
-import com.fs.starfarer.api.combat.CombatEntityAPI;
-import com.fs.starfarer.api.combat.GuidedMissileAI;
-import com.fs.starfarer.api.combat.MissileAIPlugin;
-import com.fs.starfarer.api.combat.MissileAPI;
-import com.fs.starfarer.api.combat.ShipAPI;
-
-import java.util.*;
-
-import com.fs.starfarer.combat.entities.Ship;
+import com.fs.starfarer.api.combat.*;
 import org.lazywizard.lazylib.CollectionUtils;
 import org.lazywizard.lazylib.MathUtils;
-import org.lazywizard.lazylib.combat.AIUtils;
 import org.lwjgl.util.vector.Vector2f;
 import real_combat.ai.RC_BaseShipAI;
 import real_combat.util.RC_Util;
+
+import java.util.*;
 
 public class RC_BaseMissile implements MissileAIPlugin, GuidedMissileAI {
 

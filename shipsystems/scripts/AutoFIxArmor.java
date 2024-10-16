@@ -5,7 +5,7 @@ import com.fs.starfarer.api.combat.*;
 import com.fs.starfarer.api.impl.combat.BaseShipSystemScript;
 import org.lazywizard.lazylib.combat.DefenseUtils;
 
-import java.util.*;
+import java.util.EnumSet;
 
 /**
  *

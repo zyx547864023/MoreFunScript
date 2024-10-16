@@ -1,6 +1,5 @@
 package real_combat.ai;
 
-import com.fs.starfarer.api.combat.FighterWingAPI;
 import com.fs.starfarer.api.combat.ShipAPI;
 import com.fs.starfarer.api.combat.ShipCommand;
 import org.lazywizard.lazylib.MathUtils;

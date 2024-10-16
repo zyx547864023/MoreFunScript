@@ -3,7 +3,6 @@ package real_combat.shipsystems.scripts.ai;
 import com.fs.starfarer.api.combat.*;
 import org.lazywizard.lazylib.combat.AIUtils;
 import org.lwjgl.util.vector.Vector2f;
-import real_combat.entity.RC_Escort;
 
 import java.util.List;
 

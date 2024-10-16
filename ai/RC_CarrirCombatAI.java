@@ -2,9 +2,6 @@ package real_combat.ai;
 
 import com.fs.starfarer.api.combat.FighterWingAPI;
 import com.fs.starfarer.api.combat.ShipAPI;
-import org.lazywizard.lazylib.MathUtils;
-import org.lazywizard.lazylib.VectorUtils;
-import org.lwjgl.util.vector.Vector2f;
 
 /**
  * 护卫舰AI

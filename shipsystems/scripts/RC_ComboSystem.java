@@ -1,21 +1,17 @@
 package real_combat.shipsystems.scripts;
 
 import com.fs.starfarer.api.Global;
-import com.fs.starfarer.api.combat.*;
-import com.fs.starfarer.api.graphics.SpriteAPI;
+import com.fs.starfarer.api.combat.CombatEngineAPI;
+import com.fs.starfarer.api.combat.MutableShipStatsAPI;
+import com.fs.starfarer.api.combat.ShipAPI;
+import com.fs.starfarer.api.combat.ShipSystemAPI;
 import com.fs.starfarer.api.impl.combat.*;
-import data.scripts.plugins.MagicRenderPlugin;
 import data.shipsystems.scripts.AmmoFeedStats;
 import data.shipsystems.scripts.HighEnergyFocusStats;
 import data.shipsystems.scripts.MicroBurnStats;
-import org.lazywizard.lazylib.MathUtils;
-import org.lwjgl.util.vector.Vector2f;
 import real_combat.constant.RC_ComboConstant;
-import real_combat.util.MyMath;
 
 import java.awt.*;
-import java.util.HashMap;
-import java.util.Map;
 
 public class RC_ComboSystem extends BaseShipSystemScript {
     private String ID = "RC_ComboSystem";

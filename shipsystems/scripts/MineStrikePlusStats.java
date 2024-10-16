@@ -1,22 +1,21 @@
 package real_combat.shipsystems.scripts;
 
-import java.awt.Color;
-import java.util.List;
-
+import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.*;
+import com.fs.starfarer.api.combat.ShipSystemAPI.SystemState;
+import com.fs.starfarer.api.combat.ShipwideAIFlags.AIFlags;
+import com.fs.starfarer.api.combat.WeaponAPI.WeaponType;
 import com.fs.starfarer.api.impl.combat.BaseShipSystemScript;
 import com.fs.starfarer.api.impl.combat.MineStrikeStatsAIInfoProvider;
+import com.fs.starfarer.api.input.InputEventAPI;
+import com.fs.starfarer.api.util.Misc;
+import com.fs.starfarer.api.util.WeightedRandomPicker;
 import org.lazywizard.lazylib.VectorUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.vector.Vector2f;
 
-import com.fs.starfarer.api.Global;
-import com.fs.starfarer.api.combat.ShipSystemAPI.SystemState;
-import com.fs.starfarer.api.combat.ShipwideAIFlags.AIFlags;
-import com.fs.starfarer.api.combat.WeaponAPI.WeaponType;
-import com.fs.starfarer.api.input.InputEventAPI;
-import com.fs.starfarer.api.util.Misc;
-import com.fs.starfarer.api.util.WeightedRandomPicker;
+import java.awt.*;
+import java.util.List;
 
 public class MineStrikePlusStats extends BaseShipSystemScript implements MineStrikeStatsAIInfoProvider {
 	

@@ -3,16 +3,14 @@ package real_combat.hullmods;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.*;
 import com.fs.starfarer.api.combat.ShipAPI.HullSize;
-import com.fs.starfarer.api.impl.campaign.ids.Stats;
-import com.fs.starfarer.api.loading.VariantSource;
 import org.lazywizard.lazylib.MathUtils;
 import org.lazywizard.lazylib.VectorUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.vector.Vector2f;
 
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * 反动能导弹插件 ckem_hullmod
@@ -33,24 +31,26 @@ public class RC_CKEM extends BaseHullMod {
         List<DamagingProjectileAPI> damagingProjectiles = engine.getProjectiles();
         List<MissileAPI> keMissileList = new ArrayList<>();
         //如果开盾找动能导弹，如果没开盾找最近导弹
-        if(ship.getShield().isOn()) {
-            for (DamagingProjectileAPI damagingProjectile : damagingProjectiles) {
-                if (!(damagingProjectile instanceof MissileAPI)) continue;
-                MissileAPI missile = (MissileAPI) damagingProjectile;
-                if (missile.getOwner() == ship.getOwner()) {
-                    missileLocationMap.remove(missile);
-                    continue;
-                }
-                if (!engine.isEntityInPlay(missile) ||
-                        missile.getProjectileSpecId() == null ||
-                        missile.didDamage() ||
-                        missile.isFading()) {
-                    missileLocationMap.remove(missile);
-                    continue;
-                }
-                //导弹是动能导弹
-                if (DamageType.KINETIC.equals(missile.getDamageType())) {
-                    setMissile(missile,ship,missileLocationMap,keMissileList);
+        if(ship.getShield()!=null) {
+            if (ship.getShield().isOn()) {
+                for (DamagingProjectileAPI damagingProjectile : damagingProjectiles) {
+                    if (!(damagingProjectile instanceof MissileAPI)) continue;
+                    MissileAPI missile = (MissileAPI) damagingProjectile;
+                    if (missile.getOwner() == ship.getOwner()) {
+                        missileLocationMap.remove(missile);
+                        continue;
+                    }
+                    if (!engine.isEntityInPlay(missile) ||
+                            missile.getProjectileSpecId() == null ||
+                            missile.didDamage() ||
+                            missile.isFading()) {
+                        missileLocationMap.remove(missile);
+                        continue;
+                    }
+                    //导弹是动能导弹
+                    if (DamageType.KINETIC.equals(missile.getDamageType())) {
+                        setMissile(missile, ship, missileLocationMap, keMissileList);
+                    }
                 }
             }
         }

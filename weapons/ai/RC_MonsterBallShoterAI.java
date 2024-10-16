@@ -3,14 +3,11 @@ package real_combat.weapons.ai;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.*;
 import org.lazywizard.lazylib.MathUtils;
-import org.lazywizard.lazylib.combat.AIUtils;
 import org.lwjgl.util.vector.Vector2f;
 import real_combat.ai.RC_BaseShipAI;
 import real_combat.combat.RC_MonsterBallEveryFrameCombatPlugin;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public class RC_MonsterBallShoterAI implements AutofireAIPlugin {

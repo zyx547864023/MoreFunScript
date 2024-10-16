@@ -6,17 +6,16 @@ import com.fs.starfarer.api.combat.*;
 import com.fs.starfarer.api.graphics.SpriteAPI;
 import com.fs.starfarer.api.impl.campaign.ids.Stats;
 import com.fs.starfarer.api.util.IntervalUtil;
-import com.fs.starfarer.combat.systems.EmpArcEntity;
 import org.lazywizard.lazylib.MathUtils;
 import org.lazywizard.lazylib.VectorUtils;
 import org.lazywizard.lazylib.combat.CombatUtils;
 import org.lazywizard.lazylib.combat.entities.SimpleEntity;
 import org.lwjgl.util.vector.Vector2f;
-import real_combat.entity.RC_AnchoredEntity;
 import real_combat.weapons.RC_ElectromagnetismOnHitEffect;
 
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 
 /**

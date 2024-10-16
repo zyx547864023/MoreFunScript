@@ -2,14 +2,7 @@ package real_combat.shipsystems.scripts.ai;
 
 import com.fs.starfarer.api.combat.*;
 import com.fs.starfarer.api.util.IntervalUtil;
-import org.lazywizard.lazylib.MathUtils;
-import org.lazywizard.lazylib.VectorUtils;
-import org.lazywizard.lazylib.combat.AIUtils;
 import org.lwjgl.util.vector.Vector2f;
-import real_combat.hullmods.RC_SpiderCore;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class RC_HulkEaterAI implements ShipSystemAIScript {
 

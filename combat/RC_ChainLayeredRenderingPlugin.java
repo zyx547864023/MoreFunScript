@@ -4,21 +4,15 @@ package real_combat.combat;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.*;
 import com.fs.starfarer.api.graphics.SpriteAPI;
-import com.fs.starfarer.api.impl.campaign.ids.Stats;
-import com.fs.starfarer.api.util.IntervalUtil;
 import org.lazywizard.lazylib.MathUtils;
 import org.lazywizard.lazylib.VectorUtils;
 import org.lazywizard.lazylib.combat.CombatUtils;
-import org.lazywizard.lazylib.combat.entities.SimpleEntity;
 import org.lwjgl.util.vector.Vector2f;
 import real_combat.weapons.RC_ChainPlugin;
-import real_combat.weapons.RC_ElectromagnetismOnHitEffect;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Vector;
 
 /**
  * 命中之后持续生成电弧 给一个力拉向目标

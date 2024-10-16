@@ -1,8 +1,9 @@
 package real_combat.util;
 
-import java.util.Random;
 import org.lazywizard.lazylib.VectorUtils;
 import org.lwjgl.util.vector.Vector2f;
+
+import java.util.Random;
 
 public class MyMath {
     public static final Vector2f ZERO = new Vector2f();

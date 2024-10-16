@@ -1,18 +1,18 @@
 package real_combat.shipsystems.scripts;
 
 import com.fs.starfarer.api.Global;
-import com.fs.starfarer.api.combat.*;
+import com.fs.starfarer.api.combat.CombatEngineAPI;
+import com.fs.starfarer.api.combat.MutableShipStatsAPI;
+import com.fs.starfarer.api.combat.ShipAPI;
+import com.fs.starfarer.api.combat.ShipSystemAPI;
 import com.fs.starfarer.api.impl.combat.BaseShipSystemScript;
 import org.lazywizard.lazylib.MathUtils;
 import org.lazywizard.lazylib.VectorUtils;
 import org.lazywizard.lazylib.combat.AIUtils;
 import org.lwjgl.util.vector.Vector2f;
 import real_combat.ai.RC_PhaseSpyOnFighterAI;
-import real_combat.hullmods.RC_SpiderCore;
-import real_combat.shipsystems.scripts.ai.RC_SpyOnAI;
 
 import java.awt.*;
-import java.util.EnumSet;
 import java.util.List;
 
 /**

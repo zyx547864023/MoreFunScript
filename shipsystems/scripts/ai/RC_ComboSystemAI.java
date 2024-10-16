@@ -6,7 +6,6 @@ import org.lwjgl.util.vector.Vector2f;
 import real_combat.ai.RC_BaseShipAI;
 import real_combat.constant.RC_ComboConstant;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;

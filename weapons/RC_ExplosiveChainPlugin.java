@@ -5,12 +5,9 @@ import com.fs.starfarer.api.combat.listeners.ApplyDamageResultAPI;
 import org.lazywizard.lazylib.MathUtils;
 import org.lwjgl.util.vector.Vector2f;
 import real_combat.entity.RC_AnchoredEntity;
-import real_combat.shipsystems.scripts.RC_FlyingThunderGod;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class RC_ExplosiveChainPlugin implements EveryFrameWeaponEffectPlugin, OnFireEffectPlugin , OnHitEffectPlugin {
     public static String ID = "RC_ExplosiveChainPlugin";

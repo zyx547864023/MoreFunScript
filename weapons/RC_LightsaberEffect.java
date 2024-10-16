@@ -1,21 +1,7 @@
 package real_combat.weapons;
 
-import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.*;
-import com.fs.starfarer.api.combat.BoundsAPI.SegmentAPI;
-import com.fs.starfarer.api.combat.WeaponAPI.WeaponType;
-import com.fs.starfarer.api.impl.combat.RiftCascadeMineExplosion;
-import com.fs.starfarer.api.loading.MissileSpecAPI;
-import com.fs.starfarer.api.util.IntervalUtil;
-import com.fs.starfarer.api.util.Misc;
-import org.lazywizard.lazylib.MathUtils;
 import org.lwjgl.util.vector.Vector2f;
-import real_combat.util.RC_Util;
-
-import java.awt.*;
-import java.awt.geom.Line2D;
-import java.awt.geom.Point2D;
-import java.util.List;
 
 /**
 	速度相差越大 额外伤害越高

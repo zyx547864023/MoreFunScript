@@ -3,24 +3,18 @@ package real_combat.combat;
 
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.*;
-import com.fs.starfarer.api.impl.combat.BreachOnHitEffect;
 import com.fs.starfarer.api.util.IntervalUtil;
 import org.lazywizard.lazylib.MathUtils;
-import org.lazywizard.lazylib.VectorUtils;
-import org.lazywizard.lazylib.combat.entities.SimpleEntity;
 import org.lazywizard.lazylib.ui.FontException;
 import org.lazywizard.lazylib.ui.LazyFont;
 import org.lwjgl.util.vector.Vector2f;
-import real_combat.ai.RC_BaseShipAI;
 import real_combat.ai.RC_CounterWeaponFighterAI;
-import real_combat.ai.RC_FighterAI;
-import real_combat.ai.RC_FrigateAI;
-import real_combat.weapons.RC_CamouflageNetOnHitEffect;
 import real_combat.weapons.RC_OvumOnHitEffect;
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
-import java.util.*;
 
 /**
  * 命中之后持续生成电弧 给一个力拉向目标

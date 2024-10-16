@@ -4,17 +4,11 @@ import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.*;
 import com.fs.starfarer.api.combat.listeners.ApplyDamageResultAPI;
 import com.fs.starfarer.api.combat.listeners.WeaponRangeModifier;
-import com.fs.starfarer.api.impl.combat.RiftLanceEffect;
-import com.fs.starfarer.api.loading.WeaponSpecAPI;
-import com.fs.starfarer.loading.specs.BaseWeaponSpec;
 import org.lazywizard.lazylib.MathUtils;
 import org.lazywizard.lazylib.VectorUtils;
 import org.lwjgl.util.vector.Vector2f;
-import real_combat.RCModPlugin;
 import real_combat.ai.RC_BaseShipAI;
-import real_combat.combat.RealCombatEveryFrameCombatPlugin;
 import real_combat.entity.RC_AnchoredEntity;
-import real_combat.util.MyMath;
 
 import java.awt.*;
 import java.util.ArrayList;

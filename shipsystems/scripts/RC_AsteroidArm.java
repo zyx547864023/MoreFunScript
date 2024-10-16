@@ -1,21 +1,19 @@
 package real_combat.shipsystems.scripts;
 
 import com.fs.starfarer.api.Global;
-import com.fs.starfarer.api.campaign.AsteroidAPI;
 import com.fs.starfarer.api.combat.*;
-import com.fs.starfarer.api.impl.combat.*;
+import com.fs.starfarer.api.impl.combat.BaseShipSystemScript;
 import com.fs.starfarer.api.util.IntervalUtil;
-import com.sun.javafx.image.BytePixelSetter;
 import org.lazywizard.lazylib.MathUtils;
 import org.lazywizard.lazylib.VectorUtils;
-import org.lazywizard.lazylib.combat.AIUtils;
-import org.lazywizard.lazylib.combat.CombatUtils;
 import org.lwjgl.util.vector.Vector2f;
 import real_combat.ai.RC_BaseShipAI;
 import real_combat.entity.RC_AnchoredEntity;
 
-import java.util.*;
-import java.util.List;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * 每一个陨石有三个状态

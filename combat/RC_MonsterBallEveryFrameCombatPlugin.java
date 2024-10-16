@@ -16,8 +16,6 @@ import com.fs.starfarer.api.impl.campaign.ids.HullMods;
 import com.fs.starfarer.api.input.InputEventAPI;
 import com.fs.starfarer.api.mission.FleetSide;
 import com.fs.starfarer.api.util.Misc;
-
-import data.scripts.plugins.MagicRenderPlugin;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.lwjgl.opengl.GL11;

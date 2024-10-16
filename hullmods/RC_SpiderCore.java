@@ -8,8 +8,8 @@ import com.fs.starfarer.api.loading.WingRole;
 import com.fs.starfarer.api.ui.Alignment;
 import com.fs.starfarer.api.ui.TooltipMakerAPI;
 import com.fs.starfarer.api.util.Misc;
-import real_combat.ai.RC_FighterAI;
 import real_combat.ai.RC_BomberAI;
+import real_combat.ai.RC_FighterAI;
 import real_combat.shipsystems.scripts.RC_AsteroidArm;
 
 import java.awt.*;
@@ -119,7 +119,7 @@ public class RC_SpiderCore extends BaseHullMod {
                 }
             }
             else {
-                for (FighterWingAPI w : ship.getAllWings()) {
+                for (FighterWingAPI w : m.getAllWings()) {
                     if (WingRole.BOMBER.equals(w.getRole())) {
                         for (ShipAPI f : w.getWingMembers()) {
                             if (f.getCustomData().get(RC_BomberAI.ID) == null && f.isAlive() && f.getCustomData().get(RC_BomberAI.ID + RC_BomberAI.CATCHED) == null) {

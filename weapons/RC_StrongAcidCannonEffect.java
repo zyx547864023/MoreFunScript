@@ -1,14 +1,13 @@
 package real_combat.weapons;
 
-import com.fs.starfarer.api.combat.*;
-import com.fs.starfarer.api.impl.combat.RiftLanceEffect;
-import org.lazywizard.lazylib.MathUtils;
-import org.lwjgl.util.vector.Vector2f;
-
 import com.fs.starfarer.api.Global;
+import com.fs.starfarer.api.combat.*;
 import com.fs.starfarer.api.combat.listeners.ApplyDamageResultAPI;
+import com.fs.starfarer.api.impl.combat.RiftLanceEffect;
 import com.fs.starfarer.api.util.IntervalUtil;
 import com.fs.starfarer.api.util.Misc;
+import org.lazywizard.lazylib.MathUtils;
+import org.lwjgl.util.vector.Vector2f;
 import real_combat.entity.RC_AnchoredEntity;
 
 import java.awt.*;

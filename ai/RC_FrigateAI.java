@@ -78,16 +78,25 @@ public class RC_FrigateAI extends RC_BaseShipAI {
             }
         }
         //与最近的敌人保持最短攻击距离
-        if (nearestBiggerShip!=null) {
-            if (nearestBiggerShip.minDistance < minWeaponRange) {
-                RC_BaseAIAction.move(ship, ship.getFacing(), VectorUtils.getAngle(nearestBiggerShip.ship.getLocation(), ship.getLocation()));
+        if (nearestBiggerEnemy!=null) {
+            if (nearestBiggerEnemy.minDistance < minWeaponRange) {
+                RC_BaseAIAction.move(ship, ship.getFacing(), VectorUtils.getAngle(nearestBiggerEnemy.ship.getLocation(), ship.getLocation()));
                 isDodge = true;
             }
-            else if (nearestBiggerShip.minDistance < maxWeaponRange) {
-                if (Math.abs(MathUtils.getShortestRotation(nearestBiggerShip.ship.getFacing(),  VectorUtils.getAngle(nearestBiggerShip.ship.getLocation(), ship.getLocation()))) < 30) {
-                    RC_BaseAIAction.move(ship, ship.getFacing(), VectorUtils.getAngle(nearestBiggerShip.ship.getLocation(), ship.getLocation()));
+            else if (nearestBiggerEnemy.minDistance < maxWeaponRange) {
+                if (Math.abs(MathUtils.getShortestRotation(nearestBiggerEnemy.ship.getFacing(),  VectorUtils.getAngle(nearestBiggerEnemy.ship.getLocation(), ship.getLocation()))) < 30) {
+                    RC_BaseAIAction.move(ship, ship.getFacing(), VectorUtils.getAngle(nearestBiggerEnemy.ship.getLocation(), ship.getLocation()));
                     isDodge = true;
                 }
+            }
+        }
+        if (target!=null&&nearestBiggerAlly!=null) {
+            if (MathUtils.getDistance(target,ship)>minWeaponRange&&target!=nearestBiggerAlly.ship&&MathUtils.getDistance(nearestBiggerAlly.ship,ship)<nearestBiggerAlly.ship.getCollisionRadius()+ship.getCollisionRadius()) {
+                //远离队友且飞向敌人
+                float shipToTargetAngle = VectorUtils.getAngle(ship.getLocation(), target.getLocation());
+                float shipToNearestShipAngle = VectorUtils.getAngle(nearestBiggerAlly.ship.getLocation(), ship.getLocation());
+                RC_BaseAIAction.move(ship, ship.getFacing(), (shipToTargetAngle+shipToNearestShipAngle)/2f);
+                isDodge = true;
             }
         }
     }

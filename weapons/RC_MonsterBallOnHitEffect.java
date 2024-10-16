@@ -1,16 +1,13 @@
 package real_combat.weapons;
 
+import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.*;
-import com.fs.starfarer.api.impl.PlayerFleetPersonnelTracker;
-import com.fs.starfarer.api.impl.campaign.ids.Commodities;
+import com.fs.starfarer.api.combat.listeners.ApplyDamageResultAPI;
 import org.lazywizard.lazylib.MathUtils;
 import org.lwjgl.util.vector.Vector2f;
-
-import com.fs.starfarer.api.Global;
-import com.fs.starfarer.api.combat.listeners.ApplyDamageResultAPI;
 import real_combat.entity.RC_AnchoredEntity;
 
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public class RC_MonsterBallOnHitEffect implements OnHitEffectPlugin {

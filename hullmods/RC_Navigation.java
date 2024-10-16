@@ -1,17 +1,17 @@
 package real_combat.hullmods;
 
 import com.fs.starfarer.api.Global;
-import com.fs.starfarer.api.combat.*;
+import com.fs.starfarer.api.combat.BaseHullMod;
+import com.fs.starfarer.api.combat.CombatEngineAPI;
+import com.fs.starfarer.api.combat.MutableShipStatsAPI;
+import com.fs.starfarer.api.combat.ShipAPI;
 import com.fs.starfarer.api.combat.ShipAPI.HullSize;
 import org.lazywizard.lazylib.MathUtils;
 import org.lazywizard.lazylib.VectorUtils;
-import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.vector.Vector2f;
 import real_combat.ai.RC_BaseShipAI;
 
-import java.awt.*;
-import java.util.List;
-import java.util.*;
+import java.util.HashSet;
 
 /**
  * 导航

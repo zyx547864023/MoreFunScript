@@ -1,13 +1,11 @@
 package real_combat.ai;
 
-import com.fs.starfarer.api.Global;
-import com.fs.starfarer.api.combat.*;
-import com.fs.starfarer.ui.P;
+import com.fs.starfarer.api.combat.ShipAPI;
+import com.fs.starfarer.api.combat.ShipCommand;
+import com.fs.starfarer.api.combat.WeaponAPI;
 import org.lazywizard.lazylib.MathUtils;
 import org.lazywizard.lazylib.VectorUtils;
 import org.lwjgl.util.vector.Vector2f;
-
-import java.util.List;
 
 /**
  * 护卫舰AI

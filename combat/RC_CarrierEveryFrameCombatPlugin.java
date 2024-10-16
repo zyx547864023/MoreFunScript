@@ -3,8 +3,6 @@ package real_combat.combat;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.*;
 import com.fs.starfarer.api.input.InputEventAPI;
-import com.fs.starfarer.api.input.InputEventType;
-import com.fs.starfarer.api.loading.FighterWingSpecAPI;
 import org.lazywizard.lazylib.MathUtils;
 import org.lazywizard.lazylib.ui.FontException;
 import org.lazywizard.lazylib.ui.LazyFont;

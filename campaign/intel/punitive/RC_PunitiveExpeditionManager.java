@@ -1,27 +1,18 @@
 package real_combat.campaign.intel.punitive;
 
-import com.fs.starfarer.api.EveryFrameScript;
 import com.fs.starfarer.api.Global;
-import com.fs.starfarer.api.campaign.FactionAPI;
-import com.fs.starfarer.api.campaign.econ.CommodityMarketDataAPI;
-import com.fs.starfarer.api.campaign.econ.CommodityOnMarketAPI;
 import com.fs.starfarer.api.campaign.econ.Industry;
 import com.fs.starfarer.api.campaign.econ.MarketAPI;
-import com.fs.starfarer.api.impl.campaign.DebugFlags;
 import com.fs.starfarer.api.impl.campaign.ids.Factions;
 import com.fs.starfarer.api.impl.campaign.ids.Industries;
 import com.fs.starfarer.api.impl.campaign.ids.MemFlags;
-import com.fs.starfarer.api.impl.campaign.intel.BaseIntelPlugin;
 import com.fs.starfarer.api.impl.campaign.intel.punitive.PunitiveExpeditionIntel;
 import com.fs.starfarer.api.impl.campaign.intel.punitive.PunitiveExpeditionManager;
-import com.fs.starfarer.api.impl.campaign.rulecmd.salvage.MarketCMD;
-import com.fs.starfarer.api.util.IntervalUtil;
-import com.fs.starfarer.api.util.Misc;
 import com.fs.starfarer.api.util.WeightedRandomPicker;
 import org.json.JSONObject;
 import org.lazywizard.lazylib.MathUtils;
 
-import java.util.*;
+import java.util.List;
 
 public class RC_PunitiveExpeditionManager extends PunitiveExpeditionManager {
 

@@ -2,9 +2,6 @@ package real_combat.weapons.ai;
 
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.*;
-
-import java.util.*;
-
 import org.lazywizard.lazylib.CollectionUtils;
 import org.lazywizard.lazylib.MathUtils;
 import org.lazywizard.lazylib.VectorUtils;
@@ -13,6 +10,8 @@ import org.lwjgl.util.vector.Vector2f;
 import real_combat.ai.RC_BaseShipAI;
 import real_combat.combat.RC_MonsterBallEveryFrameCombatPlugin;
 import real_combat.util.RC_Util;
+
+import java.util.*;
 
 public class RC_MonsterBallAI extends RC_BaseMissile {
     private static final float TARGET_ACQUISITION_RANGE = 3600f;

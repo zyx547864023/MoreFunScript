@@ -1,18 +1,16 @@
 package real_combat.campaign.missions;
 
-import java.util.List;
-import java.util.Map;
-
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.InteractionDialogAPI;
 import com.fs.starfarer.api.campaign.econ.MarketAPI;
 import com.fs.starfarer.api.campaign.rules.MemoryAPI;
-import com.fs.starfarer.api.characters.FullName;
-import com.fs.starfarer.api.characters.PersonAPI;
 import com.fs.starfarer.api.fleet.FleetMemberAPI;
 import com.fs.starfarer.api.impl.campaign.missions.hub.HubMissionWithBarEvent;
 import com.fs.starfarer.api.util.Misc;
 import com.fs.starfarer.api.util.Misc.Token;
+
+import java.util.List;
+import java.util.Map;
 
 public class FairyJump extends HubMissionWithBarEvent {
 

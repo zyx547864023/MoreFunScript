@@ -11,13 +11,11 @@ import org.lazywizard.lazylib.MathUtils;
 import org.lazywizard.lazylib.VectorUtils;
 import org.lazywizard.lazylib.combat.CombatUtils;
 import org.lwjgl.util.vector.Vector2f;
-import org.magiclib.plugins.MagicRenderPlugin;
-import real_combat.ai.RC_BaseShipAI;
 import real_combat.weapons.RC_ChainPlugin;
 
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * 绕圈圈画绳子

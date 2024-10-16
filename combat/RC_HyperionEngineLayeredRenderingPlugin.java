@@ -3,15 +3,9 @@ package real_combat.combat;
 
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.*;
-import com.fs.starfarer.api.graphics.SpriteAPI;
-import com.fs.starfarer.prototype.entities.Ship;
 import org.lazywizard.lazylib.MathUtils;
-import org.lazywizard.lazylib.VectorUtils;
-import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.vector.Vector2f;
 import real_combat.ai.RC_BaseShipAI;
-import real_combat.ai.RC_Drone_borerAI;
-import real_combat.util.MyMath;
 
 import java.awt.*;
 import java.util.EnumSet;

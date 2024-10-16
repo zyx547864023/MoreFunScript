@@ -10,7 +10,6 @@ import com.fs.starfarer.api.impl.campaign.FleetEncounterContext;
 import com.fs.starfarer.api.loading.VariantSource;
 import com.fs.starfarer.api.util.Misc;
 
-import java.awt.*;
 import java.util.List;
 import java.util.Random;
 

@@ -1,6 +1,8 @@
 package real_combat.constant;
 
-import com.fs.starfarer.api.impl.combat.*;
+import com.fs.starfarer.api.impl.combat.AcausalDisruptorStats;
+import com.fs.starfarer.api.impl.combat.DamperFieldOmegaStats;
+import com.fs.starfarer.api.impl.combat.EntropyAmplifierStats;
 import data.shipsystems.scripts.HighEnergyFocusStats;
 import data.shipsystems.scripts.MicroBurnStats;
 import real_combat.shipsystems.scripts.RC_TransAmSystem;

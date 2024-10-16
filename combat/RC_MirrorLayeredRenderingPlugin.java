@@ -4,14 +4,9 @@ package real_combat.combat;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.*;
 import com.fs.starfarer.api.graphics.SpriteAPI;
-import com.fs.starfarer.api.impl.combat.RiftLanceEffect;
-import com.fs.starfarer.util.M;
-import org.lazywizard.lazylib.MathUtils;
 import org.lwjgl.util.vector.Vector2f;
-import real_combat.util.MyMath;
 import real_combat.weapons.RC_MirrorOnHitEffect;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;

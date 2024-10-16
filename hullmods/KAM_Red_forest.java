@@ -1,19 +1,12 @@
 package real_combat.hullmods;
 
 import com.fs.starfarer.api.Global;
-import com.fs.starfarer.api.SpriteId;
 import com.fs.starfarer.api.combat.*;
 import com.fs.starfarer.api.graphics.SpriteAPI;
-import com.fs.starfarer.api.loading.WingRole;
-import com.fs.starfarer.api.util.IntervalUtil;
-import com.fs.starfarer.combat.P;
-import com.fs.starfarer.combat.entities.Ship;
-import data.scripts.plugins.MagicRenderPlugin;
 import org.lazywizard.lazylib.MathUtils;
 import org.lazywizard.lazylib.VectorUtils;
 import org.lazywizard.lazylib.combat.AIUtils;
 import org.lwjgl.util.vector.Vector2f;
-import org.magiclib.util.MagicRender;
 
 import java.awt.*;
 import java.util.ArrayList;

@@ -1,36 +1,29 @@
 package real_combat.campaign.missions;
 
 import com.fs.starfarer.api.Global;
-import com.fs.starfarer.api.campaign.*;
-import com.fs.starfarer.api.campaign.FactionAPI.ShipPickMode;
-import com.fs.starfarer.api.campaign.econ.Industry;
+import com.fs.starfarer.api.campaign.FactionAPI;
+import com.fs.starfarer.api.campaign.InteractionDialogAPI;
+import com.fs.starfarer.api.campaign.PersonImportance;
 import com.fs.starfarer.api.campaign.econ.MarketAPI;
 import com.fs.starfarer.api.campaign.rules.MemoryAPI;
 import com.fs.starfarer.api.characters.FullName;
 import com.fs.starfarer.api.characters.ImportantPeopleAPI;
 import com.fs.starfarer.api.characters.PersonAPI;
 import com.fs.starfarer.api.fleet.FleetMemberAPI;
-import com.fs.starfarer.api.impl.campaign.econ.impl.ShipQuality;
-import com.fs.starfarer.api.impl.campaign.fleets.DefaultFleetInflaterParams;
-import com.fs.starfarer.api.impl.campaign.ids.*;
-import com.fs.starfarer.api.impl.campaign.intel.bases.PirateBaseManager;
-import com.fs.starfarer.api.impl.campaign.intel.contacts.ContactIntel;
+import com.fs.starfarer.api.impl.campaign.ids.Factions;
+import com.fs.starfarer.api.impl.campaign.ids.Industries;
+import com.fs.starfarer.api.impl.campaign.ids.Ranks;
+import com.fs.starfarer.api.impl.campaign.ids.Tags;
 import com.fs.starfarer.api.impl.campaign.intel.misc.ProductionReportIntel.ProductionData;
 import com.fs.starfarer.api.impl.campaign.missions.hub.HubMissionWithBarEvent;
 import com.fs.starfarer.api.impl.campaign.rulecmd.FireBest;
-import com.fs.starfarer.api.impl.campaign.submarkets.StoragePlugin;
-import com.fs.starfarer.api.ui.Alignment;
-import com.fs.starfarer.api.ui.LabelAPI;
-import com.fs.starfarer.api.ui.SectorMapAPI;
 import com.fs.starfarer.api.ui.TooltipMakerAPI;
-import com.fs.starfarer.api.util.CountingMap;
 import com.fs.starfarer.api.util.Misc;
 import com.fs.starfarer.api.util.Misc.Token;
-import com.fs.starfarer.api.util.WeightedRandomPicker;
 
 import java.awt.*;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 
 public class RC_ChangeHyperion extends HubMissionWithBarEvent {
 	public static enum Stage {
@@ -66,7 +59,7 @@ public class RC_ChangeHyperion extends HubMissionWithBarEvent {
 		//必须是军事星球 好像没必要
 		//boolean isMilitary = isAlreadyExist && createdAt != null && Misc.isMilitary(createdAt);
 		//有轨道工作站 createdAt.hasIndustry(Industries.HEAVYINDUSTRY) ||
-		boolean hasIndustry = createdAt.hasIndustry(Industries.ORBITALWORKS);
+			boolean hasIndustry = createdAt.hasIndustry(Industries.ORBITALWORKS);
 		//需要玩家舰队里面有 海波龙原型
 		boolean hasHyperion = false;
 		List<FleetMemberAPI> playerFleetMembers = Global.getSector().getPlayerFleet().getFleetData().getMembersListCopy();

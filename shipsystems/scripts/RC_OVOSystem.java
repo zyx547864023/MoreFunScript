@@ -1,17 +1,12 @@
 package real_combat.shipsystems.scripts;
 
-import com.fs.starfarer.String.H;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.*;
-import com.fs.starfarer.api.graphics.SpriteAPI;
 import com.fs.starfarer.api.impl.combat.BaseShipSystemScript;
-import org.lazywizard.lazylib.MathUtils;
 import org.lwjgl.util.vector.Vector2f;
-import real_combat.util.MyMath;
 
-import java.awt.*;
-import java.util.*;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * 全局时流放慢

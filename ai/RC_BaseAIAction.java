@@ -6,9 +6,6 @@ import org.lazywizard.lazylib.MathUtils;
 import org.lazywizard.lazylib.VectorUtils;
 import org.lwjgl.util.vector.Vector2f;
 
-import java.util.HashSet;
-import java.util.Set;
-
 public class RC_BaseAIAction {
 
     public static void move(ShipAPI ship, float shipFacing, float toTargetAngle) {

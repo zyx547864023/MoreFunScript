@@ -1,12 +1,7 @@
 package real_combat.shipsystems.scripts.ai;
 
 import com.fs.starfarer.api.combat.*;
-import com.fs.starfarer.api.util.IntervalUtil;
-import org.lazywizard.lazylib.MathUtils;
 import org.lwjgl.util.vector.Vector2f;
-
-import java.util.List;
-import java.util.Map;
 
 public class RC_AsteroidArmAI implements ShipSystemAIScript {
     private final static String WHO_SHOOT = "WHO_SHOOT";

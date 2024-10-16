@@ -1,26 +1,16 @@
 package real_combat.combat;
 
-import java.io.IOException;
-import java.util.*;
-
 import com.fs.starfarer.api.Global;
-import com.fs.starfarer.api.campaign.CampaignFleetAPI;
 import com.fs.starfarer.api.combat.*;
 import com.fs.starfarer.api.combat.listeners.DamageDealtModifier;
 import com.fs.starfarer.api.combat.listeners.WeaponRangeModifier;
-import com.fs.starfarer.api.fleet.FleetMemberAPI;
-import com.fs.starfarer.api.fleet.FleetMemberType;
 import com.fs.starfarer.api.input.InputEventAPI;
-import com.fs.starfarer.api.loading.VariantSource;
-import com.fs.starfarer.api.mission.FleetSide;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.lazywizard.lazylib.MathUtils;
-import org.lazywizard.lazylib.combat.AIUtils;
 import org.lwjgl.util.vector.Vector2f;
 import real_combat.RCModPlugin;
 import real_combat.entity.RC_Escort;
-import real_combat.shipsystems.scripts.RC_TransAmSystem;
+
+import java.util.*;
 
 /**
  * 伤害修改射程修改
@@ -60,7 +50,9 @@ public class RealCombatEveryFrameCombatPlugin implements EveryFrameCombatPlugin 
 		}
 		 */
 		CombatEngineAPI engine = Global.getCombatEngine();
-
+		if (engine.isPaused()) {
+			return;
+		}
 		//报警
 		if (RCModPlugin.isWarningEnabled()) {
 			if (engine.getPlayerShip()!=null) {
@@ -318,7 +310,6 @@ public class RealCombatEveryFrameCombatPlugin implements EveryFrameCombatPlugin 
 	}
 
 	public void init(CombatEngineAPI engine) {
-
 	}
 
 	private static class DamageDealtMod implements DamageDealtModifier {

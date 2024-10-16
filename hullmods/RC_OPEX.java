@@ -1,22 +1,14 @@
 package real_combat.hullmods;
 
-import com.fs.starfarer.api.Global;
-import com.fs.starfarer.api.combat.*;
+import com.fs.starfarer.api.combat.BaseHullMod;
+import com.fs.starfarer.api.combat.MutableShipStatsAPI;
+import com.fs.starfarer.api.combat.ShipAPI;
 import com.fs.starfarer.api.combat.ShipAPI.HullSize;
 import com.fs.starfarer.api.fleet.FleetMemberAPI;
 import com.fs.starfarer.api.loading.WeaponGroupSpec;
 import com.fs.starfarer.api.loading.WeaponSpecAPI;
-import com.fs.starfarer.api.loading.WingRole;
-import com.fs.starfarer.api.ui.Alignment;
-import com.fs.starfarer.api.ui.TooltipMakerAPI;
-import com.fs.starfarer.api.util.Misc;
-import com.fs.starfarer.coreui.H;
-import real_combat.ai.RC_BomberAI;
-import real_combat.ai.RC_FighterAI;
-import real_combat.shipsystems.scripts.RC_AsteroidArm;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**

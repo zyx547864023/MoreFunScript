@@ -7,8 +7,6 @@ import org.lazywizard.lazylib.combat.AIUtils;
 import org.lwjgl.util.vector.Vector2f;
 import real_combat.shipsystems.scripts.RC_FlyingThunderGod;
 
-import java.util.List;
-
 public class RC_FlyingThunderGodAI implements ShipSystemAIScript {
     private final static String ID = "RC_FlyingThunderGodAI";
     private CombatEngineAPI engine;

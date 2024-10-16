@@ -1,13 +1,10 @@
 package real_combat.hullmods;
 
 import com.fs.starfarer.api.Global;
-import com.fs.starfarer.api.campaign.FleetAssignment;
 import com.fs.starfarer.api.campaign.PlanetAPI;
-import com.fs.starfarer.api.campaign.SectorEntityToken;
 import com.fs.starfarer.api.campaign.ai.FleetAssignmentDataAPI;
-import com.fs.starfarer.api.fleet.FleetMemberAPI;
 import com.fs.starfarer.api.combat.BaseHullMod;
-import com.fs.starfarer.api.impl.campaign.ids.Factions;
+import com.fs.starfarer.api.fleet.FleetMemberAPI;
 import com.fs.starfarer.api.impl.campaign.ids.Industries;
 import com.fs.starfarer.api.util.IntervalUtil;
 import com.fs.starfarer.api.util.Misc;

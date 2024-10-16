@@ -3,17 +3,14 @@ package real_combat.ai;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.*;
 import com.fs.starfarer.api.util.IntervalUtil;
-import com.fs.starfarer.combat.entities.Ship;
 import org.lazywizard.lazylib.MathUtils;
 import org.lazywizard.lazylib.VectorUtils;
-import org.lazywizard.lazylib.combat.AIUtils;
-import org.lazywizard.lazylib.combat.DefenseUtils;
 import org.lwjgl.util.vector.Vector2f;
 import real_combat.entity.RC_NeedDrawLine;
 
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class RC_Drone_borerAI extends RC_BaseShipAI {
     private final static String ID = "RC_RepairCombatLayeredRenderingPlugin";
@@ -24,7 +21,25 @@ public class RC_Drone_borerAI extends RC_BaseShipAI {
     public RC_Drone_borerAI(ShipAPI ship) {
         super(ship);
     }
-
+    /**
+     * 没有目标的时候编队飞行
+     */
+    //路径列表
+    private static List<Vector2f> routeList = new ArrayList<>();
+    static {
+        routeList.add(new Vector2f(300,0));
+        routeList.add(new Vector2f(0,300));
+        routeList.add(new Vector2f(-300,0));
+        routeList.add(new Vector2f(0,-300));
+    }
+    //编队形状 一字阵
+    private static List<Vector2f> shapeList = new ArrayList<>();
+    static {
+        shapeList.add(new Vector2f(0,0));
+        shapeList.add(new Vector2f(50,0));
+        shapeList.add(new Vector2f(100,0));
+        shapeList.add(new Vector2f(150,0));
+    }
     /**
      * 40CR以下不修
      * 不修的时候返回母船

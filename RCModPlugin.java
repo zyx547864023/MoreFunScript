@@ -7,17 +7,13 @@ import com.fs.starfarer.api.campaign.CampaignPlugin;
 import com.fs.starfarer.api.campaign.CampaignPlugin.PickPriority;
 import com.fs.starfarer.api.combat.*;
 import com.fs.starfarer.api.fleet.FleetMemberAPI;
-import com.fs.starfarer.api.impl.campaign.intel.bar.events.BarEventManager;
 import exerelin.campaign.SectorManager;
 import lunalib.lunaSettings.LunaSettings;
 import org.apache.log4j.Level;
 import org.json.JSONException;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL13;
 import org.lwjgl.opengl.GL20;
 import real_combat.ai.RC_Drone_borerAI;
 import real_combat.campaign.RC_CampaignPlugin;
-//import real_combat.campaign.missions.intel.bar.events.FamousShipBarEventCreator;
 import real_combat.combat.RC_ComboEveryFrameCombatPlugin;
 import real_combat.combat.RC_MonsterBallEveryFrameCombatPlugin;
 import real_combat.combat.RC_SmartAIEveryFrameCombatPlugin;
@@ -27,7 +23,8 @@ import real_combat.weapons.ai.*;
 import real_combat.world.RCWorldGen;
 
 import java.io.IOException;
-import java.io.InputStream;
+
+//import real_combat.campaign.missions.intel.bar.events.FamousShipBarEventCreator;
 
 
 public class RCModPlugin extends BaseModPlugin {

@@ -4,11 +4,9 @@ import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.*;
 import com.fs.starfarer.api.impl.combat.BaseShipSystemScript;
 import com.fs.starfarer.api.util.IntervalUtil;
-import com.fs.starfarer.coreui.V;
 import org.lazywizard.lazylib.MathUtils;
 import org.lazywizard.lazylib.combat.entities.SimpleEntity;
 import org.lwjgl.util.vector.Vector2f;
-import real_combat.constant.RC_ComboConstant;
 
 public class RC_FlyingThunderGod extends BaseShipSystemScript {
     public static final String ID="RC_FlyingThunderGod";

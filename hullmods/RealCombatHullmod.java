@@ -1,23 +1,15 @@
 package real_combat.hullmods;
-import java.util.HashMap;
-import java.util.Map;
 
-import org.lwjgl.util.vector.Vector2f;
-
-import com.fs.starfarer.api.combat.BaseHullMod;
-import com.fs.starfarer.api.combat.BeamAPI;
-import com.fs.starfarer.api.combat.CombatEntityAPI;
-import com.fs.starfarer.api.combat.DamageAPI;
-import com.fs.starfarer.api.combat.DamagingProjectileAPI;
-import com.fs.starfarer.api.combat.MissileAPI;
-import com.fs.starfarer.api.combat.MutableShipStatsAPI;
-import com.fs.starfarer.api.combat.ShipAPI;
+import com.fs.starfarer.api.combat.*;
 import com.fs.starfarer.api.combat.ShipAPI.HullSize;
-import com.fs.starfarer.api.combat.WeaponAPI;
 import com.fs.starfarer.api.combat.WeaponAPI.WeaponSize;
 import com.fs.starfarer.api.combat.WeaponAPI.WeaponType;
 import com.fs.starfarer.api.combat.listeners.DamageDealtModifier;
 import com.fs.starfarer.api.combat.listeners.WeaponRangeModifier;
+import org.lwjgl.util.vector.Vector2f;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class RealCombatHullmod extends BaseHullMod {
 

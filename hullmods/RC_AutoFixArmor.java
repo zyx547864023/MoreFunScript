@@ -3,14 +3,9 @@ package real_combat.hullmods;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.BaseHullMod;
 import com.fs.starfarer.api.combat.CombatEngineAPI;
-import com.fs.starfarer.api.combat.MutableShipStatsAPI;
 import com.fs.starfarer.api.combat.ShipAPI;
-import com.fs.starfarer.api.impl.campaign.ids.Stats;
 import com.fs.starfarer.api.util.IntervalUtil;
 import org.lazywizard.lazylib.combat.DefenseUtils;
-import org.lwjgl.util.Point;
-
-import java.util.Map;
 
 public class RC_AutoFixArmor extends BaseHullMod {
     protected IntervalUtil tracker = new IntervalUtil(1f, 1f);

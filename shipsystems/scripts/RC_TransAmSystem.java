@@ -3,27 +3,16 @@ package real_combat.shipsystems.scripts;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.*;
 import com.fs.starfarer.api.graphics.SpriteAPI;
-import com.fs.starfarer.api.impl.campaign.ids.Stats;
 import com.fs.starfarer.api.impl.combat.BaseShipSystemScript;
-import com.fs.starfarer.api.util.IntervalUtil;
-import com.fs.starfarer.combat.ai.movement.maneuvers.V;
-import com.thoughtworks.xstream.converters.basic.DateConverter;
-import data.scripts.plugins.MagicRenderPlugin;
-import javafx.scene.effect.Shadow;
 import org.lazywizard.lazylib.MathUtils;
-import org.lazywizard.lazylib.VectorUtils;
-import org.lazywizard.lazylib.combat.CombatUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.util.vector.Vector2f;
-
 import real_combat.RCModPlugin;
-import real_combat.ai.RC_ModulesFighterAI;
 import real_combat.util.MyMath;
 
 import java.awt.*;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -390,7 +379,7 @@ public class RC_TransAmSystem extends BaseShipSystemScript {
                     //transAmsprite.renderAtCenter(ship.getLocation().getX(), ship.getLocation().getY());
                 }
             }
-            renderShader(layer,viewport);
+            //renderShader(layer,viewport);
         }
 
         public void renderShader(CombatEngineLayers layer, ViewportAPI viewport) {

@@ -3,9 +3,6 @@ package real_combat.entity;
 import com.fs.starfarer.api.combat.ShipAPI;
 import org.lwjgl.util.vector.Vector2f;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /*
 *如何玩家舰队组成合理
 *当一艘船有下级船只护卫时候，移动速度增加 10%

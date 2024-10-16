@@ -1,10 +1,7 @@
 package real_combat.weapons;
 
-import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.*;
 import com.fs.starfarer.api.combat.listeners.ApplyDamageResultAPI;
-import com.fs.starfarer.combat.entities.Ship;
-import org.lazywizard.lazylib.MathUtils;
 import org.lwjgl.util.vector.Vector2f;
 import real_combat.entity.RC_AnchoredEntity;
 

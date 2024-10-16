@@ -1,13 +1,10 @@
 package real_combat.weapons;
 
-import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.*;
 import com.fs.starfarer.api.combat.listeners.ApplyDamageResultAPI;
 import org.lazywizard.lazylib.MathUtils;
 import org.lazywizard.lazylib.VectorUtils;
 import org.lwjgl.util.vector.Vector2f;
-import org.w3c.dom.ranges.Range;
-import real_combat.entity.RC_AnchoredEntity;
 
 import java.util.ArrayList;
 import java.util.List;

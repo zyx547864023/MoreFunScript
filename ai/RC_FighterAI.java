@@ -3,15 +3,12 @@ package real_combat.ai;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.*;
 import com.fs.starfarer.api.util.IntervalUtil;
-import com.fs.starfarer.prototype.entities.Ship;
 import org.lazywizard.lazylib.MathUtils;
 import org.lazywizard.lazylib.VectorUtils;
 import org.lazywizard.lazylib.combat.AIUtils;
-import org.lazywizard.lazylib.combat.DefenseUtils;
 import org.lwjgl.util.vector.Vector2f;
 
-import java.awt.*;
-import java.util.*;
+import java.util.HashSet;
 import java.util.List;
 
 /**

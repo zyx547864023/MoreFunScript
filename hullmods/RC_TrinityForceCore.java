@@ -1,27 +1,14 @@
 package real_combat.hullmods;
 
 import com.fs.starfarer.api.Global;
-import com.fs.starfarer.api.campaign.SectorEntityToken;
-import com.fs.starfarer.api.characters.MutableCharacterStatsAPI;
 import com.fs.starfarer.api.combat.*;
 import com.fs.starfarer.api.combat.ShipAPI.HullSize;
 import com.fs.starfarer.api.fleet.FleetMemberAPI;
 import com.fs.starfarer.api.impl.campaign.ids.HullMods;
 import com.fs.starfarer.api.impl.campaign.ids.Stats;
-import com.fs.starfarer.api.loading.VariantSource;
-import com.fs.starfarer.api.util.Misc;
-import com.fs.starfarer.campaign.CampaignEngine;
-import com.fs.starfarer.campaign.fleet.CampaignFleet;
-import com.fs.starfarer.campaign.ui.intel.OOoO;
-import com.fs.starfarer.campaign.ui.intel.SortablePlanetList;
-import org.lazywizard.lazylib.MathUtils;
-import org.lazywizard.lazylib.VectorUtils;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.util.vector.Vector2f;
 
-import java.awt.*;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 
 /**
  * 合体船的速度计算

@@ -1,7 +1,9 @@
 package real_combat.hullmods;
 
-import com.fs.starfarer.api.Global;
-import com.fs.starfarer.api.combat.*;
+import com.fs.starfarer.api.combat.BaseHullMod;
+import com.fs.starfarer.api.combat.ShipAPI;
+import com.fs.starfarer.api.combat.ShipCommand;
+import com.fs.starfarer.api.combat.ShipSystemAPI;
 import org.lazywizard.lazylib.combat.AIUtils;
 
 public class KAM_Coniferous_forests extends BaseHullMod {
